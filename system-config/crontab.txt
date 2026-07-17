@@ -1,0 +1,2 @@
+*/10 * * * * curl -fsS --retry 3 https://hc-ping.com/93a77c60-5d22-4e4e-a60f-bac951d6d69d > /dev/null
+30 2 * * * ~/agents/scripts/backup.sh >> ~/agents/logs/backup.log 2>&1

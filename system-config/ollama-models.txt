@@ -1,0 +1,4 @@
+NAME                       ID              SIZE      MODIFIED     
+qwen3-agent:latest         1adc23451bf4    5.2 GB    17 hours ago    
+nomic-embed-text:latest    0a109f422b47    274 MB    17 hours ago    
+qwen3:8b                   500a1f067a9f    5.2 GB    17 hours ago    
