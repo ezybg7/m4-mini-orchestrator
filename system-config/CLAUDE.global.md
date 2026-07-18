@@ -2,6 +2,23 @@
 Before any task: read relevant files in ~/agents/memory/ (grep by project name).
 After any task: append a handoff note to ~/agents/memory/daily-log/$(date +%F).md covering what was done, decisions made, and open items.
 
+## Spec-first, think-first
+- Think deeply before implementing anything. Lay out the goal, constraints,
+  options considered, and edge cases before touching code — never jump straight
+  to implementation.
+- Before building any new functionality (feature, screen, endpoint, workflow,
+  integration), write a detailed spec file FIRST and keep it in the repo:
+  - whole project → SPEC.md at the repo root (goals, domain model, features,
+    data model, milestones, open questions)
+  - individual feature → specs/<feature>.md (purpose, UX flows, data/schema
+    changes, edge cases, error and empty states, acceptance criteria)
+- Show the user the spec and get their sign-off before implementing when scope
+  is new or requirements are ambiguous; for small additions inside an
+  already-agreed spec, update the spec in the same PR as the code.
+- Specs are the source of truth: whenever behavior changes, update the spec in
+  the same change. Pure bug fixes and refactors that don't change behavior need
+  no new spec.
+
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 
