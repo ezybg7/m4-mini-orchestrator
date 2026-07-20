@@ -1,0 +1,12 @@
+EFFORT:max
+Read-only audit of the pantry codebase against its specs. Repo: /Users/orchestrator/code/pantry (branch feat/receipt-capture is checked out; origin/main is the merged baseline). Do NOT implement, edit, or commit anything.
+
+Context: read ~/agents/memory/projects/pantry.md, then specs/README.md in the repo (the roadmap/status index), then the individual specs it references.
+
+Report:
+1. Drift between code and specs — files missing, misplaced, or contracts not matching what specs claim exists (note: a local qwen orchestrator wrote garbage into this working tree yesterday which has been cleaned; flag any residue you find).
+2. State of the receipt-capture feature: backend files on this branch vs specs/receipt-capture.md "Implementation status & remaining plan" — confirm what is built vs pending.
+3. Health: run `npm run typecheck`, `npm run lint`, `npm test` and include the results verbatim.
+4. A ranked list of the next 5 concrete actions per specs/README.md Phase A order, each with its spec reference.
+
+Keep the final report concise and structured. End with a single line: AUDIT COMPLETE.

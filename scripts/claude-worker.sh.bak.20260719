@@ -5,23 +5,11 @@
 #   MODEL:<model>         — e.g. fable, opus (default: user's saved default)
 #   EFFORT:<level>        — max for thinking-heavy tasks, high for regular
 # Everything after the headers is the prompt.
-# Finished tasks move to $QUEUE/done/ or $QUEUE/failed/ — never renamed in
-# place, because done-*.task in the queue root matches the *.task glob and
-# re-runs forever (test -> done-test -> done-done-test -> ...).
 set -euo pipefail
-# Single-instance lock. Lives OUTSIDE ~/agents/queue so lock churn never
-# retriggers the launchd WatchPaths watcher on the queue directory.
-LOCKDIR="$HOME/agents/.worker.lock"
-if ! mkdir "$LOCKDIR" 2>/dev/null; then
-  echo "claude-worker: another instance holds the lock; exiting"
-  exit 0
-fi
-trap 'rmdir "$LOCKDIR"' EXIT
 export PATH="$HOME/.local/bin:$PATH"
 export CLAUDE_CODE_OAUTH_TOKEN="$(cat ~/.claude/oauth_token)"
 QUEUE=~/agents/queue
 LOGS=~/agents/logs
-mkdir -p "$QUEUE/done" "$QUEUE/failed"
 shopt -s nullglob
 tasks=("$QUEUE"/*.task)
 if [ ${#tasks[@]} -eq 0 ]; then
@@ -29,18 +17,7 @@ if [ ${#tasks[@]} -eq 0 ]; then
   exit 0
 fi
 for f in "${tasks[@]}"; do
-  [ -f "$f" ] || continue
   name=$(basename "$f" .task)
-  case "$name" in
-    done-*)
-      mv "$f" "$QUEUE/done/"
-      echo "claude-worker: archived stale done marker $name (pre-fix leftover, not re-run)"
-      continue ;;
-    failed-*)
-      mv "$f" "$QUEUE/failed/"
-      echo "claude-worker: archived stale failed marker $name (pre-fix leftover, not re-run)"
-      continue ;;
-  esac
   out="$LOGS/claude-$name-$(date +%Y%m%d-%H%M%S).json"
   echo "claude-worker: processing $name ..."
   content=$(cat "$f")
@@ -58,20 +35,16 @@ for f in "${tasks[@]}"; do
       *) content=""; break ;;
     esac
   done
-  PREAMBLE="$QUEUE/.preamble.md"
-  if [ -f "$PREAMBLE" ]; then
-    content="$(cat "$PREAMBLE")"$'\n\n'"$content"
-  fi
   cmd=(claude -p "$content" --output-format json)
   [ -n "$sid" ] && cmd+=(--resume "$sid")
   [ -n "$model" ] && cmd+=(--model "$model")
   [ -n "$effort" ] && cmd+=(--effort "$effort")
   ok=0; "${cmd[@]}" > "$out" 2>&1 && ok=1
   if [ "$ok" = 1 ]; then
-    mv "$f" "$QUEUE/done/$name.task"
+    mv "$f" "$QUEUE/done-$name.task"
     echo "claude-worker: done ($name) → $out"
   else
-    mv "$f" "$QUEUE/failed/$name.task"
+    mv "$f" "$QUEUE/failed-$name.task"
     echo "claude-worker: FAILED ($name) — details in $out"
   fi
 done

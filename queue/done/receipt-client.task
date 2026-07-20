@@ -1,0 +1,10 @@
+EFFORT:high
+Implement the client half of receipt capture for the pantry app.
+
+Repo: /Users/orchestrator/code/pantry — work on the EXISTING branch feat/receipt-capture (already checked out; it contains the parse-receipt backend and the merged spec suite; origin is up to date — pull first).
+
+Follow specs/receipt-capture.md exactly, especially its "Implementation status & remaining plan" section, which lists the complete file plan (capture feature folder: types, suggestLocation + tests, useParseReceipt, SearchCapture extraction from add.tsx, ReceiptCapture, ReviewList; useBulkAddItems in inventory hooks; segmented Add hub with Scan placeholder) and the Verify sequence. Install expo-image-picker and expo-image-manipulator via npx expo install. Apply the SPEC.md privacy errata the spec calls for. The local Supabase stack should already be running (supabase status; if not: export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock && supabase start).
+
+Constraints: repo CLAUDE.md and specs/README.md conventions; the typescript-style skill rules; npm run typecheck, npm run lint, and npm test must all pass. Commit to feat/receipt-capture, push, and open a PR with gh pr create --fill (this branch has no PR yet).
+
+End your output with a line: PR: <url>

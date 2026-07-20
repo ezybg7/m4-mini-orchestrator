@@ -7,7 +7,7 @@ Currently in use:
  powernap             1
  networkoversleep     0
  disksleep            0
- sleep                0 (sleep prevented by coreaudiod)
+ sleep                0 (sleep prevented by coreaudiod, coreaudiod, screensharingd)
  ttyskeepawake        1
  displaysleep         1
  tcpkeepalive         1

@@ -1,0 +1,25 @@
+MODEL:opus
+EFFORT:max
+~/agents/queue/pantry-orchestration-setup.task
+---
+Repo: /Users/orchestrator/code/pantry
+Branch: feat/orchestration-hardening
+
+Goal: Refactor orchestration and address Gemini/Gemini-usage constraints.
+
+Tasks:
+1. Orchestration: Claude (the worker) should be given instructions to perform tasks directly (like restarting services, managing files, etc.) whenever possible, rather than asking the user. The orchestrator (me) will perform them directly when within my capabilities, or queue them to the worker. Clarify that only design/implementation-choice questions should reach the user.
+2. Gemini/Testing: The user needs a free-tier receipt scanning path.
+   - The user currently hits 20/req limit due to shared key.
+   - Propose/Implement a way to use a mock/stub response for receipt scanning during local development (e.g., a local file-based mock) so the Gemini API is NOT hit.
+   - Ensure the Edge Function can toggle between real Gemini and a local mock based on an env var.
+3. Local Model: The user suggests "maybe we should be running the local model". Explore if we can host a small local vision model (e.g., LLaVA/Moondream via Llama.cpp) on the Mac mini to replace Gemini for the receipt task entirely, keeping testing free.
+4. Hardening (from previous report): Implement the requested hardening fixes:
+   - Client-side error messaging (distinguish "service unavailable" from "parsing error").
+   - Model pin + `thinkingConfig` (to avoid token-limit/502).
+   - Spec updates to reflect the 20-req/day reality.
+
+Constraints:
+- Do not ask the user for tasks like restarting services — do them (or queue them for the worker).
+- Preserve the Gemini-free-tier integrity.
+- If a local model can handle receipt scanning, outline the plan to swap it in.

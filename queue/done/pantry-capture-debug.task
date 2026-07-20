@@ -1,0 +1,19 @@
+MODEL:opus
+EFFORT:high
+~/agents/queue/pantry-capture-debug.task
+---
+Repo: /Users/orchestrator/code/pantry
+Branch: feat/receipt-capture-debug
+
+Goal: Investigate "something went wrong while reading the receipt" error during receipt capture.
+
+User reports: 
+1. "something went wrong while reading the receipt" when using "choose from photos" or taking a photo.
+2. User asks: "how are we implementing the photograph from receipt? arent we just using a library to get the text from the image and then parsing it for grocery items and counting them up? then adding the items that most closely matches?"
+
+Tasks:
+1. Explain that we ARE using an AI (Gemini Flash) via an Edge Function, not a local library, to parse the image into a JSON structured list of items.
+2. Check the Edge Function logs (`supabase/functions/parse-receipt`) to see the actual error (likely a 500, 502, or 429).
+3. Verify if the API key is set and if the `Gemini` API is working.
+4. Check if the image size/format is triggering the function error.
+5. Report findings and fix any identified issues.

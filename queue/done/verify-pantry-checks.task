@@ -1,0 +1,16 @@
+EFFORT:high
+REPO_PATH: /Users/orchestrator/code/pantry
+BRANCH: feat/receipt-capture
+
+GOAL: Run the repository checks (typecheck, lint, and test) on the pantry project to verify its current state and report the results.
+
+BACKGROUND & CONSTRAINTS:
+- Absolute repo path: /Users/orchestrator/code/pantry
+- Currently checked out branch: feat/receipt-capture
+- The repo has a CLAUDE.md and SPEC.md.
+- Run the following commands:
+  1. `npm run typecheck`
+  2. `npm run lint`
+  3. `npm test`
+- Make sure all dependencies are installed before running them.
+- Report the specific exit codes, stdout/stderr, and summary results of each check.
