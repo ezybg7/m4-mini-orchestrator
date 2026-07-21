@@ -1,0 +1,10 @@
+EFFORT:high
+MODEL:opus
+repo: /Users/orchestrator/code/pantry
+branch: main
+
+Goal: Continue work on the pantry app by checking the status of pending PRs #9 and #10 and ensuring everything is ready for Everett's review/merge. Specifically:
+1. Verify CI status for PR #9 and #10.
+2. If there are any requested changes or if the PRs are ready, report the status.
+3. If they are ready, check if there are any preparations needed for the roadmap (e.g., setting up for roadmap item "barcode (#2)").
+4. Do NOT attempt to merge yourself; just report status.

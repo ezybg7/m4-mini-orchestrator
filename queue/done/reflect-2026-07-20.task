@@ -1,0 +1,4 @@
+Nightly maintenance for 2026-07-20:
+1. SKILLS: Read today's session logs in ~/.hermes/logs and ~/agents/logs. Identify repeated procedures, failures, and near-misses. Refine or create SKILL.md files in ~/agents/skills on a new branch named nightly-2026-07-20; commit with clear messages and push the branch. Do NOT merge to main.
+2. MEMORY: Summarize daily-log files older than 7 days into their matching files in ~/agents/memory/projects/, then move the originals to ~/agents/memory/daily-log/archive/.
+3. Append a 5-line summary of what you changed to ~/agents/memory/daily-log/2026-07-20.md under a "## Nightly reflection" heading.

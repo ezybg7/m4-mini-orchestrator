@@ -19,9 +19,11 @@ edit code or specs, or run git yourself — Claude does all thinking and buildin
   2. A background runner (launchd: com.user.claude-worker) executes queued
      tasks automatically within seconds. NEVER run claude-worker.sh or claude
      yourself, and never wait for completion — confirm queued, end your turn.
-  3. Status: pending = ~/agents/queue/*.task · finished = queue/done/ ·
-     failed = queue/failed/ · results = newest ~/agents/logs/claude-<slug>-*.json
-     (report the outcome including any PR: line and its session_id).
+  3. Completions are PUSHED to Discord automatically by the worker (status,
+     PR link, session_id) — never promise to monitor or report back later.
+     For an on-demand status check: pending = ~/agents/queue/*.task ·
+     finished = queue/done/ · failed = queue/failed/ · results = newest
+     ~/agents/logs/claude-<slug>-*.json (include any PR: line and session_id).
   4. Follow-ups or answers to a task's question: new task file starting with
      RESUME:<session_id> followed by the user's message.
   5. NEVER use the delegate_task tool — it spawns a local model, not Claude.

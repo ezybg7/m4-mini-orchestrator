@@ -1,0 +1,24 @@
+MODEL:opus
+EFFORT:max
+~/agents/queue/pantry-vision-model-selection.task
+---
+Repo: /Users/orchestrator/code/pantry
+Branch: feat/vision-model-selection
+
+Goal: Select and implement a cost-effective, production-ready vision model for receipt scanning.
+
+Tasks:
+1. Research/Evaluate Vision Models: Identify a production-grade, cost-effective vision model that is suitable for receipt scanning. 
+   - Gemini 1.5 Flash (paid tier) is the current baseline. Evaluate it vs Claude Haiku (3.5) vs GPT-4o-mini.
+   - Criteria: Latency, accuracy on thermal receipts, cost-per-scan, and data privacy (must be "no training" data use).
+2. Update Implementation:
+   - Point the `parse-receipt` Edge Function to the selected production provider (using the provider adapter pattern already implemented).
+   - Update `specs/receipt-capture.md` and `specs/README.md` to reflect the chosen production model.
+3. Cleanup: Remove the "local-vision-model" spec since we are proceeding with a cloud-based production strategy.
+4. Deployment/Verification: Update the environment configuration to use the production provider (via a new environment variable if needed).
+5. Ensure the "mock" provider remains for local development.
+
+Constraints:
+- We are building for production; prioritize privacy (no training) and cost-efficiency.
+- Gemini 1.5 Flash paid-tier is the baseline to beat.
+- Follow the spec-first approach; output the updated design/model selection document to the chat for the user.

@@ -74,4 +74,36 @@ for f in "${tasks[@]}"; do
     mv "$f" "$QUEUE/failed/$name.task"
     echo "claude-worker: FAILED ($name) — details in $out"
   fi
+  # Push the outcome straight to Discord. `hermes send` reuses the gateway's
+  # bot token with no LLM and no agent loop, so notifications can't be lost to
+  # relay rate limits or forgotten by the orchestrator. Never fatal.
+  notify_target="${WORKER_NOTIFY_TARGET:-discord:#reports}"
+  python3 - "$out" "$name" "$ok" > "$LOGS/.notify-body" 2>/dev/null <<'PY' || true
+import json, re, sys
+path, name, ok = sys.argv[1], sys.argv[2], sys.argv[3] == "1"
+try:
+    d = json.load(open(path))
+except Exception:
+    d = {}
+result = (d.get("result") or "").strip()
+sid = d.get("session_id") or ""
+mins = round((d.get("duration_ms") or 0) / 60000, 1)
+cost = d.get("total_cost_usd")
+head = f"{'✅' if ok else '❌'} Task **{name}** {'finished' if ok else 'FAILED'}"
+meta = [f"{mins} min"] + ([f"${cost:.2f}"] if isinstance(cost, (int, float)) else [])
+lines = [head + f"  ({' · '.join(meta)})"]
+pr = re.search(r"^PR: (\S+)", result, re.M)
+if pr:
+    lines.append(f"PR: {pr.group(1)}")
+body = result[-900:].strip()
+if body:
+    lines.append("```\n" + (("…" + body) if len(result) > 900 else body) + "\n```")
+if sid:
+    lines.append(f"session_id: `{sid}`  (reply to continue this task)")
+print("\n".join(lines)[:1900])
+PY
+  if [ -s "$LOGS/.notify-body" ]; then
+    hermes send --to "$notify_target" --quiet --file "$LOGS/.notify-body" \
+      || echo "claude-worker: notify failed (task result is still in $out)"
+  fi
 done

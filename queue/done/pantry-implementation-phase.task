@@ -1,0 +1,19 @@
+MODEL:opus
+EFFORT:high
+~/agents/queue/pantry-implementation-phase.task
+---
+Repo: /Users/orchestrator/code/pantry
+Branch: feat/pantry-hardening
+
+Goal: Implement receipt-parsing hardening, local mock-parsing, and production model selection.
+
+Tasks:
+1. Local Mock: Implement the requested mock/stub path in the 'parse-receipt' Edge Function for local development to bypass API usage.
+2. Hardening: Implement the requested client-side error messaging and model pinning as specified in the orchestration hardening plan.
+3. Model Selection: Apply the final selection from the vision-model-selection audit (Gemini 1.5 Flash paid-tier) to the production Edge Function configuration.
+4. Spec Updates: Update /specs/receipt-capture.md to reflect the new production/mock-local architecture and the Gemini 1.5 Flash paid-tier configuration.
+5. Verification: Verify the flow locally (mock-parsing) and confirm the service availability fix.
+
+Constraints:
+- Prioritize implementation (write code and update specs).
+- Do not ask the user to restart services; perform the necessary service management directly.
