@@ -1,0 +1,9 @@
+EFFORT:max
+GOAL: Design and implement a pipeline to extract text from receipt images/PDFs and use an LLM to parse relevant data (e.g., date, items, total cost) for the pantry application.
+PATH: /Users/orchestrator/code/pantry
+CONSTRAINTS: 
+- Propose an appropriate API or tool for OCR (e.g., Tesseract, Google Vision API, or a library like `marker-pdf`).
+- Define the prompt/schema for the LLM extraction.
+- Create a reusable service or function for the pantry app.
+- Ensure the pipeline handles common receipt variations.
+BRANCH: feat/receipt-parsing

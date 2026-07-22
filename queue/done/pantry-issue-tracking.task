@@ -1,0 +1,8 @@
+EFFORT:max
+GOAL: Audit the existing specifications in `/Users/orchestrator/code/pantry/specs/` and create tracking issues on GitHub for features that are not yet implemented.
+PATH: /Users/orchestrator/code/pantry
+CONSTRAINTS:
+- For each spec file, check if the corresponding feature is implemented in the codebase.
+- If not implemented, create a GitHub issue using `gh issue create`.
+- Ensure the issue title and body are descriptive based on the spec file.
+- Do not create duplicates for already tracked items.
