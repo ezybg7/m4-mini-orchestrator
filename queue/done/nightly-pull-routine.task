@@ -1,0 +1,13 @@
+MODEL:opus
+EFFORT:high
+
+Repo: /Users/orchestrator/code/pantry
+Branch: feat/nightly-pull-routine (create from main)
+
+Goal:
+Add a routine/script or scheduled workflow to nightly pull from main / synchronize upstream/main.
+
+Constraints:
+- Follow repo CLAUDE.md guidelines and standards.
+- Ensure typecheck, lint, and tests pass.
+- Open a PR via `gh pr create` when complete.
