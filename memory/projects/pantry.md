@@ -6,7 +6,8 @@ permalink: agents/projects/pantry
 
 # Pantry
 
-_Updated: 2026-07-17 · Repo: github.com/ezybg7/pantry (private) · Local: ~/code/pantry_
+_Updated: 2026-07-21 · Repo: github.com/ezybg7/pantry (private) · Local: ~/code/pantry_
+_(2026-07-17 daily-log folded in during the 2026-07-25 nightly archival — durable fixtures/gotchas below.)_
 
 Mobile pantry tracker: household inventory with auto-estimated expirations, self-organizing storage locations, and recipes (deterministic "what can I make" matching + AI ideas). Public multi-user app. Full spec lives in the repo's SPEC.md — that file is the source of truth; this note is the summary.
 
@@ -36,6 +37,32 @@ Mobile pantry tracker: household inventory with auto-estimated expirations, self
 3. App Store display name — "Pantry" is crowded; bundle id TBD before M4.
 4. Community moderation beyond report + manual takedown if usage grows.
 5. Recipe import from URL — v2 candidate.
+
+## Local dev fixtures & gotchas (folded from 2026-07-17 setup)
+
+- **Permanent local test login** (seeded in `seed.sql`, survives `supabase db reset`):
+  **`test@pantry.dev` / `password123`** — member of household **"Test Home"** (invite
+  code `testhome`) with default storage locations. Use for on-device/local smoke tests.
+- **Migration-grants lesson** (`supabase-cli-migration-grants`): local Supabase CLI 2.x
+  does **not** apply default privileges, so a migration that creates tables without
+  explicit `GRANT`s for `anon`/`authenticated`/`service_role` makes every REST query
+  fail `42501` while only `SECURITY DEFINER` RPCs work. `0001_init.sql` now ships the
+  standard API-role grants (re-apply the `anon` RPC revokes **after** the blanket
+  routines grant). Fixed 07-17 in `8d935fa`.
+- **Mobile dark-mode UX rule**: never ship hardcoded-light screens with
+  `userInterfaceStyle: automatic` — dark mode turned white-on-white TextInputs
+  unreadable and silently broke signup on Everett's first device run. Always set
+  explicit `color` + `placeholderTextColor` + background on every TextInput; the
+  scaffold is pinned to `userInterfaceStyle: "light"` until a real dark theme exists.
+- **Toolchain notes**: `create-expo-app` is broken under npm 12 (can't parse
+  `npm pack --dry-run`) — worked around by extracting the expo-template tarball by
+  hand. Supabase CLI is not installed here; `config.toml` is hand-written minimal.
+  OrbStack needs one GUI launch to create `/var/run/docker.sock`; until then supabase
+  commands need `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock`.
+
+_Orchestrator/host infra facts from the same 07-17 log (config.yaml YAML-parse hazard,
+qwen3 40960-ctx ceiling, Tailscale argv[0] wrapper, repo hygiene) live in the
+`hermes-local-gateway-ops` skill — not duplicated here._
 
 ## Roadmap authority
 
