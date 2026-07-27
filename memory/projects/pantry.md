@@ -7,7 +7,7 @@ permalink: agents/projects/pantry
 # Pantry
 
 _Updated: 2026-07-21 · Repo: github.com/ezybg7/pantry (private) · Local: ~/code/pantry_
-_(2026-07-17 daily-log folded in during the 2026-07-25 nightly archival — durable fixtures/gotchas below.)_
+_(2026-07-17 daily-log folded in during the 2026-07-25 nightly archival; 2026-07-18 folded in during the 2026-07-26 nightly — durable fixtures/gotchas below. 07-18's Gemini→Claude vision evolution + spec suite are already in the Status entries; its Hermes model-swap saga lives in the `hermes-local-gateway-ops` skill and its duplicate-run/queue-lifecycle fixes in `delegate-to-claude` — nothing lost.)_
 
 Mobile pantry tracker: household inventory with auto-estimated expirations, self-organizing storage locations, and recipes (deterministic "what can I make" matching + AI ideas). Public multi-user app. Full spec lives in the repo's SPEC.md — that file is the source of truth; this note is the summary.
 
@@ -63,6 +63,17 @@ Mobile pantry tracker: household inventory with auto-estimated expirations, self
 _Orchestrator/host infra facts from the same 07-17 log (config.yaml YAML-parse hazard,
 qwen3 40960-ctx ceiling, Tailscale argv[0] wrapper, repo hygiene) live in the
 `hermes-local-gateway-ops` skill — not duplicated here._
+
+## AI vision provider gotchas (folded from 2026-07-18)
+
+- **Never pin a dated model id — use the `-latest` alias.** The Gemini adapter must
+  target `gemini-flash-latest`; pinned/dated ids retire out from under you. (Gemini
+  is now the config-flip *fallback*; Claude Haiku 4.5 is the production vision
+  provider per the 2026-07-20 Status entry — but the fallback still hits this.)
+- **Receipt/photo images are never persisted** — a hard privacy invariant: the
+  Edge Function extracts items in-memory and drops the image; only the `ai_calls`
+  row (with the 20/day/user cap, migration 0003) survives. Keep it that way when
+  touching the vision path.
 
 ## Roadmap authority
 
