@@ -8,6 +8,7 @@ permalink: agents/projects/pantry
 
 _Updated: 2026-07-21 · Repo: github.com/ezybg7/pantry (private) · Local: ~/code/pantry_
 _(2026-07-17 daily-log folded in during the 2026-07-25 nightly archival; 2026-07-18 folded in during the 2026-07-26 nightly — durable fixtures/gotchas below. 07-18's Gemini→Claude vision evolution + spec suite are already in the Status entries; its Hermes model-swap saga lives in the `hermes-local-gateway-ops` skill and its duplicate-run/queue-lifecycle fixes in `delegate-to-claude` — nothing lost.)_
+_(2026-07-19 daily-log folded in during the 2026-07-27 nightly archival — **nothing new to add**: its durable facts were all already captured. The receipt-capture client (PR #8) is in the Status board; the permanent `test@pantry.dev`/`password123` login is under Local dev fixtures; the worker node/npm PATH copy-trick is in the `claude-worker-env` skill; and the "0% Claude usage" investigation, `delegate_task` ban, SOUL.md rewrite, Gemini-flip tripwire, and launchd queue-runner live in `hermes-local-gateway-ops` + `delegate-to-claude`.)_
 
 Mobile pantry tracker: household inventory with auto-estimated expirations, self-organizing storage locations, and recipes (deterministic "what can I make" matching + AI ideas). Public multi-user app. Full spec lives in the repo's SPEC.md — that file is the source of truth; this note is the summary.
 
