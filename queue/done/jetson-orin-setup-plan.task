@@ -1,0 +1,17 @@
+EFFORT:max
+
+Repository Path: /Users/orchestrator/code/pantry
+Branch: Create a new branch `feat/jetson-orin-setup-plan` from `main` following github-workflow.
+
+Goal:
+Create a comprehensive architecture and setup plan for configuring an NVIDIA Jetson Orin Nano to run a full-time local AI agent node/worker that can integrate with and be utilized by the Hermes orchestrator on the Mac mini.
+
+Requirements & Context:
+1. Hardware / Environment target: NVIDIA Jetson Orin Nano (ARM64, unified memory, JetPack SDK, CUDA, TensorRT, etc.).
+2. Architecture & Networking: How the Jetson Orin Nano communicates with the orchestrator Mac mini (secure tunneling, API endpoints, queue syncing, or remote worker setup).
+3. Local LLM / Agent runtime on Jetson: Running optimized local models (e.g., via llama.cpp / vLLM / Ollama with TensorRT-LLM or GGUF quantization suited for Jetson Orin Nano's 8GB/16GB unified memory).
+4. Integration with Hermes / Queue system: How the Jetson agent can pick up delegated tasks or serve as a dedicated inference/worker node.
+5. Step-by-step implementation plan and operational checklist (flash/setup JetPack, setup docker/container runtimes, configure agent daemon, security/firewall, monitoring/health checks).
+
+Output:
+Write the complete plan as an architecture spec document in the repository (e.g., `specs/jetson-orin-nano-setup.md`) and open a Pull Request with the changes.
