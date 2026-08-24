@@ -2,3 +2,4 @@
 */30 * * * * ~/agents/scripts/watchdog.sh >> ~/agents/logs/watchdog.log 2>&1
 30 2 * * * ~/agents/scripts/backup.sh >> ~/agents/logs/backup.log 2>&1
 0 3 * * * ~/agents/scripts/nightly-reflection.sh >> ~/agents/logs/reflection.log 2>&1
+0 9 * * 1 /Users/orchestrator/agents/pantry-weekly-maintenance.sh
