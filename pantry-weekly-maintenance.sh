@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Cron strips PATH to almost nothing; claude lives in ~/.local/bin on the mini.
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+# Cron also has no Claude login: the 08-24 and 08-31 runs died with "Not logged
+# in · Please run /login". Hand `claude -p` the same OAuth token the queue
+# worker (~/agents/scripts/claude-worker.sh) uses. (Added 2026-09-03.)
+if [ -r "$HOME/.claude/oauth_token" ]; then
+  export CLAUDE_CODE_OAUTH_TOKEN="$(cat "$HOME/.claude/oauth_token")"
+fi
 #
 # pantry-weekly-maintenance.sh — weekly dependency + security pass for Ambry
 # (repo ezybg7/pantry, checkout ~/Code/pantry).
@@ -90,8 +96,12 @@ You are the weekly dependency maintainer for Ambry (repo ezybg7/pantry, base
 branch main, checkout ~/Code/pantry). Read ~/Code/pantry/CLAUDE.md first — its
 hard rules bind you.
 
-Use the GitHub MCP server for all GitHub work: the gh CLI is NOT installed on
-this machine. Never report "gh: command not found" as a blocker.
+On this machine (the M4 mini) the `gh` CLI IS installed and authenticated as
+ezybg7 — use it for all GitHub work (`gh pr list --author app/dependabot`,
+`gh pr view`, `gh pr checks`, `gh pr merge --squash`, `gh pr close`,
+`gh pr comment`). The GitHub MCP server may not be connected here; fall back
+to it only if `gh` is somehow missing, and never report either absence as a
+blocker.
 
 Read `.github/dependabot.yml` in the checkout before you start — it is the
 repo's own written policy and it outranks any assumption. As of 2026-08-22 it
