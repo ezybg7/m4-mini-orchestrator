@@ -1,8 +1,0 @@
-NAME                                       ID              SIZE      MODIFIED    
-qwen3-agent-128k:latest                    e695a8dca626    5.0 GB    6 weeks ago    
-hf.co/unsloth/Qwen3-8B-128K-GGUF:Q4_K_M    69ea1334deee    5.0 GB    6 weeks ago    
-hermes-agent:latest                        664dd99de4fd    4.9 GB    6 weeks ago    
-llama3.1:8b                                46e0c10c039e    4.9 GB    6 weeks ago    
-qwen3-agent:latest                         56768eb3beee    5.2 GB    6 weeks ago    
-nomic-embed-text:latest                    0a109f422b47    274 MB    6 weeks ago    
-qwen3:8b                                   500a1f067a9f    5.2 GB    6 weeks ago    

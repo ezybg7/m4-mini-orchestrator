@@ -3,3 +3,4 @@ logs/
 queue/done-*
 queue/failed-*
 .DS_Store
+builds/
