@@ -1,0 +1,19 @@
+appId: com.everettyan.ambry
+---
+- launchApp
+- extendedWaitUntil:
+    visible: 'Email|Search your whole pantry|Get started'
+    timeout: 60000
+- tapOn: 'Profile, tab.*'
+- scrollUntilVisible:
+    element: 'Sign out'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn: 'Sign out'
+- takeScreenshot: after-signout-0s
+- extendedWaitUntil:
+    visible: 'Get started|Email|Sign in'
+    timeout: 15000
+    optional: true
+- takeScreenshot: after-signout-15s

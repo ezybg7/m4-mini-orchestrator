@@ -1,0 +1,142 @@
+[
+  {
+    "screen": "Pantry overview tab",
+    "screen_slug": "pantry-overview-tab",
+    "today": {
+      "file": "pantry-overview-tab/today.html",
+      "look_for": "The grid as shipped: one Expiring Soon summary row above three location cards, Add location as the footer button, no pantry-wide Low/Out anywhere."
+    },
+    "directions": [
+      {
+        "name": "A. Reminders home",
+        "slug": "a-reminders-home",
+        "file": "pantry-overview-tab/a-reminders-home.html",
+        "look_for": "Four count tiles (Expiring 1 · Low 0 · Out 0 · All 7) replace the summary row, and the shelves become one inset list of rows with counts and chevrons — tile = state, row = place."
+      },
+      {
+        "name": "B. One long shelf list",
+        "slug": "b-one-long-shelf-list",
+        "file": "pantry-overview-tab/b-one-long-shelf-list.html",
+        "look_for": "No grid: each shelf is a pressable section header with its three soonest rows inline and a Show all row, under a pantry-wide All/Expiring/Low/Out segment; the page already runs past the tab bar with seven items."
+      },
+      {
+        "name": "C. Home-app chips over the grid",
+        "slug": "c-home-app-chips-over-the-grid",
+        "file": "pantry-overview-tab/c-home-app-chips-over-the-grid.html",
+        "look_for": "Cards kept; a chip row (Expiring 1 tone-coloured, Low/Out muted at zero) sits over the grid, the ellipsis on the title holds New/Reorder location, the footer button is gone, and the Expiring chip has opened its triage sheet with a Used swipe revealed."
+      }
+    ]
+  },
+  {
+    "screen": "Location screen",
+    "screen_slug": "location-screen",
+    "today": {
+      "file": "location-screen/today.html",
+      "look_for": "Fridge as shipped: search field and All/Expiring/Low/Out segment beside Select, then category sections whose rows carry an urgency badge and a tap-to-cycle Stocked chip."
+    },
+    "directions": [
+      {
+        "name": "A. Reminders list",
+        "slug": "a-reminders-list",
+        "file": "location-screen/a-reminders-list.html",
+        "look_for": "Search moved behind a header magnifier and Select into the ellipsis, segment labels carry counts, section headers are pressable and Produce is collapsed; the sheet shows the menu with its new Select items and Sort by rows."
+      },
+      {
+        "name": "B. Swipe triage, no chip cycle",
+        "slug": "b-swipe-triage-no-chip-cycle",
+        "file": "location-screen/b-swipe-triage-no-chip-cycle.html",
+        "look_for": "The Stocked chip is now a passive grey word, a first-use hint explains the gesture, and Milk is swiped open on its leading edge to show the new Low / Out actions (trailing edge carries +2 days / List)."
+      },
+      {
+        "name": "C. Flat urgency list with count chips",
+        "slug": "c-flat-urgency-list-with-count-chips",
+        "file": "location-screen/c-flat-urgency-list-with-count-chips.html",
+        "look_for": "No section headers: one list ordered by urgency (Milk 7d first) under a scrolling chip row of counts including zone chips, with the zone as a caption on pinned rows; the chip row scrolls (Top shelf and Select sit past its clipped end). (Door/Top shelf are illustrative — Test Home seeds no zones.)"
+      }
+    ]
+  },
+  {
+    "screen": "Zones editor",
+    "screen_slug": "zones-editor",
+    "today": {
+      "file": "zones-editor/today.html",
+      "look_for": "The pushed editor as shipped: an intro paragraph, a boxless inline rename field with a pencil per zone, trash and drag handle, and a standing New zone field with an Add button. (Door/Top shelf are illustrative — Test Home seeds no zones.)"
+    },
+    "directions": [
+      {
+        "name": "A. Sections in place (no editor screen)",
+        "slug": "a-sections-in-place-no-editor-screen",
+        "file": "zones-editor/a-sections-in-place-no-editor-screen.html",
+        "look_for": "There is no editor: this is the location screen, whose zone headers (Door, Top shelf) are pressable and have opened a Door sheet with Rename / Move up / Move down / Delete zone; category headers stay static."
+      },
+      {
+        "name": "B. iOS edit mode",
+        "slug": "b-ios-edit-mode",
+        "file": "zones-editor/b-ios-edit-mode.html",
+        "look_for": "A Settings-style list in Edit mode: red minus circles and drag handles on each SettingsRow (name · N items), an Add zone… insert row, a one-line intro and Done in the bar — no standing text field."
+      },
+      {
+        "name": "C. One zones sheet for editing and pinning",
+        "slug": "c-one-zones-sheet-for-editing-and-pinning",
+        "file": "zones-editor/c-one-zones-sheet-for-editing-and-pinning.html",
+        "look_for": "The editor is a sheet over the Fridge screen titled with the location: New zone field on top, rows with a handle and an ×, Cancel always; the same sheet doubles as the pin picker."
+      }
+    ]
+  },
+  {
+    "screen": "Expiring screen",
+    "screen_slug": "expiring-screen",
+    "today": {
+      "file": "expiring-screen/today.html",
+      "look_for": "As shipped: Add all in the bar, large title with the count, one tinted Cook CTA, then day sections in sentence case — Milk under \"In 7 days · Sep 11\" with its shelf as the subtitle and a trash."
+    },
+    "directions": [
+      {
+        "name": "A. Triage inbox",
+        "slug": "a-triage-inbox",
+        "file": "expiring-screen/a-triage-inbox.html",
+        "look_for": "The list opens straight on food: the Cook CTA and Add all live in the ellipsis, every row has a leading tap-to-complete circle (Bananas just tapped, toast with Undo) and the red Overdue header carries Snooze all +2d. (Bananas is shown overdue to exercise that header.)"
+      },
+      {
+        "name": "B. Two cuts: by day, by shelf",
+        "slug": "b-two-cuts-by-day-by-shelf",
+        "file": "expiring-screen/b-two-cuts-by-day-by-shelf.html",
+        "look_for": "A By day · By shelf segment above the Cook CTA; By shelf groups the same rows under a Fridge header sorted by urgency with \"added Sep 4\" as the subtitle since the shelf is now the header."
+      },
+      {
+        "name": "C. One date vocabulary",
+        "slug": "c-one-date-vocabulary",
+        "file": "expiring-screen/c-one-date-vocabulary.html",
+        "look_for": "The trailing swipe reads Later instead of +2 days and has opened a sheet with the item screen's nudge chips and Type a date; a footer under the list says \"Showing 7 days · Change\"."
+      }
+    ]
+  },
+  {
+    "screen": "Item screen",
+    "screen_slug": "item-screen",
+    "today": {
+      "file": "item-screen/today.html",
+      "look_for": "Milk as rebuilt in #173: hero tile beside the boxless name, STORAGE (Location ▸, Status segment), EXPIRY as four rows (value + provenance, nudge chips, Type a date ▸, Clear date), Notes, the nutrition placeholder, Delete item."
+    },
+    "directions": [
+      {
+        "name": "A. Expiry as one row and a sheet",
+        "slug": "a-expiry-as-one-row-and-a-sheet",
+        "file": "item-screen/a-expiry-as-one-row-and-a-sheet.html",
+        "look_for": "EXPIRY collapses to one Expires row with the value in urgency orange and a chevron; tapping it opened a scheduler sheet — quick chips, a September month grid with Sep 11 selected, Type a date, Clear date, Cancel — so the page is a third shorter."
+      },
+      {
+        "name": "B. Typed dates, understood",
+        "slug": "b-typed-dates-understood",
+        "file": "item-screen/b-typed-dates-understood.html",
+        "look_for": "Everything as today except Type a date, which is now one short field (\"in 10 days\") with a live echo \"→ Sep 15 · Tue · 10d\" beneath it and the keyboard up; the eight-digit mask is only the fallback."
+      },
+      {
+        "name": "C. Action row under the heading",
+        "slug": "c-action-row-under-the-heading",
+        "file": "item-screen/c-action-row-under-the-heading.html",
+        "look_for": "Four small tinted buttons (Used · +2 days · Add to list · Move) sit under the heading, Location and Zone merge into one \"Where · 🧊 Fridge · Door\" row, and the toast shows the new grocery hand-off."
+      }
+    ]
+  }
+]

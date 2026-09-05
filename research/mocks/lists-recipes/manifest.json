@@ -1,0 +1,198 @@
+[
+  {
+    "screen": "Lists tab",
+    "screen_slug": "lists-tab",
+    "today": {
+      "file": "lists-tab/today.html",
+      "look_for": "The keyboard field is the only way in; To Buy has no aisle headers, the one bought row (Milk) still sits in the reading list, and the green-turned-ink Restock button travels under it above Suggested."
+    },
+    "directions": [
+      {
+        "name": "A. Aisles",
+        "slug": "a-aisles",
+        "file": "lists-tab/a-aisles.html",
+        "look_for": "Aisle headers are back (Produce · Dairy & Eggs · Baking · Grains & Pasta), the field is a search-style bar, Bought collapses to one “Show 1 bought” row, and a lifted Bread row mid-drag is leaving the wrong aisle for a glowing target that says the categoriser will remember."
+      },
+      {
+        "name": "B. Buy again",
+        "slug": "b-buy-again",
+        "file": "lists-tab/b-buy-again.html",
+        "look_for": "A Buy Again chip strip (recent restocks plus Out/Low pantry names) sits where the field was; the keyboard hides behind a collapsed “Add something else…” row; Suggested is gone because the strip absorbed it."
+      },
+      {
+        "name": "C. Cart bar",
+        "slug": "c-cart-bar",
+        "file": "lists-tab/c-cart-bar.html",
+        "look_for": "No bought rows in the scroll — To Buy runs straight into Suggested; the count and Restock live in a bar above the tab bar, and tapping the count has expanded it into the bought list with un-buy, Clear and Cancel."
+      }
+    ]
+  },
+  {
+    "screen": "Restock review",
+    "screen_slug": "restock-review",
+    "today": {
+      "file": "restock-review/today.html",
+      "look_for": "A pushed screen: summary, “Put everything in…” pill and a 3-of-4 bulk tick, then one card per bought row with a location chip and “expires Sep 12 · 7d”, an unlinked Dish soap under a “Not adding” divider, and the commit button pinned at the bottom."
+    },
+    "directions": [
+      {
+        "name": "A. Inline restock",
+        "slug": "a-inline-restock",
+        "file": "restock-review/a-inline-restock.html",
+        "look_for": "No push: it is the Lists tab, and the In Your Cart rows themselves carry the Fridge chip and expiry caption; Dish soap wears a Skip pill instead of a divider, and “Add 2 to pantry” commits in place as the section footer."
+      },
+      {
+        "name": "B. By destination",
+        "slug": "b-by-destination",
+        "file": "restock-review/b-by-destination.html",
+        "look_for": "Rows regroup under Fridge / Pantry / Freezer / Not adding with a “Move all…” per header; Bread is caught mid-swipe showing the leading blue Fridge strip; the empty Freezer group is a drop target, the divider became a section."
+      },
+      {
+        "name": "C. Confirm sheet",
+        "slug": "c-confirm-sheet",
+        "file": "restock-review/c-confirm-sheet.html",
+        "look_for": "A sheet over the Lists tab does the whole job in three lines (2 to Fridge, 1 to Pantry, Skipping 1: Dish soap) with Add to pantry primary, “Review first…” as the way into today’s screen, and a Cancel row because it commits."
+      }
+    ]
+  },
+  {
+    "screen": "Recipes tab",
+    "screen_slug": "recipes-tab",
+    "today": {
+      "file": "recipes-tab/today.html",
+      "look_for": "A second “My recipes” heading under the Recipes large title, sort glyph and Add recipe beside it, then Folders and Yours / Favorites cards — Cook, the headline, is a segment you have to remember to tap."
+    },
+    "directions": [
+      {
+        "name": "A. Cook is the tab",
+        "slug": "a-cook-is-the-tab",
+        "file": "recipes-tab/a-cook-is-the-tab.html",
+        "look_for": "The ranking is the landing: filter chips and the ideas button up top, You Can Make / Almost There as inset grouped rows with time on the meta line, and My recipes · Folders · Community demoted to a Library group beneath."
+      },
+      {
+        "name": "B. Smart lists index",
+        "slug": "b-smart-lists-index",
+        "file": "recipes-tab/b-smart-lists-index.html",
+        "look_for": "No segments and no list — a search field then a Settings-style index (What can I make · Favorites · Recent · Folders · Household · Community · Ideas), each a push; the tab has become a menu."
+      },
+      {
+        "name": "C. One list, chips",
+        "slug": "c-one-list-chips",
+        "file": "recipes-tab/c-one-list-chips.html",
+        "look_for": "One list of every rankable recipe under a chip row where Community is the last, tinted chip; each card carries its makeability verdict in the meta line and + / ⋯ in the title bar replace the two square buttons."
+      }
+    ]
+  },
+  {
+    "screen": "Recipe detail",
+    "screen_slug": "recipe-detail",
+    "today": {
+      "file": "recipe-detail/today.html",
+      "look_for": "The name appears twice (nav bar and body), four icon-only header controls, ✓/○ ingredients that are status only, and Start cooking — with its 3-button Alert — is below the fold under the steps."
+    },
+    "directions": [
+      {
+        "name": "A. Ingredients act",
+        "slug": "a-ingredients-act",
+        "file": "recipe-detail/a-ingredients-act.html",
+        "look_for": "An empty nav title so the name is drawn once, heart plus ⋯ instead of four glyphs, the missing Butter row carries a 44pt +, and a sticky footer pairs Start cooking with a tinted “Add 1 missing” so the Alert is gone."
+      },
+      {
+        "name": "B. Two panes",
+        "slug": "b-two-panes",
+        "file": "recipe-detail/b-two-panes.html",
+        "look_for": "A compact 4:3 hero row, then an Ingredients | Steps segmented control; the Steps pane shows detected durations as tappable “10 min ▶” chips and Start cooking is pinned."
+      },
+      {
+        "name": "C. Card stack",
+        "slug": "c-card-stack",
+        "file": "recipe-detail/c-card-stack.html",
+        "look_for": "Everything is an inset card in a fixed order — hero, then an Actions group where Start cooking, Add missing (1) and a − 4 + Serves stepper are Settings rows — before Ingredients and Steps."
+      }
+    ]
+  },
+  {
+    "screen": "Cook mode",
+    "screen_slug": "cook-mode",
+    "today": {
+      "file": "cook-mode/today.html",
+      "look_for": "A flat scroll of five equal bordered step cards, a 1 OF 5 DONE caption, no ingredients and no timer; Done cooking sits at the end of the list, and the ticks live only in memory."
+    },
+    "directions": [
+      {
+        "name": "A. Focused checklist",
+        "slug": "a-focused-checklist",
+        "file": "cook-mode/a-focused-checklist.html",
+        "look_for": "The current step is the only full-ink card while done and later steps dim; a collapsed Ingredients (4) row sits on top; step 2’s “10 minutes” has become a running timer chip; Finish (1 of 5) is a sticky footer."
+      },
+      {
+        "name": "B. Step pager",
+        "slug": "b-step-pager",
+        "file": "cook-mode/b-step-pager.html",
+        "look_for": "One step per page: Step 2 of 5 in 24pt, the one ingredient this step uses with its quantity, a 10 min timer chip, page dots, and 56pt Back / Next buttons at the bottom instead of a list."
+      },
+      {
+        "name": "C. Cook & consume",
+        "slug": "c-cook-consume",
+        "file": "cook-mode/c-cook-consume.html",
+        "look_for": "The all-done sheet is two stacked cards: the star rating, then “Used anything up?” chips for the in-stock ingredients — Eggs tapped once to Low, Milk twice to Out — above a single Done."
+      }
+    ]
+  },
+  {
+    "screen": "Recipe editor, import and ideas",
+    "screen_slug": "recipe-editor-import-and-ideas",
+    "today": {
+      "file": "recipe-editor-import-and-ideas/today.html",
+      "look_for": "Today’s form scrolled to its middle: Servings and Time as number pads, the difficulty slider with its readout and Clear, Tags with a Choose button and a free-text field, and the three-line ingredient editor rows."
+    },
+    "directions": [
+      {
+        "name": "A. Essentials first",
+        "slug": "a-essentials-first",
+        "file": "recipe-editor-import-and-ideas/a-essentials-first.html",
+        "look_for": "Title → Ingredients → Steps are the whole form; everything else hides under an expanded “More details” group of keyboard-free rows (photo, − 4 + serves, time chips, slider, tag chips), and Save rides the keyboard accessory bar."
+      },
+      {
+        "name": "B. Paste anything",
+        "slug": "b-paste-anything",
+        "file": "recipe-editor-import-and-ideas/b-paste-anything.html",
+        "look_for": "The clipboard is read on open — a tinted card offers “Import from smittenkitchen.com” in one tap or “Paste recipe text” — and the ingredient field is a multiline paste box where each pasted line already wears its link chip."
+      },
+      {
+        "name": "C. Review, don't edit",
+        "slug": "c-review-don-t-edit",
+        "file": "recipe-editor-import-and-ideas/c-review-don-t-edit.html",
+        "look_for": "A saved idea (Banana custard, from Eggs · Milk · Bananas) lands on a read-only review card instead of a toast: 4 ingredients with tappable link chips (one doubtful, in amber), a steps summary, then Save and Edit first."
+      }
+    ]
+  },
+  {
+    "screen": "Creator profile",
+    "screen_slug": "creator-profile",
+    "today": {
+      "file": "creator-profile/today.html",
+      "look_for": "Everett’s name in both the nav bar and the body, an inert “0 followers · 0 following” stats line, bordered link rows, and community cards that still say “by Everett” on his own page — no Follow yet."
+    },
+    "directions": [
+      {
+        "name": "A. Card + grid",
+        "slug": "a-card-grid",
+        "file": "creator-profile/a-card-grid.html",
+        "look_for": "An Instagram-style header card — three stat buttons, a bio, the first link “and 2 more”, and a full-width tinted Follow — above a two-column photo grid where photo-less recipes fall back to grey tiles."
+      },
+      {
+        "name": "B. Compare & cook",
+        "slug": "b-compare-cook",
+        "file": "creator-profile/b-compare-cook.html",
+        "look_for": "The stats line is about you: “You can make 3 of Everett’s 12 recipes”, with All / Can make / Almost chips, cook status on every row, and a compact Follow tucked in the nav bar’s right slot."
+      },
+      {
+        "name": "C. Contact card",
+        "slug": "c-contact-card",
+        "file": "creator-profile/c-contact-card.html",
+        "look_for": "A Settings-style contact card: identity row with Follow as its accessory, a Links group, Followers 48 › / Following 12 › rows, then a dense Recipes (12) list with 44pt thumbnails and a ⋯ sort."
+      }
+    ]
+  }
+]

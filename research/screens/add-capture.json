@@ -1,0 +1,635 @@
+[
+  {
+    "screen": "Add tab (type-ahead + confirm sheet)",
+    "route": "src/app/(tabs)/add.tsx",
+    "current_summary": "Large title, optional basket bar, SearchField 'Search for a food', grouped result rows (category tile, name, 'Fridge · ~7 days', trailing + one-tap add with a Change toast; row body opens the confirm sheet), 'Add “x” as new item', Scan barcode / Snap groceries or receipt rows, RECENT (5 with +), confirm sheet (Cancel, item card, Leftovers chip for free text, Location segmented <=4 else picker, Expires with once-only explainer, Add to <Location>). Cost: catalog food = keyboard + 1 tap (+) or 2 (row -> Add); Recent re-buy = 1 tap but below the camera rows; free text = keyboard + 2.",
+    "apps": [
+      {
+        "name": "AnyList",
+        "what": "One Add Item field; suggestions from the built-in database, favorites and recents with a source icon each; tap adds, pencil edits first; Favorites and Recent are browsable lists.",
+        "aspects": [
+          {
+            "aspect": "Tap adds, pencil edits before adding",
+            "why": "Makes the add the default and the decision opt-in, one affordance per row",
+            "source": "https://help.anylist.com/articles/feature-overview-adding-items/"
+          },
+          {
+            "aspect": "Favorites distinct from Recent",
+            "why": "Ambry's Recent is recency-only; staples want a frequency view",
+            "source": "https://help.anylist.com/articles/favorites/"
+          }
+        ]
+      },
+      {
+        "name": "Bring!",
+        "what": "Bottom field; tile catalog by category browsed without typing; green Recently used tiles; long-press a tile for quantity/notes.",
+        "aspects": [
+          {
+            "aspect": "Browse-by-category catalog",
+            "why": "A keyboard-free path to any staple",
+            "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+          },
+          {
+            "aspect": "Recently used as a compact tile strip",
+            "why": "Re-buys above the fold without a second list",
+            "source": "https://www.makeuseof.com/organize-family-shopping-with-bring-grocery-app/"
+          }
+        ]
+      },
+      {
+        "name": "MyFitnessPal (food search)",
+        "what": "Before typing, Recent / Frequent / My foods lists sit under the search bar; the barcode button sits beneath the field.",
+        "aspects": [
+          {
+            "aspect": "Frequent as its own view",
+            "why": "Weekly staples are frequency, not recency",
+            "source": "https://community.myfitnesspal.com/en/discussion/10843437/when-logging-food-how-to-search-only-foods-you-039-ve-already-logged"
+          }
+        ]
+      },
+      {
+        "name": "Apple Reminders (Groceries list)",
+        "what": "Items auto-file into store sections as added; drag to another section and the list remembers the preference for that item.",
+        "aspects": [
+          {
+            "aspect": "Remembered per-item correction",
+            "why": "The shelf heuristic should learn a corrected default per food",
+            "source": "https://support.apple.com/en-us/105086"
+          }
+        ]
+      },
+      {
+        "name": "Instacart",
+        "what": "'Buy it again' badge on search results and a carousel on home; + on the tile adds.",
+        "aspects": [
+          {
+            "aspect": "Badge results already bought",
+            "why": "Search and Recent become one list instead of two",
+            "source": "https://docs.instacart.com/storefront/learn_about_your_storefront/shopping/buy_it_again/"
+          }
+        ]
+      }
+    ],
+    "directions": [
+      {
+        "name": "1A Recents up front",
+        "pitch": "The tab's frequency claim is undone by putting Recent under the camera rows; put the re-buy where the thumb lands.",
+        "regions": [
+          "Large title",
+          "Basket bar (only when staged)",
+          "SearchField",
+          "Frequent strip: 6-8 tile+name chips, tap adds with toast/Change, long-press opens the sheet",
+          "Results replace everything below the field while typing",
+          "Scan barcode / Snap groceries or receipt rows",
+          "Empty: no strip until 3 adds; camera rows stay",
+          "Error: existing toast"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Recently used tile strip",
+            "app": "Bring!",
+            "source": "https://www.makeuseof.com/organize-family-shopping-with-bring-grocery-app/"
+          },
+          {
+            "aspect": "Frequent view",
+            "app": "MyFitnessPal",
+            "source": "https://community.myfitnesspal.com/en/discussion/10843437/when-logging-food-how-to-search-only-foods-you-039-ve-already-logged"
+          }
+        ],
+        "cost": "Re-buy 1 tap with no scroll; all else unchanged.",
+        "tradeoff": "A horizontal strip is a second list idiom on a screen that just lost one (S3); long-press is undiscoverable so the toast's Change must also reach the sheet."
+      },
+      {
+        "name": "1B Browse, don't type",
+        "pitch": "421 curated rows are already cached on the client; a category grid reaches any staple with no keyboard.",
+        "regions": [
+          "Large title",
+          "Basket bar",
+          "SearchField",
+          "Recent (5 rows)",
+          "Grid of the 12 CategoryTiles with counts",
+          "Scan / Snap rows",
+          "Tile pushes a category list: grouped catalog rows with subtitle and + (row -> sheet); search stays on top",
+          "Empty: never; a category with no visible rows is hidden"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Tile catalog by category",
+            "app": "Bring!",
+            "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+          },
+          {
+            "aspect": "Category sections",
+            "app": "Apple Reminders",
+            "source": "https://support.apple.com/en-us/105086"
+          }
+        ],
+        "cost": "Staple = 2 taps, zero keyboard; search unchanged.",
+        "tradeoff": "Scrolling 40 rows beats two typed letters only for a new household: a discoverability win, not a speed win; the camera rows sink unless the grid is one row."
+      },
+      {
+        "name": "1C Tap adds, pencil edits",
+        "pitch": "A result row still has two affordances doing different things; make the row the add and demote the decision.",
+        "regions": [
+          "As today, but the row commits with suggested defaults and a toast with Change",
+          "Trailing glyph becomes a pencil that opens the sheet first",
+          "Free-text row keeps the sheet",
+          "Confirm sheet unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Tap adds, pencil edits",
+            "app": "AnyList",
+            "source": "https://help.anylist.com/articles/feature-overview-adding-items/"
+          }
+        ],
+        "cost": "Any catalog food = keyboard + 1 tap; edit-first = 2.",
+        "tradeoff": "Change cannot move a row (merge_add_items returns no ids, spec 32 Follow-ups) so a wrong shelf becomes a second copy; honest only after a migration makes the RPC return what it wrote; strains ADR D3's 'type-ahead -> confirm card' beyond A7."
+      }
+    ]
+  },
+  {
+    "screen": "Barcode scan (staged session)",
+    "route": "src/app/capture/scan.tsx",
+    "current_summary": "ScreenHeader 'Scan barcode', camera card (reticle, hint, torch), 'Enter number instead' revealing a digits field + Look up, scan bar ('N staged' · Review). Detect -> haptic -> Worker lookup (catalog -> OFF -> not found) -> success haptic + live count; toast only for unknown, duplicate or error (Add by name action). Basket survives leaving; denied card keeps the digits field and Review. Cost: 0 taps per product; a session ends in 2 (Review -> Add N); an unknown barcode is named later in the editor (open + type + dismiss).",
+    "apps": [
+      {
+        "name": "Yuka",
+        "what": "Camera stays live; on recognition the colour verdict appears immediately as a card, tap for the full sheet.",
+        "aspects": [
+          {
+            "aspect": "Result as a card over the viewfinder",
+            "why": "Feedback with content instead of a toast",
+            "source": "https://help.yuka.io/l/en/article/it3abac47h-how-scan"
+          }
+        ]
+      },
+      {
+        "name": "MyFitnessPal Multi-Add",
+        "what": "After the first scan, Multi-Add keeps the session open; each scan lands in a temporary list; log all at once; not-found prompts you to create the food.",
+        "aspects": [
+          {
+            "aspect": "Staged list visible while scanning",
+            "why": "The haul is reviewable without leaving the scanner",
+            "source": "https://eathealthy365.com/myfitnesspal-barcode-scanner-your-ultimate-how-to-guide/"
+          }
+        ]
+      },
+      {
+        "name": "Pantry Check",
+        "what": "Scanner is the default pane; scanned items queue at the bottom of the scanner; swipe right for name lookup; Add to Inventory commits the queue.",
+        "aspects": [
+          {
+            "aspect": "Queue under the viewfinder, commit from the scanner",
+            "why": "Removes the second screen for a clean haul",
+            "source": "https://pantrycheck.com/kb/add-items-screen/"
+          }
+        ]
+      },
+      {
+        "name": "Sortly Quick Actions",
+        "what": "Choose the action first (adjust, move to folder, tag); every scan applies it; swipe between saved actions at the bottom.",
+        "aspects": [
+          {
+            "aspect": "Set the destination first, then scan",
+            "why": "One tap per shelf instead of one edit per item",
+            "source": "https://help.sortly.com/hc/en-us/articles/360012367432-Quick-Actions-on-the-Sortly-Mobile-App"
+          }
+        ]
+      },
+      {
+        "name": "Barcode Buddy (Grocy)",
+        "what": "Purchase/Consume modes switched by barcodes; unknown codes are looked up and parked under New Barcodes to associate later.",
+        "aspects": [
+          {
+            "aspect": "Unknowns parked without stopping the haul",
+            "why": "Ambry already does this; keep it",
+            "source": "https://barcodebuddy-documentation.readthedocs.io/en/latest/usage.html"
+          }
+        ]
+      },
+      {
+        "name": "Apple Camera",
+        "what": "Passive QR detection with a tappable badge; no shutter.",
+        "aspects": [
+          {
+            "aspect": "The scanner never asks for a tap",
+            "why": "Zero-tap capture is the bar",
+            "source": "https://support.apple.com/en-us/102680"
+          }
+        ]
+      }
+    ],
+    "directions": [
+      {
+        "name": "2A Queue under the viewfinder",
+        "pitch": "The review screen is a second screen for a list the scanner already holds; show the staged rows here and commit here.",
+        "regions": [
+          "ScreenHeader",
+          "Camera ~45% height: reticle, torch, 'Enter number instead' as an overlay button",
+          "Staged cells newest first (GroupedRow: name or warn 'Name this product', location Chip, '~7d', tick); tapping an unknown row opens TextPrompt",
+          "Footer: Add N to pantry (primary) · Review (secondary); primary disabled with the review's hint while a row needs attention",
+          "Empty: full-height camera, today's copy",
+          "Denied card unchanged",
+          "Error: toast with Add by name"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Queue under the scanner + Add to Inventory",
+            "app": "Pantry Check",
+            "source": "https://pantrycheck.com/kb/add-items-screen/"
+          },
+          {
+            "aspect": "Multi-Add temporary list",
+            "app": "MyFitnessPal",
+            "source": "https://eathealthy365.com/myfitnesspal-barcode-scanner-your-ultimate-how-to-guide/"
+          }
+        ],
+        "cost": "Clean haul = 1 tap (was 2); unknown named in 1 tap + typing, no modal.",
+        "tradeoff": "Two commit surfaces must share BasketReview's commit (extract it); the camera loses height on small phones; ADR D3 holds because the queue is the review."
+      },
+      {
+        "name": "2B Set the shelf first",
+        "pitch": "Review-time location edits exist because the heuristic guesses per item; when one bag goes to one shelf, say so once.",
+        "regions": [
+          "ScreenHeader",
+          "Camera with an overlay SegmentedControl: Auto · Fridge · Pantry · Freezer (>4 locations -> a Chip opening LocationPickerModal); the mode stamps every following scan",
+          "Scan bar reads '6 staged · to Freezer' while a mode is set",
+          "Enter number instead / denied card / errors unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Pre-selected action applied per scan",
+            "app": "Sortly",
+            "source": "https://help.sortly.com/hc/en-us/articles/360012367432-Quick-Actions-on-the-Sortly-Mobile-App"
+          },
+          {
+            "aspect": "Scan modes",
+            "app": "Barcode Buddy (Grocy)",
+            "source": "https://barcodebuddy-documentation.readthedocs.io/en/latest/usage.html"
+          }
+        ],
+        "cost": "1 tap per shelf change, 0 per item; single-shelf hauls need no review edits.",
+        "tradeoff": "A forgotten mode misfiles a batch: Auto is the default, the count names the mode, and review chips remain."
+      },
+      {
+        "name": "2C Result card, camera stays live",
+        "pitch": "Replace haptic-plus-count with a card carrying the fact worth checking.",
+        "regions": [
+          "ScreenHeader",
+          "Full-height camera",
+          "Per scan a card slides up over the bottom third for ~2.5 s: photo tile · name · 'Fridge · ~7 days' · Change chip · ×",
+          "Unknown: 'Unknown barcode' card with an inline Name it field",
+          "Duplicate: card says so; error: card with Add by name",
+          "Scan bar (count · Review) under the camera"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Instant result card",
+            "app": "Yuka",
+            "source": "https://help.yuka.io/l/en/article/it3abac47h-how-scan"
+          },
+          {
+            "aspect": "Passive detection, tappable badge",
+            "app": "Apple Camera",
+            "source": "https://support.apple.com/en-us/102680"
+          }
+        ],
+        "cost": "0 taps per known product; shelf change 2 taps now instead of in review; unknown named now.",
+        "tradeoff": "A card over the reticle fights framing on small screens; more motion on a one-handed screen; VoiceOver keeps today's announcement."
+      }
+    ]
+  },
+  {
+    "screen": "Receipt / photo capture (camera-first, AI parse, quota meter)",
+    "route": "src/app/capture/receipt.tsx",
+    "current_summary": "ScreenHeader 'Snap groceries or receipt'; viewfinder with overlay Receipt | Groceries control, corner glyphs Photos / PDF, shutter; one meter line naming the binding allowance; preview (image, hint, privacy line, Scan receipt, Retake/Cancel); analyzing (skeleton rows, Hide, continues in background); parse stages into the basket and opens the review; zero-items, quota upsell, daily cap, permission and retryable errors each keep Retake / Choose another / Try this photo again with an honest cost note. Cost: Snap row (1) -> shutter (2) -> Scan (3) -> review -> Add N (4); the 5-15 s wait holds the screen.",
+    "apps": [
+      {
+        "name": "Expensify SmartScan",
+        "what": "Camera first; gallery bottom-left, shutter bottom-right; Rapid Fire shoots a stack of receipts in a row; details fill in afterwards and you carry on.",
+        "aspects": [
+          {
+            "aspect": "Shoot-and-go with processing shown elsewhere",
+            "why": "The wait need not hold the screen",
+            "source": "https://help.expensify.com/articles/expensify-classic/expenses/Add-an-expense"
+          },
+          {
+            "aspect": "Rapid Fire multi-receipt",
+            "why": "Several receipts in one visit",
+            "source": "https://www.androidpolice.com/2014/12/31/expensify-adds-beta-camera-features-rapid-fire-mode-add-from-gallery-and-led-flash-support/"
+          }
+        ]
+      },
+      {
+        "name": "Dext",
+        "what": "Single / Multiple / Combine modes at the bottom of the camera; Combine stitches a long receipt across up to 50 shots into one item; a Processing section tops the inbox while extraction runs.",
+        "aspects": [
+          {
+            "aspect": "Combine mode for long receipts",
+            "why": "A supermarket receipt does not fit one frame",
+            "source": "https://help.dext.com/en/articles/105670-how-to-scan-and-upload-documents-in-the-dext-mobile-app"
+          },
+          {
+            "aspect": "Processing as a section of the list",
+            "why": "Progress lives where the result lands",
+            "source": "https://help.dext.com/en/articles/105670-how-to-scan-and-upload-documents-in-the-dext-mobile-app"
+          }
+        ]
+      },
+      {
+        "name": "Apple Notes scanner",
+        "what": "Auto capture on edge detection; manual shutter; Keep Scan / Retake; add pages; Save with a count.",
+        "aspects": [
+          {
+            "aspect": "Count on the commit button; two verbs on a preview",
+            "why": "Says what will be sent; edge detection itself is outside expo-camera",
+            "source": "https://support.apple.com/en-us/108963"
+          }
+        ]
+      },
+      {
+        "name": "Fetch",
+        "what": "Frame squarely, shoot, then slide the camera icon into the circle to submit; green checks for store/date/total; X to retake; long receipts need several photos.",
+        "aspects": [
+          {
+            "aspect": "A cheap deliberate submit gesture",
+            "why": "Keeps the quota gate without a third screen",
+            "source": "https://help.fetch.com/hc/en-us/articles/115015779467-How-to-Snap-Receipts"
+          },
+          {
+            "aspect": "Several photos of one receipt",
+            "why": "Long receipts are the common receipt",
+            "source": "https://help.fetch.com/hc/en-us/articles/115015804947-What-Info-is-Needed-on-a-Receipt"
+          }
+        ]
+      },
+      {
+        "name": "Wave",
+        "what": "Long receipts captured in multiple sections; bulk-upload up to 10; mark as reviewed later.",
+        "aspects": [
+          {
+            "aspect": "Multi-section capture",
+            "why": "Confirms the pattern across a second product",
+            "source": "https://support.waveapps.com/hc/en-us/articles/360059848112-Scan-and-upload-your-receipts"
+          }
+        ]
+      }
+    ],
+    "directions": [
+      {
+        "name": "3A Long receipt as parts",
+        "pitch": "A supermarket receipt does not fit one frame; the spec calls multi-shot 'a v2'.",
+        "regions": [
+          "Viewfinder as today",
+          "After the shutter the frame shrinks to a thumbnail strip ('Part 1'); camera stays live with an 'Add next part' hint",
+          "'Scan 2 parts' replaces the right corner glyph once a part exists",
+          "Preview: swipeable parts with Retake each",
+          "Analyzing / quota / cap / error states and the meter unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Combine mode",
+            "app": "Dext",
+            "source": "https://help.dext.com/en/articles/105670-how-to-scan-and-upload-documents-in-the-dext-mobile-app"
+          },
+          {
+            "aspect": "Save with a page count",
+            "app": "Apple Notes",
+            "source": "https://support.apple.com/en-us/108963"
+          },
+          {
+            "aspect": "Multiple photos per receipt",
+            "app": "Fetch",
+            "source": "https://help.fetch.com/hc/en-us/articles/115015804947-What-Info-is-Needed-on-a-Receipt"
+          }
+        ],
+        "cost": "+1 tap per extra part; still one Scan tap and one charge.",
+        "tradeoff": "The route takes one image; the honest build accepts up to 3 in one call (server change, escalation); client-side stitching under the <=1600 px downscale loses legibility."
+      },
+      {
+        "name": "3B The shutter is the gate",
+        "pitch": "For a camera shot the preview repeats the viewfinder; keep the deliberate gesture as the shutter plus a short undo.",
+        "regions": [
+          "Viewfinder, mode control, meter and corner glyphs as today",
+          "Shutter -> frame freezes for 2.5 s as a chip 'Sending… Undo'; nothing leaves the phone before the window closes",
+          "Camera returns live; further shots queue as chips: Reading… / 7 items / Couldn't read · Retry",
+          "Privacy line becomes a caption under the meter",
+          "Library and PDF picks keep the preview",
+          "Quota / cap / permission states unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Slide-to-submit as the deliberate gesture",
+            "app": "Fetch",
+            "source": "https://help.fetch.com/hc/en-us/articles/115015779467-How-to-Snap-Receipts"
+          },
+          {
+            "aspect": "Rapid Fire queue",
+            "app": "Expensify",
+            "source": "https://www.androidpolice.com/2014/12/31/expensify-adds-beta-camera-features-rapid-fire-mode-add-from-gallery-and-led-flash-support/"
+          }
+        ],
+        "cost": "Snap (1) -> shutter (2) -> review -> Add (3); a second receipt is one more tap.",
+        "tradeoff": "ADR D3 says 'after a preview'; the undo window is a preview in time, not in space: escalate in the PR. A pocket shutter is bounded by the window and the focus-unmount."
+      },
+      {
+        "name": "3C Reading happens in the basket",
+        "pitch": "The analyzing screen is dead time; the parse already outlives the screen, so let the wait live where the result lands.",
+        "regions": [
+          "Viewfinder",
+          "Preview with Scan receipt as today",
+          "On Scan: back to the live viewfinder with a 'Reading… lands in your basket' toast",
+          "Add tab basket bar and badge read 'Reading receipt… · 2 staged'",
+          "Review shows a Reading… section of skeleton cells above the rows that fills in place",
+          "Zero items: toast with Retake; retryable error: toast with Try again reopening the preview",
+          "Quota / cap keep their full states"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Processing section in the list",
+            "app": "Dext",
+            "source": "https://help.dext.com/en/articles/105670-how-to-scan-and-upload-documents-in-the-dext-mobile-app"
+          },
+          {
+            "aspect": "Details fill in after the shot",
+            "app": "Expensify",
+            "source": "https://help.expensify.com/articles/expensify-classic/expenses/Add-an-expense"
+          }
+        ],
+        "cost": "Same four taps; no held screen; a second receipt starts at once.",
+        "tradeoff": "Toast errors can be missed (mitigation: the Reading section becomes an error cell with the same buttons); BasketContext gains a pending-parse count."
+      }
+    ]
+  },
+  {
+    "screen": "Capture review list (grouped cells, per-row location/expiry, bulk tick, add all)",
+    "route": "src/app/capture-review.tsx",
+    "current_summary": "ScreenHeader 'Review items'; header ('N items staged' · Clear; 'Put everything in…' · 'N of M' bulk tick); GroupedRow cells: checkbox · name (warn 'Name this product') · location Chip -> picker · 'expires Sep 11 · 7d' · category · caption (needs a name / doesn't look like a product name / we weren't sure) · chevron -> CaptureEditor pageSheet; 'N rows need attention · Show'; 'Add N items to pantry' (disabled with a spoken reason). Empty: glyph + one sentence. Cost: clean = 1 tap; a location fix = 2; bulk location = 2 but ignores the ticks; a name fix = open + type + dismiss.",
+    "apps": [
+      {
+        "name": "Apple Mail",
+        "what": "Select mode; tap rows or swipe down through the checkboxes to select a run; Select All; actions in a bottom bar act on the selection.",
+        "aspects": [
+          {
+            "aspect": "Swipe-through checkbox selection",
+            "why": "Ticking a run of rows in one gesture",
+            "source": "https://support.apple.com/en-us/102428"
+          },
+          {
+            "aspect": "Selection-scoped bottom action bar",
+            "why": "Bulk actions should act on the ticked rows, not all rows",
+            "source": "https://support.apple.com/en-us/102428"
+          }
+        ]
+      },
+      {
+        "name": "Gmail (iOS)",
+        "what": "Tap the sender avatar to start selecting; a Select all box appears; actions act on the selection.",
+        "aspects": [
+          {
+            "aspect": "Selection starts from the row's leading glyph",
+            "why": "No mode switch needed",
+            "source": "https://support.google.com/mail/answer/7401?co=GENIE.Platform%3DiOS"
+          }
+        ]
+      },
+      {
+        "name": "Fetch (receipt corrections)",
+        "what": "A processed receipt lists its items; tap one to correct it; Add Item scans its barcode or finds the product by search for a missed line.",
+        "aspects": [
+          {
+            "aspect": "Fix and add-missing inside the review",
+            "why": "A missed line should not mean leaving the review",
+            "source": "https://help.fetch.com/hc/en-us/articles/360036972413-How-to-Correct-Receipts-and-Get-Missing-Points"
+          }
+        ]
+      },
+      {
+        "name": "MyFitnessPal Meal Scan",
+        "what": "Detected foods must be confirmed; swipe through alternatives for a wrong guess; add extras via search; log all at once.",
+        "aspects": [
+          {
+            "aspect": "Alternatives on a low-confidence row",
+            "why": "The parse contract still returns candidates the client discards",
+            "source": "https://support.myfitnesspal.com/hc/en-us/articles/360045761612-Meal-Scan-FAQ"
+          }
+        ]
+      },
+      {
+        "name": "Splitwise Pro / Plates / splitty",
+        "what": "A scan detects items to assign to people; Plates drags items onto plates; splitty starts everything assigned and you tap to remove.",
+        "aspects": [
+          {
+            "aspect": "Drag onto a target; start assigned, correct by exception",
+            "why": "The shape Ambry's confidence gate already has",
+            "source": "https://splittyapp.com/learn/best-bill-splitting-apps/"
+          },
+          {
+            "aspect": "Detect items then assign",
+            "why": "Confirms review-by-assignment",
+            "source": "https://www.splitwise.com/pro"
+          }
+        ]
+      },
+      {
+        "name": "Apple Reminders (Groceries)",
+        "what": "Sections by category; drag an item to another section; the choice is remembered.",
+        "aspects": [
+          {
+            "aspect": "Sections as the primary structure",
+            "why": "The review's real question is which shelf",
+            "source": "https://support.apple.com/en-us/105086"
+          }
+        ]
+      }
+    ],
+    "directions": [
+      {
+        "name": "4A Swipe-through ticks and a selection bar",
+        "pitch": "'Put everything in…' acts on all rows while the ticks say which rows matter; make the ticks the selection.",
+        "regions": [
+          "ScreenHeader",
+          "Header: 'N of M' only (Clear moves to an OverflowMenu)",
+          "Cells as today; a drag down the checkbox column ticks or unticks a run",
+          "When the ticked set differs from all, a selection bar above the CTA: Put N in… · Remove N",
+          "Attention line and CTA as today",
+          "Empty / error unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Swipe down through checkboxes",
+            "app": "Apple Mail",
+            "source": "https://support.apple.com/en-us/102428"
+          },
+          {
+            "aspect": "Selection from the leading glyph",
+            "app": "Gmail",
+            "source": "https://support.google.com/mail/answer/7401?co=GENIE.Platform%3DiOS"
+          }
+        ],
+        "cost": "Untick 6 = one drag; move 8 rows = drag + 2 taps (was 16).",
+        "tradeoff": "A pan gesture over a FlatList needs gesture-handler care and a VoiceOver route (the bulk tick stays); include and select must be one meaning."
+      },
+      {
+        "name": "4B Grouped by shelf",
+        "pitch": "The reviewer's real question is whether each item is going to the right shelf; answer it by reading, not by opening chips.",
+        "regions": [
+          "ScreenHeader",
+          "Summary line",
+          "Sections per location ('Fridge · 6', 'Pantry · 4') with a per-section 'all to…'",
+          "Rows keep receipt order within a section; the location chip goes",
+          "A row moves by drag to another section (the zones drag from #180) or via the editor",
+          "A we-weren't-sure row adds a 'Try: …' alternative chip when candidates has one",
+          "Attention line and CTA as today",
+          "One location: no section headers; empty unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Sections + drag to recategorise",
+            "app": "Apple Reminders",
+            "source": "https://support.apple.com/en-us/105086"
+          },
+          {
+            "aspect": "Drag items onto plates",
+            "app": "Plates by Splitwise",
+            "source": "https://splittyapp.com/learn/best-bill-splitting-apps/"
+          },
+          {
+            "aspect": "Alternatives for a wrong guess",
+            "app": "MyFitnessPal Meal Scan",
+            "source": "https://support.myfitnesspal.com/hc/en-us/articles/360045761612-Meal-Scan-FAQ"
+          }
+        ],
+        "cost": "Verifying shelves = 0 taps; a move = 1 drag; a whole section = 2 taps.",
+        "tradeoff": "Drag inside a sectioned FlatList is the heaviest build here; receipt order is split across shelves so checking against paper is harder; the editor's raw-text meta remains."
+      },
+      {
+        "name": "4C Fix in place",
+        "pitch": "Every attention reason is a name problem; a pageSheet is the wrong tool for a one-word fix.",
+        "regions": [
+          "Header as today",
+          "Tapping a needs-a-name row opens TextPrompt inline, validated by rowNameInvalid",
+          "A we-weren't-sure caption becomes chips: Keep · Find in catalog (type-ahead as a sheet; relinking restores the estimate)",
+          "Last cell: 'Add something the scan missed' -> search or scan",
+          "Chevron / editor stays for notes and category",
+          "Attention line and CTA unchanged"
+        ],
+        "borrowed": [
+          {
+            "aspect": "Tap an item to correct; Add Item by barcode or search",
+            "app": "Fetch",
+            "source": "https://help.fetch.com/hc/en-us/articles/360036972413-How-to-Correct-Receipts-and-Get-Missing-Points"
+          },
+          {
+            "aspect": "Add extras via search from the review",
+            "app": "MyFitnessPal Meal Scan",
+            "source": "https://support.myfitnesspal.com/hc/en-us/articles/360045761612-Meal-Scan-FAQ"
+          }
+        ],
+        "cost": "Naming = 1 tap + typing, no modal; a missed line = 1 tap + search; a relink = 2 taps.",
+        "tradeoff": "A keyboard inside a FlatList needs scroll-to-focused handling; 'Find in catalog' must reuse SearchCapture's rows rather than add a fourth list."
+      }
+    ]
+  }
+]

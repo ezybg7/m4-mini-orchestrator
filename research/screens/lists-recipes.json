@@ -1,0 +1,991 @@
+[
+ {
+  "screen": "Lists tab",
+  "route": "src/app/(tabs)/lists.tsx",
+  "current_summary": "LargeTitle 'Lists' → Input 'Add to your list…' (≥2 chars: catalog suggestion rows + Add '{term}') → TO BUY (category-ordered, no aisle headers) → IN YOUR CART (header ⋯ = Clear without restocking; footer 'Restock N to Kitchen') → SUGGESTED (out/low pantry rows, 8 + Show all) → recategorise sheet (12 chips + Cancel). Costs: typed add = focus + keystrokes + return; suggestion = 1 tap; tick = 1; remove = swipe + 1 (Undo toast); category = swipe + 2; restock = 1 + review; clear = 3. The keyboard is the primary add path; Suggested is the only control-first path and sits below the list.",
+  "apps": [
+   {
+    "name": "Apple Reminders (Groceries list)",
+    "what": "Items auto-file into aisle sections; drag an item to another section and the list 'remembers your preference next time'; completed items hidden behind Show Completed / Clear.",
+    "aspects": [
+     {
+      "aspect": "Drag-to-recategorise with memory",
+      "why": "3 taps → 1 drag, and the categoriser learns",
+      "source": "https://support.apple.com/en-us/105086"
+     },
+     {
+      "aspect": "Hidden-completed model",
+      "why": "",
+      "source": "https://support.apple.com/guide/iphone/complete-items-iph3fb74d597/ios"
+     }
+    ]
+   },
+   {
+    "name": "AnyList",
+    "what": "'A live list of best guesses is always present under the main entry bar'; Recent Items and Favorites buttons with 'Add All'; crossed-off items can be hidden, accidental cross-off can be guarded.",
+    "aspects": [
+     {
+      "aspect": "Recent/Favorites as a tap surface",
+      "why": "",
+      "source": "https://thesweetsetup.com/apps/anylist-favorite-grocery-shopping-app/ ; https://help.anylist.com/topics/lists/crossing-off-and-deleting-items/"
+     }
+    ]
+   },
+   {
+    "name": "Bring!",
+    "what": "Input bar at the bottom; a tapped item 'will then move to Recently Used' (green tiles under the list, one tap to re-add); a catalog of category tiles below that; quantities typed inline ('2 kg apples').",
+    "aspects": [
+     {
+      "aspect": "Recently Used as the re-buy surface",
+      "why": "",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     }
+    ]
+   },
+   {
+    "name": "OurGroceries",
+    "what": "Crossed-off items 'move to the bottom of the list, below the Add an item… row'; cross-off can require long-press/swipe to prevent accidents; 'Delete all crossed-off items…' one button; every item ever entered is the master list.",
+    "aspects": [
+     {
+      "aspect": "Accidental-tick guard as a setting",
+      "why": "",
+      "source": "https://www.ourgroceries.com/user-guide"
+     }
+    ]
+   },
+   {
+    "name": "Listonic / Todoist",
+    "what": "Listonic: checked items drop to the bottom; screen kept active while shopping. Todoist: completed hidden by default, 'appear at the bottom of a section', uncheck restores.",
+    "aspects": [
+     {
+      "aspect": "Checked items drop to the bottom; screen kept active while shopping",
+      "why": "",
+      "source": "https://listonic.com/features"
+     },
+     {
+      "aspect": "Completed hidden by default, 'appear at the bottom of a section', uncheck restores",
+      "why": "",
+      "source": "https://www.todoist.com/help/articles/view-completed-tasks-in-todoist-J19h2s"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Aisles",
+    "pitch": "Reminders-native: aisle sections, one collapsed BOUGHT group at the bottom, and a long-press-drag that recategorises a row and teaches the categoriser.",
+    "regions": [
+     "LargeTitle (right: basket button 'Restock 4' when bought>0)",
+     "SearchField-style add",
+     "Sections PRODUCE / DAIRY & EGGS / … (only non-empty)",
+     "A single BOUGHT (4) group at the bottom, collapsed to one row 'Show 4 bought' (Reminders/Todoist) with ⋯ Clear",
+     "SUGGESTED",
+     "Rows: tick · tile · name · cap; long-press-drag a row onto another section recategorises (gesture-handler, already installed) and the categoriser remembers the choice per household (the householdFoods learning already exists)",
+     "Empty: cart glyph + one sentence"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Aisle sections; drag-to-recategorise with memory",
+      "app": "Apple Reminders",
+      "source": "https://support.apple.com/en-us/105086"
+     },
+     {
+      "aspect": "Hidden-completed",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/view-completed-tasks-in-todoist-J19h2s"
+     }
+    ],
+    "cost": "Category 3 → 1 drag; tick 1; restock 1 (header); clear 3.",
+    "tradeoff": "Re-opens the 3b decision (headers were dropped because the list did not shrink — hiding bought rows restores the shrink); bought rows out of sight for a housemate; drag is a device-pass gesture."
+   },
+   {
+    "name": "B. Buy again",
+    "pitch": "Tap-first add (Bring!/AnyList): a BUY AGAIN chip strip is the primary add path and the keyboard opens only on request.",
+    "regions": [
+     "LargeTitle",
+     "BUY AGAIN strip of Chips (last 12 names restocked or cleared, per-device ring buffer in AsyncStorage, plus out/low pantry names)",
+     "A collapsed 'Add something else…' row that only opens the keyboard on tap",
+     "TO BUY · IN YOUR CART (unchanged)",
+     "SUGGESTED folds into BUY AGAIN",
+     "Empty: the strip alone is the empty state"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Recently Used tiles",
+      "app": "Bring!",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     },
+     {
+      "aspect": "Recent/Favorites as a tap surface",
+      "app": "AnyList",
+      "source": "https://thesweetsetup.com/apps/anylist-favorite-grocery-shopping-app/ ; https://help.anylist.com/topics/lists/crossing-off-and-deleting-items/"
+     }
+    ],
+    "cost": "Recurring item 1 tap (was type + return); typed add +1 tap.",
+    "tradeoff": "The typed path — the most used today — gets one tap slower; a real 'bought before' list wants a grocery_history (or food_outcomes) read rather than a device buffer."
+   },
+   {
+    "name": "C. Cart bar",
+    "pitch": "Bought rows leave the scroll: a sticky footer bar 'In your cart · 6 · Restock' carries the count and the commit, and the bought rows live in a sheet.",
+    "regions": [
+     "LargeTitle · add field · TO BUY · SUGGESTED",
+     "A sticky footer bar 'In your cart · 6 · Restock' (Button primary + count)",
+     "Tapping the count opens a BottomSheet listing bought rows (tap to un-buy, ⋯ Clear without restocking, Cancel)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Crossed-off items at the bottom, inverted into a bar",
+      "app": "OurGroceries",
+      "source": "https://www.ourgroceries.com/user-guide"
+     },
+     {
+      "aspect": "Checked items drop to the bottom, inverted into a bar",
+      "app": "Listonic",
+      "source": "https://listonic.com/features"
+     },
+     {
+      "aspect": "Restore-by-uncheck",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/view-completed-tasks-in-todoist-J19h2s"
+     }
+    ],
+    "cost": "Tick 1; restock 1; un-buy 2 (was 1); clear 3.",
+    "tradeoff": "A housemate's ticks are less visible; one more sheet; the bar must yield to the keyboard."
+   }
+  ]
+ },
+ {
+  "screen": "Restock review",
+  "route": "src/app/grocery-restock.tsx",
+  "current_summary": "ScreenHeader 'Restock' (back locked while committing, swipe too) → summary 'N bought items' · 'Put everything in…' · 'N of M' bulk tick → GroupedRows: checkbox · name · category · location chip · 'expires Sep 11 · 7d' → divider 'Not adding 2 — tick to include' (unlinked/Other rows default-unchecked) → footer 'Add N items to pantry' (hint when 0). Snapshot at open; pantry-first two-write commit; toast 'Moved N items'. Empty: basket glyph + copy; no locations: copy + 'Add a location' (replaces to Pantry). Cost from Lists: 2 taps happy path; per-row location = chip + pick (2); bulk = pill + pick (2).",
+  "apps": [
+   {
+    "name": "Sortly (Receive items)",
+    "what": "'Select the receiving folder, and enter the quantity for each item'; partial receive leaves the PO 'Partially Received'; a confirmation summary after.",
+    "aspects": [
+     {
+      "aspect": "Partial receive as a first-class state",
+      "why": "The unticked rows staying bought is the same idea, unnamed",
+      "source": "https://help.sortly.com/hc/en-us/articles/21170610546715-Purchase-Orders"
+     }
+    ]
+   },
+   {
+    "name": "Grocy",
+    "what": "'Add all list items to stock' opens the purchase form 'with the items in the shopping list pre-filled' (best-before, amount, location per product).",
+    "aspects": [
+     {
+      "aspect": "Pre-filled purchase, location + due date per line",
+      "why": "",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     }
+    ]
+   },
+   {
+    "name": "NoWaste",
+    "what": "Inventory lists per fridge/freezer/pantry, 'move items between lists'.",
+    "aspects": [
+     {
+      "aspect": "Destination-first grouping",
+      "why": "",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     }
+    ]
+   },
+   {
+    "name": "Paprika 3",
+    "what": "Grocery filters 'To Buy / Bought / All'; pantry items 'automatically unchecked when you add recipes… to your grocery list'.",
+    "aspects": [
+     {
+      "aspect": "The loop closes both ways",
+      "why": "",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ]
+   },
+   {
+    "name": "Todoist",
+    "what": "Completed at the bottom, uncheck to restore.",
+    "aspects": [
+     {
+      "aspect": "Completed at the bottom, uncheck to restore",
+      "why": "",
+      "source": "https://www.todoist.com/help/articles/view-completed-tasks-in-todoist-J19h2s"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Inline restock",
+    "pitch": "No pushed screen: IN YOUR CART rows carry their destination and expiry, and the section footer commits in place.",
+    "regions": [
+     "IN YOUR CART rows gain a trailing location Chip and an 'expires Sep 11' caption",
+     "Unlinked rows show a dimmed 'Skip' state (tap to include)",
+     "The section footer 'Add 6 to pantry' commits in place",
+     "'Put everything in…' moves into the section ⋯"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Pre-filled lines",
+      "app": "Grocy",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     },
+     {
+      "aspect": "Restore by uncheck",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/view-completed-tasks-in-todoist-J19h2s"
+     }
+    ],
+    "cost": "2 → 1 tap.",
+    "tradeoff": "The Lists screen gets heavier and live (snapshot-at-open semantics go); a mid-commit lock has no screen to lock; the divider's legibility must survive as a row state."
+   },
+   {
+    "name": "B. By destination",
+    "pitch": "The review groups rows under FRIDGE / PANTRY / FREEZER / NOT ADDING — the suggestLocation result becomes the section — and a swipe moves a row one section.",
+    "regions": [
+     "Sections FRIDGE / PANTRY / FREEZER / NOT ADDING (the suggestLocation result becomes the section)",
+     "Swipe a row to move it one section (leading 'Fridge', trailing 'Pantry'); long-press-drag for the rest",
+     "Per-section 'Move all…' in the SectionHeader"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Lists per storage",
+      "app": "NoWaste",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     },
+     {
+      "aspect": "Receiving folder",
+      "app": "Sortly",
+      "source": "https://help.sortly.com/hc/en-us/articles/21170610546715-Purchase-Orders"
+     }
+    ],
+    "cost": "Happy path 2; location fix 1 swipe (was 2).",
+    "tradeoff": "More headers on screen; a poor suggestion means many moves; the divider becomes a fourth section."
+   },
+   {
+    "name": "C. Confirm sheet",
+    "pitch": "Restock opens a BottomSheet, not a screen: a three-line summary, a primary 'Add to pantry', and the review made optional.",
+    "regions": [
+     "BottomSheet 'Add 6 to your pantry'",
+     "Three lines: 4 to Fridge · 2 to Pantry · Skipping 1: dish soap",
+     "Primary 'Add to pantry' · secondary 'Review first…' (pushes today's screen) · Cancel (rule 7: it commits)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Confirmation summary",
+      "app": "Sortly",
+      "source": "https://help.sortly.com/hc/en-us/articles/21170610546715-Purchase-Orders"
+     },
+     {
+      "aspect": "Defaults (pre-filled location and due date)",
+      "app": "Grocy",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     }
+    ],
+    "cost": "2 taps, no push; review optional.",
+    "tradeoff": "Expiry previews hidden unless reviewed; the sheet must list skips by name or it hides a decision."
+   }
+  ]
+ },
+ {
+  "screen": "Recipes tab",
+  "route": "src/app/(tabs)/recipes.tsx",
+  "current_summary": "LargeTitle 'Recipes' → SegmentedControl Cook · My recipes · Community (last used remembered; default 'mine'). Cook: ideas Button (primary when items expire) → 'N recipes use items expiring' → YOU CAN MAKE / ALMOST THERE bordered cards (thumb, title, status line, missing chips, chevron); empty = 3 CTAs. My recipes: a second 'My recipes' heading + sort glyph + '+ Add recipe' → Folders row → YOURS / HOUSEHOLD / FAVORITES RecipeRowItems; no search. Community: Input + two 44pt square buttons (tags, sort) → active-tag chips → CommunityCard feed. Costs: open a recipe 1–2; add 2–3 (segment, button, sheet row); favourite from a list 2 + round trip; delete 4 + Alert; the headline feature (Cook) is not the landing.",
+  "apps": [
+   {
+    "name": "Paprika 3",
+    "what": "Built-in smart categories 'All Recipes, Most Recent, Top Rated, Favorites, Uncategorized' plus custom ones; search by name/ingredients/directions/notes; grid or list.",
+    "aspects": [
+     {
+      "aspect": "Smart lists instead of segments",
+      "why": "",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ]
+   },
+   {
+    "name": "Mela",
+    "what": "Sidebar of All / Favorites / Want to Cook / Most Recent + categories + Feeds; search covers titles, ingredients, instructions, notes.",
+    "aspects": [
+     {
+      "aspect": "One search across everything",
+      "why": "",
+      "source": "https://www.macstories.net/reviews/mela-an-elegant-and-innovative-recipe-and-cooking-app-for-iphone-ipad-and-mac/"
+     }
+    ]
+   },
+   {
+    "name": "SuperCook",
+    "what": "Pantry page; 'Missing one ingredient' as a named filter; max-ingredients / cuisine filters; 'shows you what ingredients you're missing'.",
+    "aspects": [
+     {
+      "aspect": "Makeability as a filter chip, not a section",
+      "why": "",
+      "source": "https://apps.apple.com/us/app/supercook-recipe-by-ingredient/id1477747816"
+     }
+    ]
+   },
+   {
+    "name": "Cookpad",
+    "what": "Five tabs Home / Search / Create / Activity / You; the You tab separates Saved from Your Recipes; search moved off the feed into its own tab.",
+    "aspects": [
+     {
+      "aspect": "Own vs saved as sections of one 'You' surface",
+      "why": "",
+      "source": "https://blog.cookpad.com/us/exciting-changes-in-the-cookpad-app/"
+     }
+    ]
+   },
+   {
+    "name": "Samsung Food",
+    "what": "Pinterest-style collections; pantry-based suggestions; communities.",
+    "aspects": [
+     {
+      "aspect": "Pinterest-style collections; pantry-based suggestions; communities",
+      "why": "",
+      "source": "https://apps.apple.com/us/app/samsung-food-meal-planner/id1133637674"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Cook is the tab",
+    "pitch": "The headline feature becomes the landing (critique R-B1): makeable recipes first, one unified search, and the library as an inset group beneath.",
+    "regions": [
+     "LargeTitle 'Recipes' (right: magnifier → unified SearchField over own/household/favourites; ＋ → AddRecipeSheet)",
+     "Chip row Under 30 min · Uses expiring · Favorites",
+     "YOU CAN MAKE / ALMOST THERE as GroupedRows with time on the meta line",
+     "An inset LIBRARY group: My recipes 12 › · Folders 3 › · Community ›",
+     "Ideas as a tinted Button above the list",
+     "Empty: one primary (Browse community), one secondary (Add), ideas as text link"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Makeability filters",
+      "app": "SuperCook",
+      "source": "https://apps.apple.com/us/app/supercook-recipe-by-ingredient/id1477747816"
+     },
+     {
+      "aspect": "One search across everything",
+      "app": "Mela",
+      "source": "https://www.macstories.net/reviews/mela-an-elegant-and-innovative-recipe-and-cooking-app-for-iphone-ipad-and-mac/"
+     },
+     {
+      "aspect": "Search as its own surface, off the feed",
+      "app": "Cookpad",
+      "source": "https://blog.cookpad.com/us/exciting-changes-in-the-cookpad-app/"
+     },
+     {
+      "aspect": "critique R-B1",
+      "app": "Ambry critique",
+      "source": ""
+     }
+    ],
+    "cost": "Makeable recipe 1; My recipes 2 (was 1–2); add 2.",
+    "tradeoff": "My recipes demoted; segment memory gone; Community two taps away."
+   },
+   {
+    "name": "B. Smart lists index",
+    "pitch": "No segments (Paprika/Mela): a SearchField, then inset-grouped SettingsRows each pushing a plain list built on one RecipeCard.",
+    "regions": [
+     "SearchField",
+     "Inset-grouped SettingsRows: What can I make (5) › · Favorites (9) › · Recent · Folders (3) › · Household (4) › · Community › · Ideas ✨",
+     "Each row pushes a plain list built on one RecipeCard"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Smart categories instead of segments",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     },
+     {
+      "aspect": "Sidebar of All / Favorites / Want to Cook / Most Recent + categories",
+      "app": "Mela",
+      "source": "https://www.macstories.net/reviews/mela-an-elegant-and-innovative-recipe-and-cooking-app-for-iphone-ipad-and-mac/"
+     }
+    ],
+    "cost": "Any list 1 tap, recipe 2; search from the tab.",
+    "tradeoff": "One more level for everything; the ranking stops being the first thing seen; the tab becomes a menu."
+   },
+   {
+    "name": "C. One list, chips",
+    "pitch": "One FlatList of every rankable recipe (SuperCook/AnyList) with a SearchField and a chip row that filters; Community is the last chip.",
+    "regions": [
+     "SearchField",
+     "Chip row All · Can make · Almost · Favorites · Folder… · Community (source switch, styled as the last chip)",
+     "Every row a RecipeCard with a makeability caption",
+     "Header ＋ and ⋯ (Sort & filter sheet, folds Community's two square buttons into one)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Makeability as a filter chip, not a section",
+      "app": "SuperCook",
+      "source": "https://apps.apple.com/us/app/supercook-recipe-by-ingredient/id1477747816"
+     },
+     {
+      "aspect": "Recent/Favorites as a tap surface",
+      "app": "AnyList",
+      "source": "https://thesweetsetup.com/apps/anylist-favorite-grocery-shopping-app/ ; https://help.anylist.com/topics/lists/crossing-off-and-deleting-items/"
+     }
+    ],
+    "cost": "Filter 1, open 1, Community 1.",
+    "tradeoff": "'Community' is a source, not a filter — one chip carrying two semantics; the sort sheet must merge both lists' options."
+   }
+  ]
+ },
+ {
+  "screen": "Recipe detail",
+  "route": "src/app/recipe/[id]/index.tsx",
+  "current_summary": "ScreenHeader (title, back; right: heart · folder · flag · pencil) → photo 16:9 → title (again) + DifficultyRing → meta (Serves · time · visibility · by author) → stars + '4.3 · 12 ratings' → attribution → description → tag chips → INGREDIENTS card (✓/○ · qty · name · link glyph) → STEPS card → NutritionLabel → YOUR RATING → 'Start cooking' (pantry check → 3-button Alert). Costs: cook 1 (+1 Alert when missing); add missing to list only via that Alert (2); per-ingredient add none; rate = scroll + 1; five icon-only header controls; the title is drawn twice.",
+  "apps": [
+   {
+    "name": "NYT Cooking",
+    "what": "Recipe Box, 'add ingredients to a built-in grocery list' with immediate feedback, private notes, ratings.",
+    "aspects": [
+     {
+      "aspect": "Immediate add-to-list feedback that links to the list",
+      "why": "The critique faults the ingredients/steps toggle ('knowledge in the head') and the hidden grocery-list destination",
+      "source": "https://ixd.prattsi.org/2023/02/design-critique-nyt-cooking-ios-app/ ; https://apps.apple.com/us/app/nyt-cooking-quick-tasty-meals/id911422904"
+     }
+    ]
+   },
+   {
+    "name": "Mela",
+    "what": "Source link, servings and time sit above the title; a Scale button; Grocery export has items 'pre-selected… so users can uncheck items they already have'.",
+    "aspects": [
+     {
+      "aspect": "Pre-selected missing items",
+      "why": "",
+      "source": "https://www.macstories.net/reviews/mela-an-elegant-and-innovative-recipe-and-cooking-app-for-iphone-ipad-and-mac/"
+     }
+    ]
+   },
+   {
+    "name": "Paprika 3",
+    "what": "Tap an ingredient to cross it off; durations in directions 'highlighted in blue; tap to start countdown'; scale; keep-screen-on.",
+    "aspects": [
+     {
+      "aspect": "Tappable durations",
+      "why": "",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ]
+   },
+   {
+    "name": "Crouton",
+    "what": "Data blocks in 'rounded rectangles' (prep times, ingredients, numbered directions); custom scale amounts; 'copy just the ingredients you need to your list'.",
+    "aspects": [
+     {
+      "aspect": "Block layout",
+      "why": "",
+      "source": "https://www.macstories.net/reviews/crouton-review-an-elegant-modern-recipe-manager-and-cooking-aid/ ; https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     }
+    ]
+   },
+   {
+    "name": "Mealime",
+    "what": "Cookware / Ingredients / Instructions tabs; 'Done' marks the recipe cooked.",
+    "aspects": [
+     {
+      "aspect": "Cookware / Ingredients / Instructions tabs; 'Done' marks the recipe cooked",
+      "why": "",
+      "source": "https://support.mealime.com/article/73-viewing-and-cooking-recipes"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Ingredients act",
+    "pitch": "The ✓/○ ingredient row becomes a control that adds to the list, a sticky footer replaces the 3-button Alert, and the name is drawn once.",
+    "regions": [
+     "Header title '' (name once, in the body); heart stays in the header, folder/flag/edit move into an OverflowMenu",
+     "The ✓/○ row is a control: tapping an absent row adds it to the list with an Undo toast",
+     "A sticky footer holds 'Start cooking' and a tinted 'Add 2 missing' so the 3-button Alert disappears"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Pre-selected missing items",
+      "app": "Mela",
+      "source": "https://www.macstories.net/reviews/mela-an-elegant-and-innovative-recipe-and-cooking-app-for-iphone-ipad-and-mac/"
+     },
+     {
+      "aspect": "Immediate add-to-list feedback",
+      "app": "NYT Cooking",
+      "source": "https://ixd.prattsi.org/2023/02/design-critique-nyt-cooking-ios-app/ ; https://apps.apple.com/us/app/nyt-cooking-quick-tasty-meals/id911422904"
+     },
+     {
+      "aspect": "critique 5.1/5.2/5.7",
+      "app": "Ambry critique",
+      "source": ""
+     }
+    ],
+    "cost": "Add missing 1; per-ingredient 1; cook 1, no Alert.",
+    "tradeoff": "A row that is both status and button needs a clear affordance (a trailing '+', 44pt); the footer costs 60pt of every scroll."
+   },
+   {
+    "name": "B. Two panes",
+    "pitch": "A compact hero, then a SegmentedControl Ingredients | Steps with duration chips inside the steps and a sticky 'Start cooking'.",
+    "regions": [
+     "Compact hero (photo 4:3, title, ring, meta, rating)",
+     "SegmentedControl Ingredients | Steps",
+     "Steps as cards with detected-duration chips '12 min ▶'",
+     "Sticky 'Start cooking'"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Cookware / Ingredients / Instructions tabs",
+      "app": "Mealime",
+      "source": "https://support.mealime.com/article/73-viewing-and-cooking-recipes"
+     },
+     {
+      "aspect": "Tappable durations",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ],
+    "cost": "Unchanged taps, far less scrolling.",
+    "tradeoff": "NYT's own failure mode — switching panes to check a quantity mid-step; mitigate by inlining matched quantities into step text (Crouton), which is a parser later."
+   },
+   {
+    "name": "C. Card stack",
+    "pitch": "Every region an inset-grouped card in a fixed order, with the actions (cook, add missing, a Serves stepper that rescales) as SettingsRows under the hero.",
+    "regions": [
+     "Hero",
+     "Actions (SettingsRows: Start cooking › · Add missing to list (2) › · Serves 4 with a − + stepper that rescales parseable quantities)",
+     "Ingredients · Steps · Rating / Comments (spec 52) · Nutrition",
+     "Header = back + heart + ⋯"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Block layout and custom scale amounts",
+      "app": "Crouton",
+      "source": "https://www.macstories.net/reviews/crouton-review-an-elegant-modern-recipe-manager-and-cooking-aid/ ; https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     },
+     {
+      "aspect": "Scale",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ],
+    "cost": "Every action 1 tap; scale 1 tap per step, no keyboard.",
+    "tradeoff": "Scaling display-only quantity_text is partial ('2 eggs' scales, 'a pinch' does not — ADR O1/O2 territory); a longer page."
+   }
+  ]
+ },
+ {
+  "screen": "Cook mode",
+  "route": "src/app/recipe/[id]/cook.tsx",
+  "current_summary": "ScreenHeader (title) → 'N OF M DONE' → scroll of bordered step cards (○/✓ · STEP n · 19pt text; ingredient rows when a recipe has no steps) → 'Done cooking' at the end → all-done sheet 'How did it turn out?' (stars · Not now). Keep-awake. Costs: 1 tap per step; finish = scroll + 1; checkmarks are in-memory (lost on background); no ingredients, no timers, no stock consumption.",
+  "apps": [
+   {
+    "name": "Mela",
+    "what": "Fullscreen, larger font, 'all but the current steps are dimmed'; ingredients checkable beside the steps; 'tap on a timed step to start a built-in timer'; several recipes in one cook mode.",
+    "aspects": [
+     {
+      "aspect": "Dim-the-rest + tap-a-time",
+      "why": "",
+      "source": "https://apps.apple.com/us/app/mela-recipe-manager/id1548466041 ; https://mela.recipes/help/"
+     }
+    ]
+   },
+   {
+    "name": "Crouton",
+    "what": "'Focus on one recipe step at time'; 'tap on ingredients within a step to get the quantity'; hands-free advance; a timer HUD 'keeps the times front of mind'.",
+    "aspects": [
+     {
+      "aspect": "Quantities inside the step",
+      "why": "",
+      "source": "https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     }
+    ]
+   },
+   {
+    "name": "Tasty",
+    "what": "'Each step fills your entire screen. It won't skip ahead until you tap the screen again'; swipe back/forward.",
+    "aspects": [
+     {
+      "aspect": "One step per screen",
+      "why": "",
+      "source": "https://www.wilx.com/2025/11/25/what-tech-tasty-app/"
+     }
+    ]
+   },
+   {
+    "name": "Mealime",
+    "what": "One instruction per screen in 'large, easy to read font'; wave to advance; 'tap Done to mark the recipe as cooked'.",
+    "aspects": [
+     {
+      "aspect": "Done as an outcome, not a dismissal",
+      "why": "",
+      "source": "https://support.mealime.com/article/88-how-to-use-cooking-mode"
+     }
+    ]
+   },
+   {
+    "name": "Paprika 3 / Kitchen Stories",
+    "what": "Paprika: detected timers, cross-off ingredients, keep screen on. Kitchen Stories: 'built-in timers are placed exactly where you need them'.",
+    "aspects": [
+     {
+      "aspect": "Detected timers, cross-off ingredients, keep screen on",
+      "why": "",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     },
+     {
+      "aspect": "'Built-in timers are placed exactly where you need them'",
+      "why": "",
+      "source": "https://pages.kitchenstories.com/en/app"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Focused checklist",
+    "pitch": "Keep the scroll: the first unchecked step is full-ink and the rest dimmed, durations become timer chips, and checks persist across backgrounding.",
+    "regions": [
+     "The first unchecked step is full-ink, the rest dimmed",
+     "A collapsed 'Ingredients (8)' disclosure at the top",
+     "Durations parsed from step text become Chips '12 min ▶' that run an in-app timer (expo-keep-awake already on; a local notification on finish)",
+     "A sticky footer 'Finish (4 of 9)'",
+     "Checks persisted per recipe in AsyncStorage and cleared on Finish"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Dimming and tap-a-time timers",
+      "app": "Mela",
+      "source": "https://apps.apple.com/us/app/mela-recipe-manager/id1548466041 ; https://mela.recipes/help/"
+     },
+     {
+      "aspect": "Detected timers",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     },
+     {
+      "aspect": "critique 9.1–9.3",
+      "app": "Ambry critique",
+      "source": ""
+     }
+    ],
+    "cost": "1 tap per step; timer 1.",
+    "tradeoff": "Duration parsing is a heuristic ('until golden' has none); a footer over a scroll on a propped-up phone."
+   },
+   {
+    "name": "B. Step pager",
+    "pitch": "One step per page with that step's ingredients and quantities, big Back / Next and swipe, Done on the last page.",
+    "regions": [
+     "'Step 3 of 9' · 24pt text",
+     "That step's ingredients (name-matched via the grocery normaliser) with quantities",
+     "Big Back / Next (bottom, 56pt) and swipe",
+     "Done on the last page"
+    ],
+    "borrowed": [
+     {
+      "aspect": "One step per screen",
+      "app": "Tasty",
+      "source": "https://www.wilx.com/2025/11/25/what-tech-tasty-app/"
+     },
+     {
+      "aspect": "One instruction per screen in a large font",
+      "app": "Mealime",
+      "source": "https://support.mealime.com/article/88-how-to-use-cooking-mode"
+     },
+     {
+      "aspect": "Quantities inside the step",
+      "app": "Crouton",
+      "source": "https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     }
+    ],
+    "cost": "1 tap or swipe per step, no scrolling.",
+    "tradeoff": "No overview; ingredient-to-step matching is fuzzy; a step that spans two screens of text still scrolls."
+   },
+   {
+    "name": "C. Cook & consume",
+    "pitch": "The finish sheet becomes two stacked cards: the rating, then 'Used anything up?' chips that walk the in-stock ingredients through the existing status cycle.",
+    "regions": [
+     "Finish sheet, card 1: stars",
+     "Card 2: 'Used anything up?' chips of the recipe's in-stock ingredients (tap → Low, tap again → Out, via the existing status cycle) and 'Done'"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Done as cooked",
+      "app": "Mealime",
+      "source": "https://support.mealime.com/article/88-how-to-use-cooking-mode"
+     },
+     {
+      "aspect": "The 'cooking never consumes stock' gap",
+      "app": "Ambry NOTES-2026-07-30",
+      "source": ""
+     }
+    ],
+    "cost": "+1 tap per consumed item, optional.",
+    "tradeoff": "Needs its own spec (SPEC.md says so); a longer sheet at the moment the user wants to eat; risk of nagging."
+   }
+  ]
+ },
+ {
+  "screen": "Recipe editor, import and ideas",
+  "route": "src/app/recipe/new.tsx · src/app/recipe/[id]/edit.tsx · src/app/recipe/import.tsx",
+  "current_summary": "RecipeForm: Title (autofocus) → Photo (200pt dashed box; Alert chooser) → Servings (number pad) → Time (two number pads + Clear) → Difficulty slider → Tags (chips + 'Choose tags…' + free text) → Description (single line) → Ingredients (rows: name Input · trash · '→ linked name' · amount Input · Optional chip · ▲▼) + 'Add ingredient…' type-ahead → Steps (numbered Inputs + '+ Add step') → Visibility (3 radio cards) → 'Create recipe' → Delete. ≈45–50 actions for a modest recipe; keyboard on servings/time/tags/description. Import: header → RECIPE LINK Input → 'Import' → expectation copy (photo arm: two buttons) → the same form prefilled ('From smittenkitchen.com', Public disabled). Ideas: BottomSheet from Cook → cards (title · summary · chips · See method · 'Save as draft') → Regenerate → 'Saved to My recipes' toast, then 2 more taps to reach the draft.",
+  "apps": [
+   {
+    "name": "Paprika 3",
+    "what": "Download button in the browser; a clipboard toolbar to 'manually select recipe sections (name, ingredients, directions, photos) and assign them to fields'; expects 'quantity unit ingredient'.",
+    "aspects": [
+     {
+      "aspect": "Paste-to-field",
+      "why": "",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     }
+    ]
+   },
+   {
+    "name": "Mela",
+    "what": "Ingredient parsing recognises 'amount and unit'; '#' markers group ingredients; markdown steps; scan a cookbook page and 'drag on the scanned document to choose text blocks'.",
+    "aspects": [
+     {
+      "aspect": "Free-text ingredients parsed per line",
+      "why": "",
+      "source": "https://mela.recipes/help/"
+     }
+    ]
+   },
+   {
+    "name": "Crouton",
+    "what": "Copy a URL and 'you'll see a pop-up offering to import that recipe'; photo/AI import 'with no manual entry required'; smart tag suggestions.",
+    "aspects": [
+     {
+      "aspect": "Clipboard-aware entry",
+      "why": "",
+      "source": "https://www.macstories.net/reviews/crouton-review-an-elegant-modern-recipe-manager-and-cooking-aid/ ; https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     }
+    ]
+   },
+   {
+    "name": "Notion",
+    "what": "Content is blocks; on mobile 'tap the + button above the keyboard to add new blocks'; 'Turn into' converts a block.",
+    "aspects": [
+     {
+      "aspect": "Optional fields as blocks you add, not fields you skip",
+      "why": "",
+      "source": "https://www.notion.com/help/what-is-a-block"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Essentials first",
+    "pitch": "Title → Ingredients → Steps, with everything else behind a 'More details' disclosure of controls that need no keyboard (critique 6.1–6.9, Notion blocks).",
+    "regions": [
+     "Order: Title → Ingredients → Steps",
+     "A 'More details' disclosure holding SettingsRows: Add a photo › (BottomSheet chooser), Serves − 4 + (stepper), Time as Chips 15 · 30 · 45 · 1 h · 1 h 30 · 2 h · More… (wheel sheet), Difficulty slider, Tags = recent chips + More…, Description multiline",
+     "Visibility (remembers last non-public)",
+     "Sticky 'Save' above the keyboard accessory"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Optional fields as blocks you add, not fields you skip",
+      "app": "Notion",
+      "source": "https://www.notion.com/help/what-is-a-block"
+     },
+     {
+      "aspect": "critique 6.1–6.9",
+      "app": "Ambry critique",
+      "source": ""
+     }
+    ],
+    "cost": "A modest recipe ≈ title + ingredient adds + steps + Save; servings/time 1–2 taps, zero keyboard.",
+    "tradeoff": "Two-level form; import review must still surface the linked names near the top."
+   },
+   {
+    "name": "B. Paste anything",
+    "pitch": "New recipe opens on a clipboard-aware first row — a URL imports in one tap, plain text goes to the server text arm, and an ingredient list pastes as one block split per line.",
+    "regions": [
+     "Clipboard-aware first row (src/lib/clipboard.ts exists): a URL → 'Import from smittenkitchen.com' one tap; plain text → 'Paste recipe text' → server text arm → prefilled form",
+     "Ingredients get a multiline 'Paste your ingredient list' box split per line by the shared ingredientLine.ts with per-line link Chips"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Clipboard toolbar, paste-to-field",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     },
+     {
+      "aspect": "Ingredient parsing per line",
+      "app": "Mela",
+      "source": "https://mela.recipes/help/"
+     },
+     {
+      "aspect": "Clipboard import prompt",
+      "app": "Crouton",
+      "source": "https://www.macstories.net/reviews/crouton-review-an-elegant-modern-recipe-manager-and-cooking-aid/ ; https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     }
+    ],
+    "cost": "Import 1 tap (was 3); 10 ingredients = 1 paste (was 10 type-ahead adds).",
+    "tradeoff": "iOS paste banner on clipboard reads; text→structure quality is the AI arm's, metered; two ways to add an ingredient."
+   },
+   {
+    "name": "C. Review, don't edit",
+    "pitch": "An import (and a saved idea) lands on a read-only review card with 'Save' primary and 'Edit first' secondary; a saved idea opens this card instead of toasting.",
+    "regions": [
+     "Read-only review card: title · '8 ingredients, 5 linked' with tappable '→ Cream' chips to relink · '6 steps'",
+     "'Save' primary · 'Edit first' secondary",
+     "A saved idea opens this same card instead of toasting"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Download → Save",
+      "app": "Paprika 3",
+      "source": "https://www.paprikaapp.com/help/ios/"
+     },
+     {
+      "aspect": "'Save the bits you need'",
+      "app": "Crouton",
+      "source": "https://www.macstories.net/reviews/crouton-review-an-elegant-modern-recipe-manager-and-cooking-aid/ ; https://apps.apple.com/us/app/crouton-recipe-manager/id1461650987"
+     },
+     {
+      "aspect": "Preview",
+      "app": "Mela",
+      "source": "https://mela.recipes/help/"
+     }
+    ],
+    "cost": "Import save 1 tap after the fetch; idea → editable recipe 2 (was 3).",
+    "tradeoff": "The D3 review gate must stay real — links are the one thing the card has to expose; two routes into RecipeForm."
+   }
+  ]
+ },
+ {
+  "screen": "Creator profile",
+  "route": "src/app/profile/[id]/index.tsx",
+  "current_summary": "ScreenHeader (name; right: flag) → initials avatar 72 → name (again) → 'N recipes · 0 followers · 0 following' (inert until spec 53) → bio → link rows (label · host · ↗) → CommunityCards without byline → 'No public recipes yet.' Spec 53 adds a Follow button (accent-outlined ⇄ filled), tappable counts, and an All/Following scope on Community. Cost: profile 1 tap from any byline; follow 1; report 3.",
+  "apps": [
+   {
+    "name": "Instagram",
+    "what": "Photo · name · 150-char bio · up to five links shown as the first link 'and N others' · posts/followers/following as tappable counts · grid tabs.",
+    "aspects": [
+     {
+      "aspect": "Collapsed link list; counts as buttons",
+      "why": "",
+      "source": "https://sproutsocial.com/insights/instagram-link-in-bio/ ; https://help.instagram.com/customer/portal/articles/95730-view-list-of-followers-following"
+     }
+    ]
+   },
+   {
+    "name": "Pinterest",
+    "what": "'Profile photo, name, bio and optionally, location'; saved boards vs created; only you see your secret boards.",
+    "aspects": [
+     {
+      "aspect": "Created vs saved split",
+      "why": "",
+      "source": "https://help.pinterest.com/en/article/find-your-profile"
+     }
+    ]
+   },
+   {
+    "name": "Strava",
+    "what": "Identity header, an overview with tabs 'Trophy Case, list of Followers, KOMs'; another athlete's page shows 'essential stats… you can quickly see how you compare'.",
+    "aspects": [
+     {
+      "aspect": "Stats relative to the viewer",
+      "why": "",
+      "source": "https://support.strava.com/en-us/articles/15402175-your-strava-profile-page"
+     }
+    ]
+   },
+   {
+    "name": "Cookpad",
+    "what": "Follow from the profile; Saved / Your Recipes / Cooksnaps sections; following puts their recipes in your feed.",
+    "aspects": [
+     {
+      "aspect": "Profile explains what following buys",
+      "why": "",
+      "source": "https://blog.cookpad.com/uk/build-your-community-on-cookpad-followers-and-following/"
+     }
+    ]
+   },
+   {
+    "name": "Substack",
+    "what": "An app-profile Follow button; bio plus subscriber count 'if you publish'; estimated counts above 1,000.",
+    "aspects": [
+     {
+      "aspect": "Counts only where they mean something",
+      "why": "",
+      "source": "https://support.substack.com/hc/en-us/articles/18261513315348-How-does-following-work-on-Substack"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Card + grid",
+    "pitch": "Instagram/Pinterest: a header card with stat buttons, a collapsed link list and a full-width Follow, then the recipes as a two-column photo grid.",
+    "regions": [
+     "Header title '' until scrolled",
+     "A header card: avatar · name · three stat buttons (Recipes · Followers · Following) · bio · first link + 'and 2 more' (sheet) · full-width tinted 'Follow' / bordered 'Following'",
+     "Recipes as a two-column photo grid (compact RecipeCard, fallback tile)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Collapsed link list; counts as buttons",
+      "app": "Instagram",
+      "source": "https://sproutsocial.com/insights/instagram-link-in-bio/ ; https://help.instagram.com/customer/portal/articles/95730-view-list-of-followers-following"
+     },
+     {
+      "aspect": "Created vs saved split",
+      "app": "Pinterest",
+      "source": "https://help.pinterest.com/en/article/find-your-profile"
+     }
+    ],
+    "cost": "Follow 1; recipe 1; extra links 2.",
+    "tradeoff": "Many recipes lack photos, so the grid is half tiles; the stat buttons are dead until spec 53 lands."
+   },
+   {
+    "name": "B. Compare & cook",
+    "pitch": "Strava/SuperCook: the stats line becomes 'You can make 3 of Ana's 12 recipes', with a makeability chip row above the list.",
+    "regions": [
+     "Stats line 'You can make 3 of Ana's 12 recipes'",
+     "A chip row All · Can make · Almost above the list",
+     "Rows carry the Cook status line",
+     "'Follow' compact in the header right slot"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Stats relative to the viewer",
+      "app": "Strava",
+      "source": "https://support.strava.com/en-us/articles/15402175-your-strava-profile-page"
+     },
+     {
+      "aspect": "Makeability as a filter chip",
+      "app": "SuperCook",
+      "source": "https://apps.apple.com/us/app/supercook-recipe-by-ingredient/id1477747816"
+     }
+    ],
+    "cost": "Follow 1; filter 1.",
+    "tradeoff": "Needs ingredients for a stranger's public recipes (FEED_SELECT has none — a capped second query) and a small matching spec; a heavier first paint."
+   },
+   {
+    "name": "C. Contact card",
+    "pitch": "Settings idiom: no name in the header; inset groups for identity, links, follower counts and a dense recipe list.",
+    "regions": [
+     "No name in the header",
+     "Identity row (avatar · name · 'Follow' as the accessory)",
+     "LINKS as SettingsRows (label, host, open glyph)",
+     "FOLLOWERS 12 › / FOLLOWING 4 › rows",
+     "RECIPES (12) as dense RecipeRowItems with a ⋯ sort"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Settings idiom (contact card)",
+      "app": "iOS Settings",
+      "source": ""
+     }
+    ],
+    "cost": "Everything 1 tap; report in ⋯.",
+    "tradeoff": "Reads like Settings, not like a creator page; photos shrink to 44pt."
+   }
+  ]
+ }
+]

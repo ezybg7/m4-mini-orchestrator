@@ -1,0 +1,226 @@
+[
+ {
+  "screen": "Welcome + Sign in + Sign up",
+  "screen_slug": "welcome-sign-in-sign-up",
+  "today": {
+   "file": "welcome-sign-in-sign-up/today.html",
+   "look_for": "Sign-up as it ships: three fields (display name, email, password) under Apple and Google, a disabled Create account, and the sign-in fork as a link at the bottom — Welcome and Sign in are its mirrors."
+  },
+  "directions": [
+   {
+    "name": "One door",
+    "slug": "one-door",
+    "file": "welcome-sign-in-sign-up/one-door.html",
+    "look_for": "One screen replaces Welcome’s fork and both forms: Apple, Google, one email field and Continue; the dashed block shows what appears after Continue for a returning address, the caption what a new one gets."
+   },
+   {
+    "name": "Code, not password",
+    "slug": "code-not-password",
+    "file": "welcome-sign-in-sign-up/code-not-password.html",
+    "look_for": "After the email, a six-box one-time-code field with iOS Security Code AutoFill offering the code above the keypad; “Use password instead” and a cooling-down Resend sit under Continue."
+   },
+   {
+    "name": "Two screens, two fields",
+    "slug": "two-screens-two-fields",
+    "file": "welcome-sign-in-sign-up/two-screens-two-fields.html",
+    "look_for": "The same sign-up screen minus the display-name field: email plus a password iOS has just suggested (“Use Strong Password” in the QuickType bar), Create account already live."
+   }
+  ]
+ },
+ {
+  "screen": "Forgot / reset password",
+  "screen_slug": "forgot-reset-password",
+  "today": {
+   "file": "forgot-reset-password/today.html",
+   "look_for": "The request form as it ships: the email field is empty even though sign-in just held the address, the button is disabled until it is retyped, and the only way back is the link."
+  },
+  "directions": [
+   {
+    "name": "Reset lands you inside",
+    "slug": "reset-lands-you-inside",
+    "file": "forgot-reset-password/reset-lands-you-inside.html",
+    "look_for": "The address is already in the field and Send is live; the dashed block is the sent state with the new Open Mail button, and its last line is the point — setting the password signs you in."
+   },
+   {
+    "name": "Sign in with a code instead",
+    "slug": "sign-in-with-a-code-instead",
+    "file": "forgot-reset-password/sign-in-with-a-code-instead.html",
+    "look_for": "“Forgot password?” has become “Email me a sign-in code”: the locked-out path is a six-box code screen, and changing the password moves to a row under Profile → Account (dashed block)."
+   },
+   {
+    "name": "Passkey after first sign-in",
+    "slug": "passkey-after-first-sign-in",
+    "file": "forgot-reset-password/passkey-after-first-sign-in.html",
+    "look_for": "A one-time tinted card at the top of Profile offers Face ID for next time; the Account group gains a Face ID sign-in switch, and the dashed strip is the unchanged sign-in screen’s QuickType bar offering the passkey."
+   }
+  ]
+ },
+ {
+  "screen": "Onboarding + first run + add household",
+  "screen_slug": "onboarding-first-run-add-household",
+  "today": {
+   "file": "onboarding-first-run-add-household/today.html",
+   "look_for": "Two equal cards for one decision: Start (prefilled “Home”, Create live) and Join (code-or-link field, Join disabled), with Sign out underneath; first-run and add-household are the next screens and reuse these cards."
+  },
+  "directions": [
+   {
+    "name": "Create is the screen, join is a row",
+    "slug": "create-is-the-screen-join-is-a-row",
+    "file": "onboarding-first-run-add-household/create-is-the-screen-join-is-a-row.html",
+    "look_for": "One primary action — the prefilled name, its chips and Create household — and joining demoted to a single chevron row; the dashed block is the TextPrompt that row opens."
+   },
+   {
+    "name": "Share at creation",
+    "slug": "share-at-creation",
+    "file": "onboarding-first-run-add-household/share-at-creation.html",
+    "look_for": "First-run is now the invite: “Test Home is ready”, a tile that says you are alone so far, one primary Invite button that opens the share sheet, and a bordered “Just me for now”; the toast is what follows a share."
+   },
+   {
+    "name": "Delete first-run",
+    "slug": "delete-first-run",
+    "file": "onboarding-first-run-add-household/delete-first-run.html",
+    "look_for": "Creating the household lands straight on the Add tab; the toast carries the locations footnote first-run used to be a screen for, and the Profile tab wears a one-time badge until an invite is shared."
+   }
+  ]
+ },
+ {
+  "screen": "Profile tab",
+  "screen_slug": "profile-tab",
+  "today": {
+   "file": "profile-tab/today.html",
+   "look_for": "One inset-grouped scroll, nine headers deep: the invite code with copy/share/⋯ on one row and Share invite link on another, two switches, Learned, Members, Notifications, Plan — the list runs off the bottom, which is the point."
+  },
+  "directions": [
+   {
+    "name": "Account card + household hub",
+    "slug": "account-card-household-hub",
+    "file": "profile-tab/account-card-household-hub.html",
+    "look_for": "The tab collapses to two pushing cards — you (initial, name, email, plan) and your kitchen (Test Home, who is in it) — plus About; everything that used to be a row is one push away, and the footers say what."
+   },
+   {
+    "name": "Flat, three groups, invite as one row",
+    "slug": "flat-three-groups-invite-as-one-row",
+    "file": "profile-tab/flat-three-groups-invite-as-one-row.html",
+    "look_for": "Still one scroll, but four groups (You · Your household · Preferences · About) and the code, the share link and the active links folded into one “Invite people” row — the sheet it opens is raised over the list."
+   },
+   {
+    "name": "Person here, kitchen on the Pantry tab",
+    "slug": "person-here-kitchen-on-the-pantry-tab",
+    "file": "profile-tab/person-here-kitchen-on-the-pantry-tab.html",
+    "look_for": "Split frame: the Profile tab keeps only the person (name, bio, plan, reminders), and the Pantry tab’s large title now names the household with a ⋯ menu whose first row is Household settings."
+   }
+  ]
+ },
+ {
+  "screen": "Join by invite",
+  "screen_slug": "join-by-invite",
+  "today": {
+   "file": "join-by-invite/today.html",
+   "look_for": "The confirm as it ships: a bottom sheet — “Join Test Home?”, one sentence, Join and a bare Cancel — raised over an empty grey screen with nothing behind it."
+  },
+  "directions": [
+   {
+    "name": "A landing, not a sheet on grey",
+    "slug": "a-landing-not-a-sheet-on-grey",
+    "file": "join-by-invite/a-landing-not-a-sheet-on-grey.html",
+    "look_for": "A full-screen invite: tile and “You’re invited to Test Home”, an optional member line, what you will share, which account you are signed in as (with a way to switch), then Join over a bordered Not now."
+   },
+   {
+    "name": "Sheet over the destination",
+    "slug": "sheet-over-the-destination",
+    "file": "join-by-invite/sheet-over-the-destination.html",
+    "look_for": "The same sheet, but raised over the dimmed Pantry tab rather than grey: the app is visible underneath, the sheet gains a tile and a “Signed in as” line, and Cancel stays because the one action commits."
+   },
+   {
+    "name": "Addressed invites with a push",
+    "slug": "addressed-invites-with-a-push",
+    "file": "join-by-invite/addressed-invites-with-a-push.html",
+    "look_for": "The invitee’s phone: a push from Ambry (“Test User invited you to Test Home”) lands on the same landing card; the dashed block is the owner’s side — Invite by email, and each person’s Sent/Joined status with Resend."
+   }
+  ]
+ },
+ {
+  "screen": "Delete account",
+  "screen_slug": "delete-account",
+  "today": {
+   "file": "delete-account/today.html",
+   "look_for": "The gate as it ships: DELETE typed into a field, the button still dimmed until Done commits it, and a keyboard covering a third of the irreversible screen — the cards above have scrolled off under the header."
+  },
+  "directions": [
+   {
+    "name": "Consequence in the button, Face ID as the gate",
+    "slug": "consequence-in-the-button-face-id-as-the-gate",
+    "file": "delete-account/consequence-in-the-button-face-id-as-the-gate.html",
+    "look_for": "No field, no keyboard: the deleted-things card carries counts from the cache (Test Home — 3 items in 3 locations), the red button says exactly what it will do, and Face ID is the confirmation."
+   },
+   {
+    "name": "Hold to delete",
+    "slug": "hold-to-delete",
+    "file": "delete-account/hold-to-delete.html",
+    "look_for": "The same cards, then one red button you hold for two seconds — the darker fill is the progress, caught mid-hold — with the footnote doubling as the VoiceOver hint; no typed word, no keyboard."
+   },
+   {
+    "name": "Grace period",
+    "slug": "grace-period",
+    "file": "delete-account/grace-period.html",
+    "look_for": "The safety net shows up at sign-in: a red-tinted card says the account is scheduled for deletion on Sep 19 with Restore account beside Continue deleting; the toast is what the confirm itself now says."
+   }
+  ]
+ },
+ {
+  "screen": "Paywall (Ambry Plus)",
+  "screen_slug": "paywall-ambry-plus",
+  "today": {
+   "file": "paywall-ambry-plus/today.html",
+   "look_for": "The screen as it ships, at the decided prices: lead paragraph, a benefits card, two radio rows with Yearly preselected and a Save badge, the disclosure, then the CTA, Restore and the two links."
+  },
+  "directions": [
+   {
+    "name": "One plan, one line",
+    "slug": "one-plan-one-line",
+    "file": "paywall-ambry-plus/one-plan-one-line.html",
+    "look_for": "A single headline about the receipt, three benefit rows, a Monthly | Yearly segment and one big price line — the billed amount is now the loudest object in the body, with the monthly figure in its caption."
+   },
+   {
+    "name": "Comparison card",
+    "slug": "comparison-card",
+    "file": "paywall-ambry-plus/comparison-card.html",
+    "look_for": "A Free | Plus table (scans, ideas, members, photos) sits above the plans, with the hand-entry promise and the household-coverage line as its footer; plans, disclosure and CTA follow as today."
+   },
+   {
+    "name": "Settings card as the sale",
+    "slug": "settings-card-as-the-sale",
+    "file": "paywall-ambry-plus/settings-card-as-the-sale.html",
+    "look_for": "No push: Profile’s Plan group becomes the purchase surface — meter, one benefit line, the price line, the full disclosure, Start free trial, and Restore plus both links crammed inside one grouped card."
+   }
+  ]
+ },
+ {
+  "screen": "Insights (waste scorecard)",
+  "screen_slug": "insights-waste-scorecard",
+  "today": {
+   "file": "insights-waste-scorecard/today.html",
+   "look_for": "The screen as it ships: the figure card, one observation, and a flat dated list of what went off — nothing on it can be acted on, and the figure looks tappable although it is not."
+  },
+  "directions": [
+   {
+    "name": "Contributors and one fix",
+    "slug": "contributors-and-one-fix",
+    "file": "insights-waste-scorecard/contributors-and-one-fix.html",
+    "look_for": "The figure gains a label band (“Good”), and the list is grouped by food with a count — Bananas ×3 is swiped open to its two actions, Remind sooner and Add to list, while Milk is expanded to its dated row."
+   },
+   {
+    "name": "Versus your usual",
+    "slug": "versus-your-usual",
+    "file": "insights-waste-scorecard/versus-your-usual.html",
+    "look_for": "Identical to today except one line under the figure — an arrow and “5 points vs August” — which is the whole direction."
+   },
+   {
+    "name": "Month-end moment",
+    "slug": "month-end-moment",
+    "file": "insights-waste-scorecard/month-end-moment.html",
+    "look_for": "On the 1st a push announces the finished month; the screen gains a This month | Last month segment (Last month selected, showing August) and a Share glyph in the header’s right slot."
+   }
+  ]
+ }
+]

@@ -1,0 +1,851 @@
+[
+ {
+  "screen": "Pantry overview tab",
+  "route": "src/app/(tabs)/index.tsx",
+  "current_summary": "LargeTitle 'Pantry' (household subtitle only when the user is in more than one), an always-visible SearchField, an 'Expiring Soon' summary row whose badge earns its colour (neutral / orange / red) and pushes /expiring, then a 2-column grid of location cards (emoji glyph, 'N foods' or 'Empty', name) pushing /location/[id]; footer = bordered 'Add location' button + ScorecardCard. An all-empty pantry collapses the grid into one empty state with a tinted 'Add your first food'. Typing swaps the grid for a SectionList of matching items grouped by location, with the full ItemRow behaviour (chip cycle, out-toast Delete, trash). Cost today: 1 tap to any shelf, 1 tap to the expiring list; anything else (Low/Out across the pantry) needs a shelf plus its filter, or the keyboard.",
+  "apps": [
+   {
+    "name": "Apple Reminders (home)",
+    "what": "Smart-list tiles (Today, Scheduled, All, Flagged, Completed, Assigned to Me) each carrying a count, above 'My Lists' rows that also carry counts; custom smart lists filter across every list by tag, date, time, location, flag and priority; the search field sits under the large title.",
+    "aspects": [
+     {
+      "aspect": "Status tiles with counts as the first thing on the home screen, each a destination",
+      "why": "Ambry's home surfaces one state (Expiring) and hides the other two the app tracks (Low, Out); Reminders shows that a count-tile row scales to four states without a menu",
+      "source": "https://support.apple.com/guide/iphone/use-smart-lists-iphe882772ed/ios"
+     },
+     {
+      "aspect": "Lists as rows with counts rather than cards",
+      "why": "Rows survive eight or more locations and read as iOS; the card grid tops out visually at six",
+      "source": "https://apps.apple.com/us/app/reminders/id1108187841"
+     }
+    ]
+   },
+   {
+    "name": "Apple Home (Home tab)",
+    "what": "A category row at the top (Lights, Security, Climate, Speakers, Water) that filters the whole home, then Cameras, Favorites, Scenes and Rooms sections of tiles; the ellipsis menu offers 'Edit Home View' (drag/resize tiles) and 'Reorder Sections'.",
+    "aspects": [
+     {
+      "aspect": "A filter-chip row of household-wide states above the tile grid",
+      "why": "The states are the triage; the tiles are the places. Home keeps both without the states becoming a second screen",
+      "source": "https://www.macrumors.com/how-to/reorganize-home-view-home-app/"
+     },
+     {
+      "aspect": "Arrangement lives behind one ellipsis ('Edit Home View', 'Reorder Sections')",
+      "why": "Ambry cannot reorder locations at all (spec 22 out of scope); Home shows the whole arrangement job fits one menu with a drag mode",
+      "source": "https://support.apple.com/guide/iphone/intro-to-home-iph22d98bbca/ios"
+     }
+    ]
+   },
+   {
+    "name": "Grocy (stock overview)",
+    "what": "A table of every product with amount and next due date, colour-coded by due status; the header carries status buttons with counts ('X products are overdue', 'Due soon', 'Below min. stock amount', 'In stock') that filter the table when clicked, plus location and product-group filters and a 'Clear filter' button; per-row consume/open/transfer/spoiled actions.",
+    "aspects": [
+     {
+      "aspect": "Summary counters that ARE the filters",
+      "why": "Ambry's Expiring Soon row is a counter that navigates; Grocy shows the counter can filter in place, and that Overdue / Due soon / Below min are three separate counters, not one",
+      "source": "https://grocy.info/changelog"
+     },
+     {
+      "aspect": "'Due soon' includes today; overdue excludes today and tomorrow",
+      "why": "Grocy needed three changelog fixes to get these boundaries right; Ambry's urgency() already encodes them and any counter must reuse it",
+      "source": "https://grocy.info/changelog"
+     }
+    ]
+   },
+   {
+    "name": "Sortly",
+    "what": "Home shows a summary of item, folder and value totals with recent activity and low-stock notifications; folders and subfolders hold items; search and advanced search run across the whole inventory; the mobile tab bar is Workflows, Items, Search, Alerts, Menu.",
+    "aspects": [
+     {
+      "aspect": "Whole-inventory totals plus an alerts feed on the home screen",
+      "why": "Ambry's home already counts per shelf; a household total and the 'needs attention' list are the two numbers a pantry glance wants",
+      "source": "https://help.sortly.com/hc/en-us/articles/360036515592-Sortly-Product-Overview"
+     },
+     {
+      "aspect": "Search as a tab-level surface across everything",
+      "why": "Confirms spec 26's choice (search the whole pantry from the overview) is the inventory-app norm",
+      "source": "https://help.sortly.com/hc/en-us/articles/6660883031451-Sortly-Mobile-App"
+     }
+    ]
+   },
+   {
+    "name": "CozZo / NoWaste",
+    "what": "CozZo's 'At Home' inventory has two views, 'All Items' and 'Spaces' (fridge, pantry, freezer, custom), with a 'Due Time' bar per item showing days remaining or overdue; NoWaste's home is a set of inventory lists (Freezer, Fridge, Pantry, up to six free) with counts, and each list sorts by expiry, name or category and filters by category or placement.",
+    "aspects": [
+     {
+      "aspect": "A single all-items view beside the by-space view",
+      "why": "The question 'what do I have that is about to go' is pantry-wide; Ambry answers it only for the 7-day window, and only on a pushed screen",
+      "source": "https://cozzo.app/features/food-home-supplies-inventory/"
+     },
+     {
+      "aspect": "Lists per storage with counts and an expiring badge",
+      "why": "Direct peer of Ambry's card grid; the peers stack lists vertically rather than tiling them",
+      "source": "https://www.nowasteapp.com/"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Reminders home",
+    "pitch": "Four status tiles (Expiring · Low · Out · All) with counts above a plain list of location rows; the tiles are pantry-wide destinations, the rows are the shelves.",
+    "regions": [
+     "LargeTitle 'Pantry' + household subtitle (unchanged); SearchField beneath it (unchanged today; a collapsible field is a later component change)",
+     "Tile row (2×2 or 4 across; Pressable + fontSize.figure): Expiring (badge tone rules as today → /expiring), Low, Out, All → a pantry-wide list = the existing search SectionList with a stock filter preset (`filterLocationItems(all, '', 'low')`), header 'Low across your pantry', rows with full ItemRow behaviour",
+     "SectionHeader 'Locations' + inset GroupedRow/SettingsRow per location: icon, name, value 'N foods', chevron → /location/[id]; counts withheld until the read lands (D3 rule kept)",
+     "Footer: 'Add location' bordered Button; ScorecardCard",
+     "Empty: shelves-but-no-food → one empty state (unchanged); no shelves → 'No storage locations yet.' + Add location; error → StaleBanner over cached rows, ErrorState when nothing cached"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Smart-list tiles with counts",
+      "app": "Apple Reminders",
+      "source": "https://support.apple.com/guide/iphone/use-smart-lists-iphe882772ed/ios"
+     },
+     {
+      "aspect": "Counters that filter (Overdue / Due soon / Below min)",
+      "app": "Grocy",
+      "source": "https://grocy.info/changelog"
+     }
+    ],
+    "cost": "1 tap to a shelf (same); 1 tap to any of three pantry-wide states (Low/Out were shelf + filter before); no new keyboard.",
+    "tradeoff": "Adds a row of four controls above the fold and a fourth destination ('All') that overlaps search; Low/Out lists need the household-wide read (already fetched for search, capped at ROW_CEILING) and spec 26 deliberately left filters off the overview — an escalation, not a silent change. Familiarity and simplicity both improve: one idiom (tile = state, row = place)."
+   },
+   {
+    "name": "B. One long shelf list",
+    "pitch": "No grid. Every location is a section of one inset-grouped list showing its soonest-expiring rows inline, so the home screen already says what needs eating on each shelf.",
+    "regions": [
+     "LargeTitle + SearchField (search filters the same list in place — no view swap)",
+     "SegmentedControl All · Expiring · Low · Out acting on the whole pantry (STOCK_FILTERS reused)",
+     "Per location: SectionHeader (icon + name + count) that is itself pressable → /location/[id]; up to 3 ItemRows (soonest expiry first, `compareItems` reversed to urgency) with chip/trash behaviour; a last GroupedRow 'Show all N ▸'",
+     "Expiring Soon summary row deleted — the Expiring segment replaces it (badge tone moves onto the segment label as a count)",
+     "Footer: Add location; ScorecardCard",
+     "Empty: shelf with nothing → the section shows one muted row 'Nothing here yet'; whole pantry empty → the single empty state; load error → ErrorState; truncation → the ROW_CEILING notice"
+    ],
+    "borrowed": [
+     {
+      "aspect": "'All Items' beside 'Spaces' — one pantry-wide view",
+      "app": "CozZo",
+      "source": "https://cozzo.app/features/food-home-supplies-inventory/"
+     },
+     {
+      "aspect": "Lists per storage with expiry colour per row",
+      "app": "NoWaste",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     },
+     {
+      "aspect": "Lists as rows with counts",
+      "app": "Apple Reminders",
+      "source": "https://apps.apple.com/us/app/reminders/id1108187841"
+     }
+    ],
+    "cost": "0 taps to see the three most urgent rows on every shelf; 1 tap to a shelf or to a state; search costs the keyboard as today.",
+    "tradeoff": "Heaviest read (all items on the home tab every time, not only while searching) and the longest scroll for a big pantry; it duplicates half of the location screen and the Expiring screen's job, which Everett removed as a tab precisely to avoid two doors to one room. Wins on purpose for small households, loses on simplicity at scale."
+   },
+   {
+    "name": "C. Home-app chips over the grid",
+    "pitch": "Keep the grid; put the pantry-wide states in a horizontal chip row like Home's Lights/Climate, each opening a triage sheet with swipe actions; arrangement (reorder locations, add) moves into one ellipsis.",
+    "regions": [
+     "LargeTitle 'Pantry' with `right` = OverflowMenu: 'New location', 'Reorder locations' (a drag mode reusing zones.tsx's handle + `dropIndex`), 'Household' (only when >1)",
+     "SearchField (unchanged)",
+     "Chip row (Chip with count labels): 'Expiring 3' (tone-coloured), 'Low 2', 'Out 5'; a chip opens a BottomSheet listing those rows as SwipeRow+ItemRow (Used / +2 days / List) with Cancel; 'Expiring' also offers 'Open list ▸' to /expiring",
+     "Location card grid (unchanged cards; counts withheld until read)",
+     "Footer: ScorecardCard only — 'Add location' moved into the menu",
+     "Empty/error states unchanged; a chip at 0 renders muted and inert with its count"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Category filter row above the tiles; 'Edit Home View' / 'Reorder Sections' behind one ellipsis",
+      "app": "Apple Home",
+      "source": "https://www.macrumors.com/how-to/reorganize-home-view-home-app/"
+     },
+     {
+      "aspect": "Home-screen totals + alerts feed",
+      "app": "Sortly",
+      "source": "https://help.sortly.com/hc/en-us/articles/360036515592-Sortly-Product-Overview"
+     }
+    ],
+    "cost": "1 tap to triage a state in place (Used/+2d/List by swipe); add location becomes 2 taps (menu) instead of a scroll to the footer; reorder = menu + drag.",
+    "tradeoff": "A sheet over the home is a new layer, and a chip that opens a list is less familiar than a tile that navigates; 'Add location' in a menu is one tap dearer for a rare action. Gains: the grid Everett approved stays, the Expiring Soon row and the chips are one control not two, and locations finally reorder (a spec 22 out-of-scope item — escalation)."
+   }
+  ]
+ },
+ {
+  "screen": "Location screen",
+  "route": "src/app/location/[id]/index.tsx",
+  "current_summary": "ScreenHeader '🧊 Fridge' with one OverflowMenu (Edit location · Zones · Move all items to… · Delete location). List header: optional description, a once-per-device hint about struck-through rows, SearchField, then SegmentedControl All · Expiring · Low · Out beside Select (→ Select all / Cancel). SectionList: zone sections first, then fixed category sections (SectionHeader with counts); each ItemRow = tile, name (struck when out), 'added Sep 3', urgency badge, tap-to-cycle status chip (stocked → low → out, out pops a Delete toast), trash when out, long-press enters selection. Selection bar: count + Move (LocationPickerModal, undoable) · Pin (Alert of zones, only if zones exist) · Delete (one undo toast). Empty shelf → tray glyph + 'Add your first item'; filtered-to-nothing → magnifier + 'Nothing here matches.'; pull-to-refresh. Cost: 1 tap to an item; 1–2 chip taps to any status; select = long-press (or Select) + N taps + 1; every location action = 2 taps.",
+  "apps": [
+   {
+    "name": "Apple Reminders (a list)",
+    "what": "Reminders inside sections that collapse on tap; the list's ellipsis offers 'Select Reminders', 'Sort By' (due date, creation date, priority, title), 'View as Columns' and list info; selecting shows a bottom toolbar to date, move, delete, assign, complete, tag or flag the selection; swipe right indents, swipe left deletes; completing is the circle.",
+    "aspects": [
+     {
+      "aspect": "Selection entered from the ellipsis, with the bulk verbs in a bottom toolbar",
+      "why": "Matches Ambry's selection bar; shows the 'Select' word can leave the filter row for the menu without hurting discoverability, since long-press still exists",
+      "source": "https://macmost.com/reminders-list-sections-and-column-view.html"
+     },
+     {
+      "aspect": "Collapsible section headers",
+      "why": "A shelf with nine category sections is a long scroll; tap-to-collapse is the iOS answer and Ambry's SectionHeader is not pressable yet",
+      "source": "https://support.apple.com/guide/iphone/edit-and-organize-a-list-iph82596cb20/ios"
+     }
+    ]
+   },
+   {
+    "name": "Things 3 (a project)",
+    "what": "To-dos under headings; swipe right on a to-do opens 'When'; swipe left starts a selection and dragging down the right edge extends it to many; tap-and-hold reorders; pull down in any list to search; the selection toolbar batch-acts.",
+    "aspects": [
+     {
+      "aspect": "One swipe edge for the scheduling verb, the other for selection",
+      "why": "A gesture vocabulary that is the same on every list — the S3 defect (four row idioms) is what Ambry is still carrying on this screen",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     },
+     {
+      "aspect": "Search revealed by pulling down, not a standing field",
+      "why": "Ambry pays ~52pt of search field on every shelf, above the filter; Things pays nothing until asked",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     }
+    ]
+   },
+   {
+    "name": "Todoist (a project with sections)",
+    "what": "Sections with tasks; swipe left/right actions are user-chosen from Complete, Schedule, Delete, Reminders (Select on Android); two-finger swipe selects a task; sections and tasks drag.",
+    "aspects": [
+     {
+      "aspect": "Swipe actions configured once in Settings, applied everywhere",
+      "why": "If Ambry moves status changes onto swipes, a single household-wide rule beats per-screen strips",
+      "source": "https://www.todoist.com/help/articles/how-to-change-your-swipe-actions-D5DQOQz6"
+     }
+    ]
+   },
+   {
+    "name": "Grocy (stock overview)",
+    "what": "Status buttons with counts that filter the table (overdue / due soon / below min / in stock), location and product-group filters, a 'Clear filter' button, and per-row consume-one / consume-all / open / transfer / spoiled actions.",
+    "aspects": [
+     {
+      "aspect": "Filter buttons carry their counts",
+      "why": "Ambry's four segments say nothing about how many rows each holds; 'Out 5' tells the user whether Select all → Delete is worth opening",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     },
+     {
+      "aspect": "Per-row verbs are consumption events (consume, open, spoiled), not a status cycle",
+      "why": "The chip cycle is a state machine the user has to walk; Grocy names the event that happened",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     }
+    ]
+   },
+   {
+    "name": "Apple Files / iOS Mail",
+    "what": "Files: More → Select → tap items → bottom actions (Share, Move, Delete). Mail: Settings › Apps › Mail › Swipe Options choose the left/right actions; a full swipe fires the outermost action.",
+    "aspects": [
+     {
+      "aspect": "Full-swipe fires the outermost action",
+      "why": "SwipeRow supports two actions per edge; a full swipe for the common one (Used / Out) makes the gesture one motion",
+      "source": "https://support.apple.com/guide/iphone/iph376ef8aa3/ios"
+     },
+     {
+      "aspect": "Select lives behind More, bulk verbs in a bottom bar",
+      "why": "Same shape as Reminders; confirms it as the platform default for lists that mostly browse",
+      "source": "https://support.apple.com/guide/iphone/modify-files-and-folders-iphc61044c11/ios"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Reminders list",
+    "pitch": "Quieter chrome: search and Select move into the header, sections collapse, and the toolbar is just the filter.",
+    "regions": [
+     "ScreenHeader: title, a magnifier button that reveals the SearchField under the header (SearchField autoFocus, dismiss on clear), and the OverflowMenu gaining 'Select items' and 'Sort by' (Name · Expiry · Added — spec 25 pins A–Z then expiry, so Sort is an escalation)",
+     "Toolbar: description + one-time hint (unchanged); SegmentedControl All · Expiring · Low · Out with counts rendered in the labels ('Out 5')",
+     "SectionHeader made pressable: tap collapses the section (chevron rotates; persisted per device like the out-hint); zone sections first as today",
+     "Rows unchanged (ItemRow chip/trash/long-press); selection bar unchanged, Select all beside Cancel",
+     "Empty / filtered-empty / error / pull-to-refresh unchanged"
+    ],
+    "borrowed": [
+     {
+      "aspect": "'Select Reminders' and 'Sort By' in the ellipsis; collapsible sections",
+      "app": "Apple Reminders",
+      "source": "https://macmost.com/reminders-list-sections-and-column-view.html"
+     },
+     {
+      "aspect": "Search revealed on demand",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     },
+     {
+      "aspect": "Counts on filter buttons",
+      "app": "Grocy",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     }
+    ],
+    "cost": "Item 1 tap (same); search +1 tap to reveal; Select 2 taps via menu or 1 long-press (same); collapsing a section 1 tap.",
+    "tradeoff": "One more tap to search on a big shelf, against ~52pt of space returned to the food on every shelf; 'Sort by' contradicts spec 25's fixed sort and must be escalated. Nothing new to learn — every element is an iOS Reminders element."
+   },
+   {
+    "name": "B. Swipe triage, no chip cycle",
+    "pitch": "The status chip stops being a control. Rows carry the Expiring screen's two-edge SwipeRow — leading Low / Out (full swipe = Out), trailing +2 days / List — so pantry and expiring rows finally share one gesture.",
+    "regions": [
+     "Header + toolbar as today (OverflowMenu, SearchField, SegmentedControl, Select)",
+     "Sections as today",
+     "Row = GroupedRow › SwipeRow(leading: Low [warnTint], Out [dangerIcon]; trailing: +2 days, List) › ItemRow with the chip rendered as a passive StockCap-style label; tap → item; long-press → select; extraActions mirror every swipe verb for VoiceOver; 'out' rows: leading = 'Back in stock' (→ stocked), trailing = Delete",
+     "First-use hint replaces the out-rows hint: 'Swipe a row to mark it low, out, or add it to your list' (once per device)",
+     "Selection bar unchanged; empty/error unchanged"
+    ],
+    "borrowed": [
+     {
+      "aspect": "One swipe vocabulary on every list",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     },
+     {
+      "aspect": "Full swipe fires the outermost action",
+      "app": "Apple Mail",
+      "source": "https://support.apple.com/guide/iphone/iph376ef8aa3/ios"
+     },
+     {
+      "aspect": "Per-row consumption verbs instead of a state cycle",
+      "app": "Grocy",
+      "source": "https://github.com/grocy/grocy-docs/blob/master/tutorials/food.md"
+     }
+    ],
+    "cost": "Any status = 1 swipe (Stocked→Out was 2 chip taps); add-to-list from a shelf = 1 swipe (not possible today); undo toasts unchanged.",
+    "tradeoff": "Swipes are undiscoverable (hence the hint and the rotor actions) and the tap-to-cycle chip was Everett's 2026-07-24 decision (spec 24) — this is a PR-description escalation. It closes S3 for the pantry half: the row that looks like the Expiring row now behaves like it. Android-clean: SwipeRow is already cross-platform."
+   },
+   {
+    "name": "C. Flat urgency list with count chips",
+    "pitch": "Drop the category sections by default. One list sorted by soonest expiry, a scrollable chip row whose chips carry counts, and a 'Group by' toggle for people who want their shelves.",
+    "regions": [
+     "Header: OverflowMenu gains 'Group by category' (toggle, persisted) beside Edit/Zones/Move all/Delete",
+     "Toolbar: SearchField; Chip row (horizontal ScrollView): 'All 24' · 'Expiring 3' (tone-coloured when >0) · 'Low 2' · 'Out 5' · zone chips ('Door 4', 'Top shelf 6') — single-select, replaces the SegmentedControl; Select/Cancel at the row's end",
+     "Body: one GroupedRow list (no SectionHeaders) sorted by urgency then name; zone-pinned rows show the zone as a caption ('Door · added Sep 3'); with 'Group by category' on, today's sections return",
+     "Rows: ItemRow unchanged (chip cycle kept)",
+     "Selection bar unchanged; empty states unchanged; the truncation notice stays"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Sort by expiration date, filter by category or placement",
+      "app": "NoWaste",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     },
+     {
+      "aspect": "Status buttons with counts as filters; clear-filter affordance",
+      "app": "Grocy",
+      "source": "https://grocy.info/changelog"
+     },
+     {
+      "aspect": "Category chips filtering the whole view",
+      "app": "Apple Home",
+      "source": "https://www.macrumors.com/how-to/reorganize-home-view-home-app/"
+     }
+    ],
+    "cost": "Filter = 1 tap (same), now with a count; zone filter = 1 tap (needed Pin/multiselect knowledge before); grouping = 2 taps via menu.",
+    "tradeoff": "Contradicts spec 25 twice (fixed sort; 'no per-category filter — sections do that job') and SPEC.md §3's self-organising sections — the biggest escalation of the three. A chip row also grows with zones and can wrap at accessibility sizes. Wins for the 'standing at the fridge, what goes first' moment, which the sectioned list answers only via the Expiring segment."
+   }
+  ]
+ },
+ {
+  "screen": "Zones editor",
+  "route": "src/app/location/[id]/zones.tsx",
+  "current_summary": "A pushed screen titled 'Zones', reached from the location's overflow menu. An intro paragraph, then one GroupedRow per zone: a boxless inline rename Input (pencil glyph; commits on blur; an empty name reverts), a 'N items' line when anything is pinned, a trash button (always confirmed with an Alert naming the pinned count) and a reorder handle (200ms press then drag, optimistic with rollback; Move up/down as accessibility actions). Below: 'No zones yet — add one below.' and an add row (Input + small Add button). Pinning is not here — it is the location's multiselect Pin (an Alert of zones) and the item screen's Zone row. Cost: reorder 1 drag; rename tap + type + blur; add tap + type + return; delete tap + confirm.",
+  "apps": [
+   {
+    "name": "Apple Reminders (sections)",
+    "what": "Sections are managed inside the list: New Section from the ellipsis, tap a section name to rename, touch-and-hold to drag it, tap to collapse, swipe left to delete; reminders not in a section sit under 'Others'; sections can be viewed as columns.",
+    "aspects": [
+     {
+      "aspect": "Sections are edited where they are displayed — there is no separate editor",
+      "why": "Ambry's zones are the same object (a user-named group above the automatic ones) but need a push to a second screen to touch",
+      "source": "https://support.apple.com/guide/iphone/edit-and-organize-a-list-iph82596cb20/ios"
+     },
+     {
+      "aspect": "'Others' holds everything unsectioned",
+      "why": "Exactly Ambry's category sections under the zone sections; confirms the model and suggests the zone/category boundary needs no explaining",
+      "source": "https://support.apple.com/guide/iphone/edit-and-organize-a-list-iph82596cb20/ios"
+     }
+    ]
+   },
+   {
+    "name": "Things 3 (headings)",
+    "what": "Headings are created from the project's More menu or by dragging the plus button to the left edge; tap-and-hold a heading and drag it, and its to-dos move with it; to-dos move under a heading via swipe-select then Move; a finished heading is archived with its to-dos.",
+    "aspects": [
+     {
+      "aspect": "Create in place by dragging the + to the edge; the heading carries its rows when dragged",
+      "why": "Reorder as the whole group is what Ambry's drag already does; creation in place is the missing half",
+      "source": "https://culturedcode.com/things/support/articles/2803577/"
+     },
+     {
+      "aspect": "Move items under a heading from the selection toolbar",
+      "why": "Ambry's multiselect Pin is this exactly; validates keeping pinning on the location screen",
+      "source": "https://culturedcode.com/things/support/articles/2803577/"
+     }
+    ]
+   },
+   {
+    "name": "Apple Notes (folders)",
+    "what": "Touch and hold a folder → Rename or Delete; drag a folder to move it or onto another folder to nest; swipe left to delete.",
+    "aspects": [
+     {
+      "aspect": "Rename through a context action, not a live text field",
+      "why": "A list of always-editable fields is what the critique flagged ('no cue that names are editable'); Notes shows the alternative the platform uses",
+      "source": "https://support.apple.com/guide/iphone/organize-in-folders-ipha61270292/ios"
+     }
+    ]
+   },
+   {
+    "name": "Trello (lists)",
+    "what": "Tap a list title to edit it in place; drag lists to reorder; the list menu offers Move list, Copy list, Archive this list, Sort by, Set list limits, Change list color; lists collapse.",
+    "aspects": [
+     {
+      "aspect": "Title edits in place on tap; everything else in the list's menu",
+      "why": "The split Ambry wants: a single-tap rename with no permanent field, and rarely-used actions out of the row",
+      "source": "https://support.atlassian.com/trello/docs/add-and-customize-cards-and-lists/"
+     }
+    ]
+   },
+   {
+    "name": "iOS edit mode (HIG) / Apple Home 'Reorder Sections'",
+    "what": "On iOS a table enters an edit mode before rows can be selected, reordered or deleted; reorder controls and delete controls appear per row. Home's 'Reorder Sections' is that mode applied to sections: drag the handle beside each, then Done.",
+    "aspects": [
+     {
+      "aspect": "An explicit Edit/Done mode that reveals handles and delete controls",
+      "why": "The current row shows a trash and a handle permanently beside a live text field; edit mode separates reading from arranging",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables"
+     },
+     {
+      "aspect": "Section reorder as a dedicated mode with drag handles",
+      "why": "Same gesture Ambry ships, framed as a mode a user opts into",
+      "source": "https://www.macrumors.com/how-to/reorganize-home-view-home-app/"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Sections in place (no editor screen)",
+    "pitch": "Delete zones.tsx. Zones are created, renamed, reordered and deleted on the location screen's own section headers, the way Reminders sections are.",
+    "regions": [
+     "Location OverflowMenu: 'New zone…' (TextPrompt) replaces 'Zones'",
+     "Zone SectionHeaders become pressable: tap → a BottomSheet for that zone with rows Rename… (TextPrompt), Move up, Move down, Delete zone (destructive, Alert names the pinned count), Cancel; long-press the header → drag to reorder (reuse the zones.tsx pan + `dropIndex` on section heights)",
+     "Category SectionHeaders stay static (they are the 'Others')",
+     "Pinning unchanged: multiselect Pin + the item screen's Zone row",
+     "Empty: a shelf with no zones shows nothing new (spec 4's zero-clutter default); the first zone is discovered via the menu row",
+     "Errors: each write toasts via failureMessage; reorder optimistic with rollback as today"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Sections edited in the list: rename on tap, drag to move, swipe/Delete",
+      "app": "Apple Reminders",
+      "source": "https://support.apple.com/guide/iphone/edit-and-organize-a-list-iph82596cb20/ios"
+     },
+     {
+      "aspect": "Rename via a context action",
+      "app": "Apple Notes",
+      "source": "https://support.apple.com/guide/iphone/organize-in-folders-ipha61270292/ios"
+     }
+    ],
+    "cost": "New zone 2 taps + keyboard (was 3 + keyboard); rename 2 taps + keyboard (was 1 + keyboard + blur); reorder 1 drag (same, without leaving the shelf); delete 2 taps + confirm (same).",
+    "tradeoff": "Removes a screen and a route (purpose, simplicity) and puts the editing where the effect is visible; but section headers gain gestures they never had, drag inside a SectionList with mixed section heights is harder than the editor's ScrollView, and spec 4 names the editor — escalation. Maestro flows that open 'Zones' need re-selectoring."
+   },
+   {
+    "name": "B. iOS edit mode",
+    "pitch": "Keep the screen, make it a proper iOS list: read mode is SettingsRows (name · 'N items' · chevron → rename prompt); Edit reveals handles and delete circles; add is a prompt.",
+    "regions": [
+     "ScreenHeader 'Zones' with right = 'Edit' / 'Done' toggle (Button secondary)",
+     "Intro cut to one line: 'Zones are the shelves inside this location.'",
+     "Inset group: SettingsRow per zone — label = name, value = 'N items', chevron; tap → TextPrompt 'Rename zone' (blur-commit fields deleted; one save contract)",
+     "In Edit: each row gains a red minus (tap → Alert as today) and a trailing reorder handle (existing drag + a11y Move up/down); chevrons hide",
+     "Last row 'Add zone…' (accent, TextPrompt) — no standing text field",
+     "Empty: the group shows only 'Add zone…' plus one line 'Pin items to a zone from the shelf's Select mode'; error → ErrorState; pending → spinner"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Edit mode with reorder and delete controls",
+      "app": "iOS HIG lists and tables",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables"
+     },
+     {
+      "aspect": "'Reorder Sections' handle-drag mode ending in Done",
+      "app": "Apple Home",
+      "source": "https://www.macrumors.com/how-to/reorganize-home-view-home-app/"
+     },
+     {
+      "aspect": "Title edits on tap, actions in a menu",
+      "app": "Trello",
+      "source": "https://support.atlassian.com/trello/docs/add-and-customize-cards-and-lists/"
+     }
+    ],
+    "cost": "Reorder = Edit + drag + Done (3 vs 1); rename 2 taps + keyboard; add 2 taps + keyboard; delete Edit + minus + Delete (3 vs 2).",
+    "tradeoff": "Costs taps on reorder and delete to buy a screen that cannot be edited by accident and needs no pencil-glyph cue; the most familiar of the three (it is Settings › Mail › Accounts). Keyboard appears only for a name, and only when asked."
+   },
+   {
+    "name": "C. One zones sheet for editing and pinning",
+    "pitch": "The editor becomes a BottomSheet on the location screen, and the same sheet is the pin picker: in Select mode 'Pin' opens it with tap-to-pin rows; from the menu it opens with handles and delete.",
+    "regions": [
+     "OverflowMenu 'Zones…' → BottomSheet titled with the location name",
+     "Sheet header: 'New zone' field (Input + Add small) at the top, keyboard only when tapped",
+     "Rows: GroupedRow per zone — name (tap → TextPrompt rename), 'N items', reorder handle (existing drag inside the sheet's ScrollView), trailing × (Alert)",
+     "Pin mode (opened from the selection bar's Pin): the same rows without handles/×, a check on the current zone, 'Unpin' row when any selection is pinned, footer 'Edit zones' switching modes; replaces promptZone's Alert (which caps at ~6 buttons)",
+     "Cancel row always (rule 7: every row commits)",
+     "Empty: 'No zones yet' above the add field; error toasts via failureMessage"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Move selected items under a heading from the selection toolbar",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803577/"
+     },
+     {
+      "aspect": "Sections managed inside the list they organise",
+      "app": "Apple Reminders",
+      "source": "https://support.apple.com/guide/iphone/edit-and-organize-a-list-iph82596cb20/ios"
+     }
+    ],
+    "cost": "Pin = Select + rows + Pin + 1 tap (same), now with a real list; manage zones = 2 taps from anywhere on the shelf, no push; reorder 1 drag inside the sheet.",
+    "tradeoff": "Drag-to-reorder inside a modal sheet that also scrolls is the hardest gesture pairing in the app (SwipeRow and the zones pan both note the scroll race); a sheet doing two jobs risks the S11 problem of mixed contracts. It retires an Alert-based picker that cannot scale past six zones."
+   }
+  ]
+ },
+ {
+  "screen": "Expiring screen",
+  "route": "src/app/expiring.tsx",
+  "current_summary": "Pushed from the Pantry summary row (and the daily reminder). ScreenHeader with an empty title and a right-slot 'Add all' (tinted, cart) → every listed row onto the grocery list; LargeTitle 'Expiring Soon' + 'N items this week'; StaleBanner; one tinted body CTA 'See what you can make with these' → Cook tab. SectionList: Overdue (danger-toned header) · Today · Tomorrow · 'In N days · Sep 8' (sentence case). Row = GroupedRow › SwipeRow (leading: Used → status out, undoable; trailing: +2 days → manual date via snoozedExpiry, List → grocery) › ItemRow (subtitle = location name, trash → delete with undo, rotor actions mirror the swipes); tap → item. Empty: check glyph + 'Nothing expiring in the next 7 days. Nice.' Cost: each verb = 1 swipe; add all 1 tap; cook 1 tap.",
+  "apps": [
+   {
+    "name": "Apple Reminders (Scheduled / Today)",
+    "what": "Scheduled groups reminders into Past Due, Today, Tomorrow, the rest of the month, then each later month; Today splits into Morning, Afternoon, Tonight; completion is a tap on the circle; swipe left reveals Delete (with Flag and Details), swipe right indents.",
+    "aspects": [
+     {
+      "aspect": "Completion is a visible tap target on every row, not a swipe",
+      "why": "'Used' is Ambry's most frequent verb and it is hidden behind a leading swipe; Reminders makes the equivalent verb one visible tap",
+      "source": "https://support.apple.com/en-us/102484"
+     },
+     {
+      "aspect": "Past Due first, then day buckets that widen as they recede",
+      "why": "Confirms Ambry's Overdue → Today → Tomorrow → dated ordering; the widening buckets are a model for a longer horizon",
+      "source": "https://support.apple.com/guide/iphone/use-smart-lists-iphe882772ed/ios"
+     }
+    ]
+   },
+   {
+    "name": "Todoist (Upcoming)",
+    "what": "A week strip, an Overdue section with a 'Reschedule' button at its top-right that re-dates every overdue task in one go, then one section per day; tasks drag between days; swipe actions are chosen from Complete, Schedule, Delete, Reminders; the scheduler suggests Today, Tomorrow, This weekend, Next week.",
+    "aspects": [
+     {
+      "aspect": "A bulk 'Reschedule' on the Overdue section",
+      "why": "Overdue food is the section that needs the most decisions; one header action (snooze all, or mark all used) is cheaper than N swipes",
+      "source": "https://www.todoist.com/help/articles/plan-your-week-with-the-upcoming-view-OKOg1mR8"
+     },
+     {
+      "aspect": "Drag a task onto another day to re-date it",
+      "why": "Ambry's day sections are the same shape; dragging a row from 'Today' to 'In 3 days' would be a re-date without a picker",
+      "source": "https://www.todoist.com/help/articles/plan-your-week-with-the-upcoming-view-OKOg1mR8"
+     }
+    ]
+   },
+   {
+    "name": "Things 3 (Today / Upcoming)",
+    "what": "Today shows anything starting or due today plus overdue items, with an optional 'This Evening' section at the bottom; Upcoming lists the next seven days separately starting with tomorrow; swipe right opens the 'When' picker (Today, This Evening, Someday, a calendar, Clear).",
+    "aspects": [
+     {
+      "aspect": "Swipe right opens a small picker rather than firing one fixed verb",
+      "why": "Ambry's '+2 days' is one fixed nudge; the item screen already has four; one picker on the swipe would give the list the same vocabulary",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     },
+     {
+      "aspect": "'This Evening' — a second axis inside Today",
+      "why": "Grouping by day is not the only useful cut; a by-shelf cut is the kitchen's own",
+      "source": "https://culturedcode.com/things/support/articles/4001304/"
+     }
+    ]
+   },
+   {
+    "name": "Apple Mail (swipe options)",
+    "what": "Settings › Apps › Mail › Swipe Options chooses what a left and right swipe do; dragging slowly reveals the menu, a full swipe fires the outermost action.",
+    "aspects": [
+     {
+      "aspect": "Full-swipe fires the outermost action",
+      "why": "Ambry's trailing edge holds +2 days (inner) and List (outer); making the full swipe fire the outer one is the platform default and needs a SwipeRow flag",
+      "source": "https://support.apple.com/guide/iphone/iph376ef8aa3/ios"
+     }
+    ]
+   },
+   {
+    "name": "CozZo / Fridgely / Pantry Check",
+    "what": "CozZo sends daily reminders for items that expire today, soon, are expired or need restocking and has a 'Cook Expiring Products' board ranked by how many expiring products a recipe uses; Fridgely colour-codes days left per space and lets Premium users widen 'expiring soon' to 15–30 days; Pantry Check has an Expiring Items screen sorted by alert type.",
+    "aspects": [
+     {
+      "aspect": "A user-set horizon for 'expiring soon'",
+      "why": "Ambry's 7 days is a constant; weekend shoppers want 10–14",
+      "source": "https://apps.apple.com/gb/app/fridgely/id988016972"
+     },
+     {
+      "aspect": "Recipes ranked by expiring-product count, linked from the expiring view",
+      "why": "Validates the Cook CTA; suggests the count ('uses 3 of these') is what makes the link worth tapping",
+      "source": "https://cozzo.app/"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Triage inbox",
+    "pitch": "Make 'Used' a visible tap and give the Overdue section a bulk action, so the screen is cleared by tapping down it like Reminders' Today.",
+    "regions": [
+     "Header: back chevron; right slot = OverflowMenu (Add all to list, See recipes, Clear all overdue) — the body CTA moves here so the list starts on food",
+     "LargeTitle 'Expiring Soon' + count subtitle (unchanged)",
+     "Overdue SectionHeader (danger) with a trailing small tinted Button 'Snooze all +2d' (undo toast lists the count) — Todoist's Reschedule",
+     "Row: GroupedRow › SwipeRow (leading Used kept for the gesture; trailing +2 days / List) › ItemRow with a leading 44pt circle (tap → Used, animates to a check, toast + Undo); rotor actions unchanged",
+     "Day sections unchanged; empty and error states unchanged"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Tap-the-circle completion",
+      "app": "Apple Reminders",
+      "source": "https://support.apple.com/en-us/102484"
+     },
+     {
+      "aspect": "Bulk 'Reschedule' on the Overdue section",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/plan-your-week-with-the-upcoming-view-OKOg1mR8"
+     }
+    ],
+    "cost": "Used = 1 visible tap (was 1 hidden swipe); all overdue snoozed = 1 tap + undo; recipes/add-all = 2 taps via the menu (were 1).",
+    "tradeoff": "The circle is a new row element (S3 again — but this screen already has its own row rules) and moving the Cook CTA into a menu costs a tap on the one 'invitation' P7 deliberately kept in the body; a bulk snooze is the kind of action that needs its undo toast to name every row. Familiarity wins: Reminders users know the circle."
+   },
+   {
+    "name": "B. Two cuts: by day, by shelf",
+    "pitch": "A SegmentedControl 'By day · By shelf' above the list. By shelf groups the same rows under location headers with the day badge doing the urgency work — the view for standing at the open fridge.",
+    "regions": [
+     "Header + LargeTitle unchanged; 'Add all' stays in the right slot",
+     "SegmentedControl By day · By shelf (persisted like 'recipes-segment'); the Cook CTA below it (unchanged, single body CTA)",
+     "By day: today's sections. By shelf: SectionHeader per location (icon + name + count, `tone: danger` when every row in it is overdue) sorted by the shelf's soonest date; rows sorted by urgency; ItemRow subtitle becomes 'added Sep 3' (the location is now the header)",
+     "Rows keep both swipe edges and rotor actions",
+     "Empty: unchanged; a shelf with nothing due simply has no section"
+    ],
+    "borrowed": [
+     {
+      "aspect": "'All Items' beside 'Spaces' — the same rows in two cuts",
+      "app": "CozZo",
+      "source": "https://cozzo.app/features/food-home-supplies-inventory/"
+     },
+     {
+      "aspect": "A second axis inside the day view ('This Evening')",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/4001304/"
+     },
+     {
+      "aspect": "Sort/filter by placement",
+      "app": "NoWaste",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     }
+    ],
+    "cost": "Switching cut = 1 tap; every verb still 1 swipe; nothing added to the item path.",
+    "tradeoff": "Puts a control back above the first row (P7 just removed one) and doubles the section logic to test; the by-shelf cut hides the Overdue header's red unless a whole shelf is overdue. Cheap to build (groupItemsByLocation exists) and answers a real kitchen moment the day view does not."
+   },
+   {
+    "name": "C. One date vocabulary",
+    "pitch": "The trailing swipe stops being a fixed '+2 days' and opens the item screen's own nudges (+3d · +1w · +2w · +1m · Type a date) in a sheet; the horizon becomes a setting.",
+    "regions": [
+     "Header right slot: 'Add all' (unchanged); LargeTitle; Cook CTA (unchanged)",
+     "Row: SwipeRow leading Used; trailing 'Later' (opens a BottomSheet: the DATE_NUDGES chips, 'Type a date' revealing MaskedDateInput, Cancel; a chip writes via the shared snoozedExpiry + toast/Undo) and 'List'",
+     "Footer row under the last section: 'Showing 7 days · Change' → a BottomSheet with a SegmentedControl 3 · 7 · 14 days (writes a per-device preference; SOON_THRESHOLD_DAYS becomes the default, the badge count on the Pantry tab follows the same preference)",
+     "Empty state names the horizon: 'Nothing expiring in the next N days.'; error unchanged"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Swipe opens a When picker with quick options",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803579/"
+     },
+     {
+      "aspect": "Scheduler suggestions Today / Tomorrow / This weekend / Next week",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     },
+     {
+      "aspect": "User-set expiring-soon range",
+      "app": "Fridgely",
+      "source": "https://apps.apple.com/gb/app/fridgely/id988016972"
+     }
+    ],
+    "cost": "Snooze = swipe + 1 tap (was 1 swipe) but any length; exact date = swipe + tap + 8 digits without opening the item; horizon change = 2 taps, once.",
+    "tradeoff": "One extra tap on the second-most-frequent verb, against never having to open the item to choose how long; the horizon setting ripples into the digest, the Pantry badge and the location filter (all read the constant) and is a product decision for Everett. Agency improves (forgiveness via Undo on every write), simplicity is neutral."
+   }
+  ]
+ },
+ {
+  "screen": "Item screen",
+  "route": "src/app/item/[id].tsx",
+  "current_summary": "Rebuilt 2026-09-04 (#173) as an iOS grouped detail. Bar: chevron only. Heading: CategoryTile hero (own photo, else catalog photo) beside a boxless name Input (commits on blur/return; 'Renames this copy only.' while dirty) and 'Category · added Sep 3'. STORAGE: Location ▸ (LocationPickerModal, recomputes the estimate on a kind change) · Zone ▸ (Alert picker, only when the shelf has zones) · Status SegmentedControl. EXPIRY: value row 'Sep 12 · 5d' with provenance caption (estimated / learned / set manually) · chips +3d +1w +2w +1m (write immediately, toast + Undo) · 'Type a date ▸' disclosing MaskedDateInput (commits on the eighth digit, year-bounded, counts as a spec-40 correction after the undo window) · Clear date. WHAT'S IN IT? (leftovers only) · NOTES (blur commit) · Nutrition card or placeholder · Delete item (one Alert). Cost: nudge 1 tap; exact date 1 tap + 8 digits; status 1 tap; location 2 taps; rename tap + keyboard.",
+  "apps": [
+   {
+    "name": "Apple Reminders (details)",
+    "what": "A grouped Details sheet: title and notes, Date (with Today / Tomorrow / This Weekend / Date & Time quick options), Time, Early Reminder, Repeat, Tags, Location, When Messaging, Flag, Priority, List, Subtasks, Images, URL; the same quick dates sit in the toolbar over the keyboard when typing a reminder.",
+    "aspects": [
+     {
+      "aspect": "Relative quick dates offered before the calendar, everywhere a date is asked for",
+      "why": "Ambry now has four nudges on the item screen and one on the swipe; Reminders shows the same set reused in both places",
+      "source": "https://support.apple.com/en-us/102484"
+     },
+     {
+      "aspect": "One grouped sheet of value rows with disclosure",
+      "why": "The shape #173 adopted; confirms Location ▸ / Zone ▸ / Expires as value rows is the platform idiom",
+      "source": "https://support.apple.com/en-us/102484"
+     }
+    ]
+   },
+   {
+    "name": "Things 3 (When)",
+    "what": "The When picker offers Today, This Evening, Someday and a calendar, with Clear; a field accepts natural language — 'tod', 'tomorrow', 'next week', 'sat 9am', '17d', '17d from jul9', '3rd wed jul' — and shows the interpreted date before Return confirms it; swipe right on a row opens the same picker.",
+    "aspects": [
+     {
+      "aspect": "Typed natural-language dates with the interpretation echoed before commit",
+      "why": "Ambry's exact-date path is eight digits with no year shown; '12 sep' or '10d' is fewer keystrokes and self-checking",
+      "source": "https://culturedcode.com/things/support/articles/9780167/"
+     },
+     {
+      "aspect": "The same picker from the row's swipe and from the detail",
+      "why": "One control for a date, wherever the date is set",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     }
+    ]
+   },
+   {
+    "name": "Todoist (scheduler)",
+    "what": "Suggestions (Today, Tomorrow, This weekend, Next week, No date), a scrollable calendar whose days show a load bar, a type-a-date field taking natural language up to 150 characters, and dates coloured red (overdue), green (today), brown (tomorrow), purple (later).",
+    "aspects": [
+     {
+      "aspect": "Colour-coded date text by urgency",
+      "why": "Ambry's expiry value row is muted grey whatever the date; the urgency tone the badge uses could colour the value",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     },
+     {
+      "aspect": "Suggestions + calendar + typed entry in one scheduler",
+      "why": "The three date paths as one control rather than three rows",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     }
+    ]
+   },
+   {
+    "name": "Fantastical (natural-language input)",
+    "what": "One field; the parser highlights the date, time and location parts as you type ('Haircut tomorrow at Quick Cuts 10am'), '/calendar' picks the calendar, 'task' makes a task, and when it cannot resolve a date the interface falls back to the picker.",
+    "aspects": [
+     {
+      "aspect": "Graceful fallback from parsing to a picker",
+      "why": "A typed expiry that does not parse must not fail silently; Fantastical's rule is the fallback Ambry's masked field would need",
+      "source": "https://flexibits.com/fantastical-ios/help/adding-events-and-tasks"
+     }
+    ]
+   },
+   {
+    "name": "Sortly (item detail)",
+    "what": "An item page with photos, quantity, min level, price, tags, notes and custom fields; 'Quick Actions' edit and update quantities without opening the editor; bulk edit updates names, quantities, tags, notes and Min Level across items; low-stock alerts feed the home screen.",
+    "aspects": [
+     {
+      "aspect": "Quick actions on the detail for the frequent write",
+      "why": "Ambry's frequent writes (used, +days, add to list) exist on the list rows but only Status exists here; a visible action row closes that gap",
+      "source": "https://help.sortly.com/hc/en-us/articles/6660883031451-Sortly-Mobile-App"
+     },
+     {
+      "aspect": "Min level as a per-item threshold behind an alert",
+      "why": "Ambry has no 'remind me when low' per item; Sortly's model is the simplest version",
+      "source": "https://help.sortly.com/hc/en-us/articles/360016384492-Bulk-Edit-Items-and-Folders"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A. Expiry as one row and a sheet",
+    "pitch": "Collapse the four EXPIRY rows into one value row; tapping it opens a scheduler sheet with the nudges, a month grid and the typed field. The screen gets a third shorter.",
+    "regions": [
+     "Bar: chevron only (unchanged); heading unchanged",
+     "STORAGE: Location ▸ · Zone ▸ · Status (unchanged)",
+     "EXPIRY: one SettingsRow 'Expires' value 'Sep 12 · 5d' (value coloured by urgency tone) with the provenance caption; tap → BottomSheet: Chip row Today · Tomorrow · +3d · +1w · +2w · +1m, a pure-JS month grid (7 columns of Pressables, no native module), 'Type a date' (MaskedDateInput), 'Clear date', Cancel; every pick writes via setExpiry with toast + Undo",
+     "WHAT'S IN IT? · NOTES · Nutrition · Delete item (unchanged)",
+     "States: pending spinner, load error ErrorState with retry, not-found sentence (unchanged)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Quick options + calendar + Clear in one picker",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803579/"
+     },
+     {
+      "aspect": "Suggestions, calendar and typed entry in one scheduler",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     },
+     {
+      "aspect": "Colour-coded date text",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     }
+    ],
+    "cost": "Nudge = 2 taps (was 1); calendar date = 3 taps, no keyboard (was 1 tap + 8 digits); clear = 2 taps (was 1).",
+    "tradeoff": "One extra tap on the most common edit, against a real calendar without a native build (the datetimepicker is queued for the next EAS build, critique decision 5 — this sheet is what the native picker would replace). Rule 7 requires Cancel (every row commits). Simplicity of the page up, minimal-taps down: the direction to bet on only if the calendar is wanted before the next native build."
+   },
+   {
+    "name": "B. Typed dates, understood",
+    "pitch": "Keep the inline nudges. Replace the eight-digit masked field with one short field that parses '12 sep', 'fri', 'in 10 days', '3w' and echoes the date it understood before committing.",
+    "regions": [
+     "Heading, STORAGE, nudges row: unchanged",
+     "EXPIRY 'Type a date ▸' discloses a single-line Input (keyboard: default, returnKeyType done) with placeholder 'e.g. 12 Sep, Fri, in 10 days'; under it a live echo '→ Sep 12 · Fri · 5d' or 'Not a date yet'; commit on return/blur when the echo is a date, bounded by expiryEntryBounds; writes as manual + spec-40 correction exactly as the masked field does",
+     "Pure module `parseExpiryPhrase(text, today, locale)` beside expiry.ts, built on addCalendarDays (device-day rule), with jest cases per phrase; numeric forms accept both 12/9 and 9/12 only when unambiguous, else the echo asks",
+     "Fallback: an unparsed entry keeps the text and offers 'Pick a date' (the masked field) — Fantastical's rule",
+     "Everything else unchanged"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Natural-language date input with the interpretation shown before Return",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/9780167/"
+     },
+     {
+      "aspect": "Parser that falls back to a picker when it cannot resolve",
+      "app": "Fantastical",
+      "source": "https://flexibits.com/fantastical-ios/help/adding-events-and-tasks"
+     },
+     {
+      "aspect": "Type-a-date field beside suggestions",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO"
+     }
+    ],
+    "cost": "Exact date = 1 tap + 3–6 characters + return (was 8 digits); nudges unchanged at 1 tap.",
+    "tradeoff": "Still a keyboard for exact dates (a control cannot produce an arbitrary date without a calendar), and locale ambiguity has to be handled in the echo rather than guessed; the parser is new pure logic with tests. It keeps every tap count #173 achieved and makes the escape hatch self-checking — the direction with the best cost/risk of the three."
+   },
+   {
+    "name": "C. Action row under the heading",
+    "pitch": "Give the detail screen the verbs the lists have: a row of four tinted buttons — Used · +2 days · Add to list · Move — under the name, and merge Location and Zone into one row.",
+    "regions": [
+     "Heading: tile + name + meta (unchanged); beneath it a horizontal row of four small tinted Buttons with icons: Used (status → out, toast + Undo), +2 days (snoozedExpiry, toast + Undo), Add to list (useAddGroceryItems, dedupe toast), Move (LocationPickerModal) — stacked two-by-two under useLargeText",
+     "STORAGE: one SettingsRow 'Where' value '🧊 Fridge · Door' → LocationPickerModal, then (if the target has zones) the zone picker as a second step in the same sheet; Status SegmentedControl stays as the last row",
+     "EXPIRY: value row with urgency-coloured value; chips; Type a date; Clear (unchanged)",
+     "Notes, Nutrition, Delete (unchanged)",
+     "Rule: a button that duplicates a swipe elsewhere uses the same handler and toast copy (`markUsed`, `snooze`, `addOneToList` lifted into a shared hook)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Quick Actions on the item for the frequent write",
+      "app": "Sortly",
+      "source": "https://help.sortly.com/hc/en-us/articles/6660883031451-Sortly-Mobile-App"
+     },
+     {
+      "aspect": "Same verbs on the row's swipe and on the detail",
+      "app": "Things 3",
+      "source": "https://culturedcode.com/things/support/articles/2803582/"
+     },
+     {
+      "aspect": "'Reschedule'/'Schedule' as a first-class action on the item",
+      "app": "Todoist",
+      "source": "https://www.todoist.com/help/articles/how-to-change-your-swipe-actions-D5DQOQz6"
+     }
+    ],
+    "cost": "Used / +2 days / Add to list = 1 tap from the detail (Add to list was impossible here; Used was a segment tap); Move = 2 taps (same); zone = 3 taps (was 2) but only after a move.",
+    "tradeoff": "Four buttons under the heading add weight to the quietest screen in the app and 'Used' duplicates the Status control one group down (agency: two ways to say one thing); merging Location and Zone into a two-step picker costs a tap on zone changes. It closes the one real gap — no grocery hand-off from the item — and makes list and detail share one vocabulary (familiarity)."
+   }
+  ]
+ }
+]

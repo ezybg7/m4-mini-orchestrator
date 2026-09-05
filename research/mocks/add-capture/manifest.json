@@ -1,0 +1,114 @@
+[
+  {
+    "screen": "Add tab (type-ahead + confirm sheet)",
+    "screen_slug": "add-tab-type-ahead-confirm-sheet",
+    "today": {
+      "file": "add-tab-type-ahead-confirm-sheet/today.html",
+      "look_for": "Two affordances on every result row (body opens the sheet, trailing + adds at once); Recent is hidden while typing and sits below the camera rows when idle; the sheet still fills its CTA with accent green, which the design system reserves for state."
+    },
+    "directions": [
+      {
+        "name": "1A Recents up front",
+        "slug": "1a-recents-up-front",
+        "file": "add-tab-type-ahead-confirm-sheet/1a-recents-up-front.html",
+        "look_for": "The re-buy strip sits under the field where the thumb lands, a tap adds and the toast carries Change; the camera rows keep their place and nothing scrolls."
+      },
+      {
+        "name": "1B Browse, don't type",
+        "slug": "1b-browse-don-t-type",
+        "file": "add-tab-type-ahead-confirm-sheet/1b-browse-don-t-type.html",
+        "look_for": "A keyboard-free path: Recent rows, then all twelve category tiles with their catalog counts; the price is visible too — the Scan and Snap rows have sunk below the fold."
+      },
+      {
+        "name": "1C Tap adds, pencil edits",
+        "slug": "1c-tap-adds-pencil-edits",
+        "file": "add-tab-type-ahead-confirm-sheet/1c-tap-adds-pencil-edits.html",
+        "look_for": "One row, one meaning: tapping Milk committed it with its suggested shelf and the toast offers Change; the trailing glyph is now a pencil that opens the sheet first, and only the free-text row still leads with the sheet."
+      }
+    ]
+  },
+  {
+    "screen": "Barcode scan (staged session)",
+    "screen_slug": "barcode-scan-staged-session",
+    "today": {
+      "file": "barcode-scan-staged-session/today.html",
+      "look_for": "The camera card owns the screen; a scan is a haptic and a count, and the staged list lives on a second screen behind Review."
+    },
+    "directions": [
+      {
+        "name": "2A Queue under the viewfinder",
+        "slug": "2a-queue-under-the-viewfinder",
+        "file": "barcode-scan-staged-session/2a-queue-under-the-viewfinder.html",
+        "look_for": "The staged rows are the review: they queue under a shorter camera, newest first, an unknown barcode is named by tapping it, and Add 4 to pantry commits from here (held while a row needs a name)."
+      },
+      {
+        "name": "2B Set the shelf first",
+        "slug": "2b-set-the-shelf-first",
+        "file": "barcode-scan-staged-session/2b-set-the-shelf-first.html",
+        "look_for": "A destination is chosen once on the viewfinder (Auto is the default) and every following scan is stamped with it; the count names the mode so a forgotten Freezer cannot go unnoticed."
+      },
+      {
+        "name": "2C Result card, camera stays live",
+        "slug": "2c-result-card-camera-stays-live",
+        "file": "barcode-scan-staged-session/2c-result-card-camera-stays-live.html",
+        "look_for": "Each scan answers with the fact worth checking — name, shelf and estimate on a card over the bottom third with Change and dismiss — while the camera keeps scanning above it."
+      }
+    ]
+  },
+  {
+    "screen": "Receipt / photo capture (camera-first, AI parse, quota meter)",
+    "screen_slug": "receipt-photo-capture-camera-first-ai-parse-quota-meter",
+    "today": {
+      "file": "receipt-photo-capture-camera-first-ai-parse-quota-meter/today.html",
+      "look_for": "Camera-first: the viewfinder with its Receipt/Groceries switch, Photos and PDF beside the shutter, and one meter line; the shot goes to a preview whose Scan button is the tap that spends a scan."
+    },
+    "directions": [
+      {
+        "name": "3A Long receipt as parts",
+        "slug": "3a-long-receipt-as-parts",
+        "file": "receipt-photo-capture-camera-first-ai-parse-quota-meter/3a-long-receipt-as-parts.html",
+        "look_for": "Each shutter press shrinks into a Part thumbnail and the camera stays live for the next section; the PDF corner becomes Scan 2 parts, so a long receipt is one Scan and one charge."
+      },
+      {
+        "name": "3B The shutter is the gate",
+        "slug": "3b-the-shutter-is-the-gate",
+        "file": "receipt-photo-capture-camera-first-ai-parse-quota-meter/3b-the-shutter-is-the-gate.html",
+        "look_for": "No preview screen: the frame freezes for 2.5 s behind Sending… Undo, nothing leaves the phone until the window closes, and earlier shots queue as chips (7 items · Reading… · Couldn’t read · Retry); the privacy promise moves under the meter."
+      },
+      {
+        "name": "3C Reading happens in the basket",
+        "slug": "3c-reading-happens-in-the-basket",
+        "file": "receipt-photo-capture-camera-first-ai-parse-quota-meter/3c-reading-happens-in-the-basket.html",
+        "look_for": "After Scan there is no held analyzing screen — the viewfinder is live again with one toast and the meter already charged; the wait moves to the Add tab’s basket bar (“Reading receipt… · 2 staged”) and to a Reading… skeleton section at the top of the review that fills in place. Note the toast lands where Toast always lands — over the shutter row — so the build would need to lift it."
+      }
+    ]
+  },
+  {
+    "screen": "Capture review list (grouped cells, per-row location/expiry, bulk tick, add all)",
+    "screen_slug": "capture-review-list-grouped-cells-per-row-location-expiry-bu",
+    "today": {
+      "file": "capture-review-list-grouped-cells-per-row-location-expiry-bu/today.html",
+      "look_for": "One flat list: every row carries a location chip and an expiry tag, Put everything in… acts on all rows regardless of the ticks, and any fix beyond location means opening the editor sheet."
+    },
+    "directions": [
+      {
+        "name": "4A Swipe-through ticks and a selection bar",
+        "slug": "4a-swipe-through-ticks-and-a-selection-bar",
+        "file": "capture-review-list-grouped-cells-per-row-location-expiry-bu/4a-swipe-through-ticks-and-a-selection-bar.html",
+        "look_for": "One drag down the checkbox column unticks a run (Bananas, Sourdough); because the ticked set now differs from all, a selection bar appears above the CTA — Put 3 in… · Remove 3 — and Clear has moved into the header’s ellipsis menu."
+      },
+      {
+        "name": "4B Grouped by shelf",
+        "slug": "4b-grouped-by-shelf",
+        "file": "capture-review-list-grouped-cells-per-row-location-expiry-bu/4b-grouped-by-shelf.html",
+        "look_for": "The shelf is read, not opened: rows sit under Fridge · 4 and Pantry · 2 with an All to… per section, the location chip is gone, Bananas is mid-drag from Fridge into the highlighted Pantry group, and the unsure row offers Try: “Butter” from the parser’s candidates."
+      },
+      {
+        "name": "4C Fix in place",
+        "slug": "4c-fix-in-place",
+        "file": "capture-review-list-grouped-cells-per-row-location-expiry-bu/4c-fix-in-place.html",
+        "look_for": "Every attention reason is fixed where it sits: the unnamed barcode row is an inline field with the keyboard, the unsure row offers Keep · Find in catalog instead of a caption, and a last cell adds a line the scan missed; the chevron still opens the editor for notes and category."
+      }
+    ]
+  }
+]

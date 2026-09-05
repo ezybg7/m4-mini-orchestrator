@@ -1,0 +1,112 @@
+<style>
+.screen{position:relative;width:390px;height:844px;overflow:hidden;background:#F2F2F7;color:#000;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.3;-webkit-font-smoothing:antialiased}
+.screen,.screen *{box-sizing:border-box}
+.screen *{margin:0;padding:0}
+.screen .status{height:47px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 9px 34px;font-size:15px;font-weight:600}
+.screen .sys{display:flex;align-items:center;gap:6px}
+.screen .sig{display:flex;align-items:flex-end;gap:1.5px;height:11px}
+.screen .sig i{display:block;width:3px;background:#000;border-radius:1px}
+.screen .wifi{width:16px;height:16px;border-radius:50%;border:3px solid transparent;border-top-color:#000;position:relative;top:4px}
+.screen .wifi::after{content:"";position:absolute;left:3px;top:-1px;width:4px;height:4px;border-radius:50%;background:#000}
+.screen .bat{width:26px;height:12px;border:1.5px solid rgba(0,0,0,.35);border-radius:4px;padding:1.5px;position:relative}
+.screen .bat i{display:block;height:100%;width:100%;background:#000;border-radius:2px}
+.screen .bat::after{content:"";position:absolute;right:-4px;top:2.5px;width:2px;height:5px;background:rgba(0,0,0,.4);border-radius:0 2px 2px 0}
+.screen .hdr{background:#fff;border-bottom:.5px solid #E5E5EA}
+.screen .nav{height:44px;display:flex;align-items:center;padding:0 10px}
+.screen .nav .ttl{flex:1;text-align:center;font-size:17px;font-weight:600}
+.screen .nav .slot{width:44px;display:flex;align-items:center}
+.screen .nav .slot.r{justify-content:flex-end}
+.screen .back{width:12px;height:12px;border-left:2.5px solid #1F7A35;border-bottom:2.5px solid #1F7A35;transform:rotate(45deg);margin-left:8px}
+.screen .lt{padding:8px 16px 0;display:flex;align-items:flex-end;gap:8px;font-size:34px;font-weight:700;letter-spacing:-.4px;line-height:1.2}
+.screen .lt>span{white-space:nowrap}
+.screen .lt small{font-size:13px;color:#6D6D72;font-weight:400;letter-spacing:0;padding-bottom:5px}
+.screen .sh{display:flex;justify-content:space-between;padding:16px 32px 6px;font-size:13px;font-weight:600;color:#6D6D72;text-transform:uppercase;letter-spacing:.5px}
+.screen .grp{margin:0 16px;background:#fff;border-radius:10px;overflow:hidden}
+.screen .row{min-height:44px;display:flex;align-items:center;gap:12px;padding:8px 16px;position:relative;font-size:15px}
+.screen .row+.row::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:#E5E5EA}
+.screen .lab{flex:1}
+.screen .val{color:#6D6D72;text-align:right}
+.screen .rchev{width:9px;height:9px;border-right:2px solid #848B92;border-top:2px solid #848B92;transform:rotate(45deg);flex:none;margin-right:2px}
+.screen .sw{width:51px;height:31px;border-radius:16px;background:#E9E9EB;position:relative;flex:none}
+.screen .sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.screen .sw.on{background:#34C759}.screen .sw.on::after{left:22px}
+.screen .fn{padding:6px 32px 0;font-size:13px;color:#6D6D72}
+.screen .gap{height:20px}
+.screen .pad{padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+.screen .btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:10px;background:#000;color:#fff;font-weight:600;font-size:15px;text-align:center}
+.screen .btn.lg{padding:14px 18px;font-size:16px}
+.screen .btn.tinted{background:#E4F7E9;border:1px solid #A7DBB6;color:#1F7A35}
+.screen .btn.bordered{background:#fff;border:1px solid #E5E5EA;color:#000}
+.screen .btn.secondary{background:none;color:#6D6D72;font-weight:400}
+.screen .btn.destructive{background:none;color:#D70015;font-weight:400}
+.screen .btn.dfill{background:#D70015}
+.screen .btn.off{opacity:.4}
+.screen .inp{min-height:44px;border:1px solid #E5E5EA;border-radius:10px;padding:10px 12px;font-size:16px;background:#fff;color:#7F7F86;display:flex;align-items:center;justify-content:space-between}
+.screen .inp.on{color:#000}
+.screen .clr{width:17px;height:17px;border-radius:50%;background:#848B92;color:#fff;font-size:12px;line-height:17px;text-align:center;font-weight:700}
+.screen .apple{height:50px;border-radius:10px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;font-weight:600}
+.screen .alogo{position:relative;width:15px;height:15px;background:#fff;border-radius:50% 50% 48% 48%/45% 45% 55% 55%;top:2px}
+.screen .alogo::before{content:"";position:absolute;top:-6px;left:7px;width:5px;height:6px;background:#fff;border-radius:0 100% 0 100%}
+.screen .google{height:50px;border-radius:10px;background:#fff;border:1px solid #E5E5EA;display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;font-weight:600}
+.screen .g{width:18px;height:18px;border-radius:50%;background:conic-gradient(#4285F4 0 25%,#34A853 0 50%,#FBBC05 0 75%,#EA4335 0);position:relative}
+.screen .g::after{content:"";position:absolute;inset:4px;background:#fff;border-radius:50%}
+.screen .or{display:flex;align-items:center;gap:10px;color:#6D6D72;font-size:13px}
+.screen .or::before,.screen .or::after{content:"";flex:1;height:.5px;background:#E5E5EA}
+.screen .chips{display:flex;gap:8px;flex-wrap:wrap}
+.screen .chip{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;border:1px solid #E5E5EA;background:#fff;font-size:13px;color:#3C3C43}
+.screen .chip.on{background:#000;border-color:#000;color:#fff}
+.screen .card{background:#fff;border-radius:12px;border:1px solid #E5E5EA;padding:16px;display:flex;flex-direction:column;gap:10px}
+.screen .bul{display:flex;gap:8px;color:#6D6D72}
+.screen .h28{font-size:28px;font-weight:700;letter-spacing:-.4px;line-height:1.2}
+.screen .h34{font-size:34px;font-weight:700;letter-spacing:-.4px;line-height:1.2}
+.screen .t17{font-size:17px;font-weight:600}.screen .t16{font-size:16px;font-weight:600}
+.screen .mut{color:#6D6D72}.screen .cap{font-size:13px}.screen .acc{color:#1F7A35}.screen .dng{color:#D70015}.screen .ctr{text-align:center}.screen .soft{color:#3C3C43}
+.screen .link{color:#1F7A35;text-align:center;min-height:44px;padding:12px;display:flex;align-items:center;justify-content:center}
+.screen .col{display:flex;flex-direction:column;gap:2px}.screen .rw{display:flex;align-items:center;gap:12px}.screen .fill{flex:1}
+.screen .tab{position:absolute;left:0;right:0;bottom:0;height:83px;background:#fff;border-top:.5px solid #E5E5EA;display:flex;justify-content:space-around;padding:7px 8px 0}
+.screen .tab>div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:500;color:#8E8E93;width:64px;position:relative}
+.screen .tab .ic{width:24px;height:24px;border:1.8px solid currentColor;border-radius:6px;position:relative}
+.screen .tab .ic.pantry{background:linear-gradient(currentColor,currentColor) center/16px 1.8px no-repeat}
+.screen .tab .ic.lists::after{content:"";position:absolute;left:7px;top:3px;width:6px;height:11px;border:solid currentColor;border-width:0 1.8px 1.8px 0;transform:rotate(45deg)}
+.screen .tab .ic.add{border-radius:50%;background:linear-gradient(currentColor,currentColor) center/12px 1.8px no-repeat,linear-gradient(currentColor,currentColor) center/1.8px 12px no-repeat}
+.screen .tab .ic.recipes{border-radius:3px;background:linear-gradient(currentColor,currentColor) 8px 0/1.8px 100% no-repeat}
+.screen .tab .ic.profile{border-radius:50%;overflow:hidden}
+.screen .tab .ic.profile::before{content:"";position:absolute;left:7px;top:4px;width:8px;height:8px;border-radius:50%;border:1.8px solid currentColor}
+.screen .tab .ic.profile::after{content:"";position:absolute;left:3px;top:14px;width:16px;height:14px;border-radius:50%;border:1.8px solid currentColor}
+.screen .tab .on{color:#525D6E}
+.screen .dot{position:absolute;top:-2px;right:14px;width:9px;height:9px;border-radius:50%;background:#FF3B30}
+.screen .home{position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:#000}
+.screen .dim{position:absolute;inset:0;background:rgba(0,0,0,.4)}
+.screen .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;padding:8px 16px 32px;display:flex;flex-direction:column;gap:10px}
+.screen .handle{align-self:center;width:36px;height:5px;border-radius:3px;background:#C7C7CC}
+.screen .toast{position:absolute;left:16px;right:16px;background:#1C1C1E;color:#fff;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.screen .toast b{color:#7FDCA0;font-weight:600}
+.screen .seg{display:flex;background:#E9E9EB;border-radius:9px;padding:2px}
+.screen .seg div{flex:1;text-align:center;padding:6px 4px;border-radius:7px;font-size:13px;font-weight:500;color:#3C3C43}
+.screen .seg .on{background:#fff;font-weight:600;color:#000;box-shadow:0 3px 4px rgba(0,0,0,.12)}
+.screen .tile{width:56px;height:56px;border-radius:14px;background:#EBEEF2;color:#525D6E;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex:none}
+.screen .bar{height:4px;border-radius:999px;background:#E9E9EB;overflow:hidden}.screen .bar i{display:block;height:100%;background:#1F7A35;border-radius:999px}
+.screen .ck{width:20px;height:20px;border-radius:50%;background:#34C759;position:relative;flex:none}
+.screen .ck::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.screen .alt{margin:0 16px;border:1.5px dashed #A7DBB6;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;position:relative}
+.screen .alt>.tag{position:absolute;top:-9px;left:12px;background:#F2F2F7;padding:0 6px;font-size:11px;font-weight:600;color:#1F7A35;text-transform:uppercase;letter-spacing:.5px}
+.screen .notif{position:absolute;left:8px;right:8px;top:8px;background:rgba(255,255,255,.96);border-radius:22px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.screen .notif .app{width:38px;height:38px;border-radius:10px;background:#E4F7E9;color:#1F7A35;font-weight:700;display:flex;align-items:center;justify-content:center}
+.screen .kb{position:absolute;left:0;right:0;bottom:0;height:291px;background:#D1D3D9;padding:8px 3px}
+.screen .qt{height:40px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;color:#000;border-bottom:.5px solid #B9BBC1;margin:-8px -3px 8px}
+.screen .kr{display:flex;gap:6px;justify-content:center;margin-bottom:11px}
+.screen .kr i{display:block;width:32px;height:42px;background:#fff;border-radius:5px;box-shadow:0 1px 0 #898A8D}
+.screen .kr i.w{width:88px;background:#ABB0BA}
+.screen .fig{margin:16px;background:#fff;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.screen .swipe{position:relative;overflow:hidden;background:#fff}
+.screen .acts{position:absolute;right:0;top:0;bottom:0;display:flex}
+.screen .acts div{width:75px;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-size:12px;font-weight:600;padding:0 6px;line-height:1.2}
+.screen .tri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #1F7A35}
+</style>
+<div class="screen">
+<div class="hdr"><div class="status"><span>9:41</span><div class="sys"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:11px"></i></div><div class="wifi"></div><div class="bat"><i></i></div></div></div><div class="nav"><div class="slot"><div class="back"></div></div><div class="ttl">This month</div><div class="slot r"></div></div></div>
+<div class="fig"><div class="h34" style="font-variant-numeric:tabular-nums">75%</div><div style="font-size:16px" class="soft">used up</div><div class="mut">12 eaten · 4 went off</div></div>
+<div class="soft" style="padding:0 16px 8px">Bananas went off 3 times this month.</div>
+<div class="sh"><span>What went off</span></div>
+<div class="grp"><div class="row" style="padding:12px 16px"><span class="lab " style="font-size:16px">Bananas</span><span class="val">Sep 4</span></div><div class="row" style="padding:12px 16px"><span class="lab " style="font-size:16px">Milk</span><span class="val">Sep 3</span></div><div class="row" style="padding:12px 16px"><span class="lab " style="font-size:16px">Bananas</span><span class="val">Sep 2</span></div><div class="row" style="padding:12px 16px"><span class="lab " style="font-size:16px">Bananas</span><span class="val">Sep 1</span></div></div>
+</div>

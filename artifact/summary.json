@@ -1,0 +1,267 @@
+{
+ "as_of": "Draft \u2014 numbers update when verification finishes",
+ "lede": "Everything below happened on 2026-09-04 (EDT) through the orchestrator queue: the feature-by-feature review, the fix wave, the design wave, and the readiness pass. Automated evidence is in the last two sections; the middle sections are the checks only you can run on a phone, in a console, or as a decision.",
+ "stats": {
+  "acceptance": "6 / 12",
+  "unit": "170 \u00b7 2,907"
+ },
+ "callout": "Tick as you go. With the shared record on, I can read your ticks and notes back and pick up the fixes without you writing a message.",
+ "changes_intro": "Thirty-seven pull requests merged since Sep 3, grouped by the wave they belonged to. Every one went through an advocate + critic review pair before merge.",
+ "waves": [
+  {
+   "name": "Design wave (critique packages P0\u2013P7)",
+   "blurb": "Every screen re-read against the design brief: minimal interactions, no keyboard where a control will do, no duplicated headers. The foundation package gates the rest.",
+   "prs": [
+    171,
+    172,
+    174,
+    173,
+    177,
+    178,
+    179,
+    180
+   ]
+  },
+  {
+   "name": "Fix wave (feature reviews)",
+   "blurb": "Each feature area got an advocate and a critic; their findings became these fix packages.",
+   "prs": [
+    157,
+    158,
+    160,
+    162,
+    165,
+    163,
+    167,
+    170,
+    164,
+    168,
+    169,
+    153,
+    140,
+    144
+   ]
+  },
+  {
+   "name": "Regressions and reliability",
+   "blurb": "Found by the acceptance runs and the simulator passes.",
+   "prs": [
+    181
+   ]
+  },
+  {
+   "name": "Docs truth, audits and records",
+   "blurb": "The specs, the runbook and the changelog brought back to what shipped.",
+   "prs": [
+    149,
+    150,
+    152,
+    159,
+    166,
+    147,
+    183
+   ]
+  },
+  {
+   "name": "Tooling, CI and dependencies",
+   "blurb": "Dependabot groups, the secret scan in CI, and the workflow fixes.",
+   "prs": [
+    145,
+    143,
+    151,
+    138,
+    116,
+    146,
+    154,
+    175
+   ]
+  }
+ ],
+ "extra_titles": {},
+ "actions_intro": "In order. The database applies come first because the Profile tab already depends on 0054 and two merged-ready PRs wait on 0047 and 0053. Every apply was rehearsed tonight on a fresh copy of production.",
+ "actions": [
+  {
+   "title": "Apply 0054 to production",
+   "detail": "Rehearsed 8/8 on the reset acceptance branch. Users see \"Couldn't load your profile\" until this is applied.",
+   "command": "cd ~/code/pantry && git pull\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0054_creator_profiles.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0054_creator_profiles.sql   # expect: ALL 8 ASSERTIONS PASSED"
+  },
+  {
+   "title": "Apply 0053 to production, then replay the grants",
+   "detail": "From PR #161's branch. Rehearsed 16/16, grants replay clean, 0054 still 8/8 afterwards. Tell me when it is in and I merge #161.",
+   "command": "git fetch origin && git checkout fix/db-integrity-2026-09-04\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0053_merge_integrity.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0053_merge_integrity.sql   # expect: ALL 16 ASSERTIONS PASSED\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -f db/neon-grants.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0054_creator_profiles.sql   # still ALL 8"
+  },
+  {
+   "title": "Apply 0047 to production",
+   "detail": "From PR #156's branch. Creates the empty USDA mirror; inert until the seed. Rehearsed 7/7. Then I merge #156.",
+   "command": "git checkout feat/catalog-nutrition-matching\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0047_usda_foods.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0047_usda_foods.sql   # expect: ALL 7 ASSERTIONS PASSED"
+  },
+  {
+   "title": "Say yes or no to the USDA downloads",
+   "detail": "The 0047 seed needs three FDC datasets (~200 MB) from fdc.nal.usda.gov. With a yes I download, generate db/apply/usda-foods-seed.sql, rehearse it on the branch and hand you the apply line."
+  },
+  {
+   "title": "Deploy the Worker",
+   "detail": "`wrangler deploy` from workers/ with your token; confirm BETTER_AUTH_SECRET, AUTH_BASE_URL, RESEND_API_KEY, ANTHROPIC_API_KEY are set (`wrangler secret list`). The mini's wrangler is not logged in.",
+   "command": "cd ~/code/pantry/workers && npx wrangler secret list && npx wrangler deploy"
+  },
+  {
+   "title": "Cut a new EAS development build",
+   "detail": "app.json gained the webcredentials association (#174); the installed dev client runs the old native runtime until this is done.",
+   "command": "cd ~/code/pantry && eas build --profile development --platform ios"
+  },
+  {
+   "title": "Rotate the seeded dev account",
+   "detail": "test@pantry.dev's password is documented in the repo; rotate before beta and put the new value in ~/agents/.env.acceptance on the mini (chmod 600)."
+  },
+  {
+   "title": "Anthropic console budget alert",
+   "detail": "The per-user cap and a provider-side alert fail differently; set the alert before any external tester."
+  },
+  {
+   "title": "Sentry (ADR D13)",
+   "detail": "Create the project, set EXPO_PUBLIC_SENTRY_DSN in eas.json profiles, then enable source-map upload for production with SENTRY_ORG/PROJECT/AUTH_TOKEN as EAS secrets; verify one real crash arrives."
+  },
+  {
+   "title": "RevenueCat go-live gate",
+   "detail": "Do not set REVENUECAT_WEBHOOK_SECRET / REVENUECAT_SECRET_KEY yet. Condition (1), the webhook assert suite, is now green 12/12 on a production copy; (2) the last_event_at ordering migration and (3) the stale-event assert case are still open."
+  }
+ ],
+ "decisions": [
+  {
+   "q": "Ambry Plus price and trial",
+   "default": "$2.99/mo \u00b7 $24.99/yr \u00b7 7-day trial stays locked until you decide; recommended $4.99 \u00b7 $29.99 \u00b7 14-day with an in-trial cap of 60 scans / 20 ideas. Decide before any product is created in App Store Connect (PR #182).",
+   "answer": "sure go ahead",
+   "resolution": "Locked: $4.99/mo \u00b7 $29.99/yr \u00b7 14-day trial with an in-trial cap of 60 scans / 20 ideas. Being written into spec 23 and ADR D2 (PR #182); App Store Connect products and STATIC_PACKAGES must match when you create them.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  },
+  {
+   "q": "Plus perks that have no spec yet",
+   "default": "Themes and rich export deferred to their own specs; \"priority shelf-life learning\" dropped (spec 40 already applies corrections at once). Launch-day Plus = 300 scans / 100 ideas, unlimited members in owned households, 2000 photos (PR #182).",
+   "answer": "works",
+   "resolution": "Default stands: priority learning dropped; themes and rich export deferred to their own specs; launch-day Plus = 300 scans / 100 ideas, unlimited members in owned households, 2000 photos.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  },
+  {
+   "q": "Welcome-grant farming bound",
+   "default": "A hashed-email grant ledger kept 13 months and disclosed in the policy; the alternative is granting only after email verification (PR #182).",
+   "answer": "sure",
+   "resolution": "Hashed-email grant ledger, kept 13 months, disclosed in the policy.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  },
+  {
+   "q": "Specs 55 + 56 (Obsidian workspace, Codex QA lane)",
+   "default": "Approve with the amendments in my consolidated comment on PR #176; the merge is yours.",
+   "answer": "no, not right now, after we finish this project",
+   "resolution": "PR #176 parked until this project is finished.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  },
+  {
+   "q": "Spec 54 load testing",
+   "default": "PR #142 is yours to review.",
+   "answer": "no, you review it",
+   "resolution": "Claude runs the advocate + critic pair on PR #142 and reports.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  },
+  {
+   "q": "Email verification at sign-up (K7)",
+   "default": "Unset; it also decides the grant-farming bound above.",
+   "answer": "sure",
+   "resolution": "Verification goes ON: an auth-spec amendment and its implementation (Better Auth verification through Resend) are queued; the welcome grant is issued only to verified accounts.",
+   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+  }
+ ],
+ "device_intro": "From docs/device-test-plan.md \u2014 the boxes not yet ticked. Sections tagged 2-DEVICE need a second phone or account; DARK needs the dark theme.",
+ "runbook_intro": "From docs/ACCEPTANCE_TESTS.md \u2014 every step the simulator suite cannot prove (camera, airplane mode, a second device, native pickers). Grouped by scenario; each row says what to do and what you should see.",
+ "release_intro": "Spec 19's pre-submission gates and the production checklist's remaining boxes.",
+ "evidence_intro": "What I could prove without a phone, tonight, against a fresh copy of production on a Neon branch.",
+ "evidence": [
+  [
+   "Typecheck \u00b7 lint \u00b7 jest",
+   "pass",
+   "CI green on main at dfcd0f0: 170 suites, 2,907 tests (2 skipped), plus the four-timezone re-run; secret scan and disclosures green."
+  ],
+  [
+   "Worker route tests",
+   "pass",
+   "PR #184 merged: barcode, ideas and import routes have route-level tests (242 cases); the three defects it caught are being fixed in their own PR."
+  ],
+  [
+   "Full-history secret scan",
+   "pass",
+   "gitleaks over 637 commits at dfcd0f0: no leaks."
+  ],
+  [
+   "RLS on every table",
+   "pass",
+   "25/25 public tables; push_tickets and usda_foods are policy-less by design (server-only)."
+  ],
+  [
+   "Anonymous role",
+   "pass",
+   "Zero table or routine privileges."
+  ],
+  [
+   "TRUNCATE",
+   "pass",
+   "Held only by service_role (the Worker); no client role."
+  ],
+  [
+   "Outbound timeouts",
+   "pass",
+   "JWKS 5 s \u00b7 Data API 10 s \u00b7 OFF 5 s \u00b7 import sidecar 6 s \u00b7 billing 10 s \u00b7 Anthropic 45/60/30 s."
+  ],
+  [
+   "Client env hygiene",
+   "pass",
+   "Only EXPO_PUBLIC_* reaches src/; .env* ignored; bundle carries only the Worker and the branch endpoints (plus RN/Sentry library constants)."
+  ],
+  [
+   "Privacy policy hosted",
+   "pass",
+   "ezybg7.github.io/pantry/privacy responds 200, effective 3 Sep 2026, linked from Profile \u2192 About."
+  ],
+  [
+   "Migration rehearsals",
+   "pass",
+   "0054 8/8 \u2192 0053 16/16 \u2192 grants replay \u2192 0054 8/8 \u2192 0047 7/7 \u2192 0053 16/16, on a branch reset from production."
+  ],
+  [
+   "Assert suites on the production copy",
+   "pass",
+   "0027 0030 0040 0041 0043 0044 0048 0049 0050 0051 0052 0054, digest window, day rounding: all green; RevenueCat webhook 12/12."
+  ],
+  [
+   "Acceptance suite (simulator)",
+   "open",
+   "6/12 on the first rerun after the design wave; selector repairs in flight."
+  ],
+  [
+   "Per-user AI cap against production",
+   "yours",
+   "Needs a real over-cap scan on the deployed Worker (a real ai_calls row)."
+  ],
+  [
+   "RLS with a second real account",
+   "yours",
+   "Runbook scenario 8 \u2014 needs a second phone or account."
+  ],
+  [
+   "Vision accuracy eval (F4)",
+   "yours",
+   "Needs your real receipts."
+  ]
+ ],
+ "open_items": [
+  "PR #182 (spec 23: one paid tier) \u2014 round-1 fixes in, rebased on main, CI running; your six answers are written into the spec and ADR; a round-2 critic pass is running; then your approval.",
+  "PR #156 (USDA nutrition matching) and PR #161 (merge integrity) \u2014 green, rebased, waiting on the 0047 and 0053 applies.",
+  "PR #182 (spec 23: one paid tier) \u2014 review round 1 applied; your approval and the price decision come next; implementation PRs follow.",
+  "PR #176 (specs 55/56) and PR #142 (spec 54) \u2014 yours.",
+  "PR #155 \u2014 Dependabot majors, parked under the weekly policy.",
+  "Design package P8 (recipes + insights) \u2014 with the recipes session."
+ ],
+ "overrides_done": [
+  "Turn GitHub Pages on",
+  "Expo account + `eas.json`",
+  "`npm run typecheck && npm run lint && npm test`"
+ ]
+}

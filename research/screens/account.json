@@ -1,0 +1,1233 @@
+[
+ {
+  "screen": "Welcome + Sign in + Sign up",
+  "route": "/(auth)/welcome · /(auth)/sign-in · /(auth)/sign-up",
+  "current_summary": "Welcome: brand mark, wordmark, one-line pitch, three tinted feature rows, 'Get started' (→ sign-up) and a secondary 'I already have an account' (→ sign-in). Sign-in: two-word heading, optional 'Sign in to join {household}' banner, Sign in with Apple, Google, email + password fields (username/password content types, return-key chaining), Sign in, 'Forgot password?', 'New here? Create an account'. Sign-up: heading + subtitle, Apple (SIGN_UP), Google, display name / email / password (8+), Create account; a refused sign-up that advises signing in shows a Sign in button. Cost today: Welcome→inside via Apple = 2 taps + Face ID; returning email user = 2 taps 0 keystrokes IF QuickType offers the pair (declared, needs the webcredentials build) else ~4 taps + ~32 keystrokes; new email user = 3 fields (~40 keystrokes, or ~25 + one tap for the suggested password) + 1 tap.",
+  "apps": [
+   {
+    "name": "Notion (mobile + web)",
+    "what": "One login screen for both new and returning people: Continue with Google / Apple / Microsoft, or an email field; email sends a temporary login code (and a magic link) instead of asking for a password; passkeys supported. Apple/Google work only when the email matches.",
+    "aspects": [
+     {
+      "aspect": "One door — no sign-in vs sign-up fork; the server decides from the email",
+      "why": "Welcome's second button and the two mirrored screens exist only to route people; a single email-first screen removes one decision and one screen",
+      "source": "https://www.notion.com/help/log-in-and-out"
+     },
+     {
+      "aspect": "Emailed code instead of a password",
+      "why": "Nothing to forget, so the reset flow disappears for most people",
+      "source": "https://www.notion.com/help/log-in-and-out"
+     }
+    ]
+   },
+   {
+    "name": "Craft",
+    "what": "Login screen lists email, Apple, Google, Microsoft, SSO. Email → a 6-digit verification code from the inbox; Continue with Apple asks whether to share the email; Hide My Email produces a relay address.",
+    "aspects": [
+     {
+      "aspect": "6-digit code that iOS Security Code AutoFill can fill",
+      "why": "Turns the second step into one tap on the QuickType bar rather than typing",
+      "source": "https://support.craft.do/en/introduction/account-setup/create-account"
+     }
+    ]
+   },
+   {
+    "name": "Slack",
+    "what": "Open app → Sign in → choose a method: password, or 'Sign in with Email' which emails a confirmation code (or a magic link); SSO where required.",
+    "aspects": [
+     {
+      "aspect": "Code sign-in doubles as the recovery path",
+      "why": "A person who forgot their password still gets in; password reset becomes an account-settings chore rather than a front-door flow",
+      "source": "https://slack.com/help/articles/212681477-Sign-in-to-Slack"
+     }
+    ]
+   },
+   {
+    "name": "Things 3 / Things Cloud",
+    "what": "No account to start; the account is created from Settings → Things Cloud when sync is wanted: email + password → Continue → Terms checkbox → 4-digit emailed code → Continue.",
+    "aspects": [
+     {
+      "aspect": "Verification is a 4-digit code inside the app, not an email link that leaves it",
+      "why": "The user never has to find their way back to the app; Ambry's reset link round-trips through Mail",
+      "source": "https://culturedcode.com/things/support/articles/1481195/"
+     }
+    ]
+   },
+   {
+    "name": "Duolingo",
+    "what": "Value first: start → language → goal → placement quiz → lesson result → then 'create a profile' (age, name, email, password) mid-flow; account creation is skippable and re-prompted later.",
+    "aspects": [
+     {
+      "aspect": "Defer everything that is not needed to proceed",
+      "why": "Ambry requires an account (spec 37 retired anonymity) but does NOT need a display name at sign-up — Apple supplies it and Profile → Your name already exists as the editor",
+      "source": "https://pageflows.com/post/ios/onboarding/duolingo/"
+     }
+    ]
+   },
+   {
+    "name": "Apple HIG — Sign in with Apple, Onboarding, Password AutoFill",
+    "what": "Button no smaller than other sign-in buttons and never below the fold; titles limited to Sign in / Sign up / Continue with Apple; welcome people immediately after Apple sign-in; postpone non-essential setup; QuickType offers the saved pair only for an associated domain with username/password content types.",
+    "aspects": [
+     {
+      "aspect": "'Continue with Apple' as the one title on a merged door",
+      "why": "The same button is valid for new and returning people, which is what a single screen needs",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple"
+     },
+     {
+      "aspect": "Postpone non-essential setup; welcome immediately",
+      "why": "Argues for dropping the display-name field and for no interstitial after Apple sign-in",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/onboarding"
+     },
+     {
+      "aspect": "QuickType credential pair needs the association + content types",
+      "why": "This is the 2-tap sign-in Ambry already declared; the design only holds once the webcredentials build ships",
+      "source": "https://developer.apple.com/documentation/security/password-autofill"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "One door",
+    "pitch": "Welcome's single CTA opens one 'Continue' screen; the email decides whether you are new or returning.",
+    "regions": [
+     "Heading 'Continue to Ambry' (accessibilityRole=header)",
+     "InviteBanner when a stash exists",
+     "Sign in with Apple (Continue), then Google",
+     "Divider 'or use email'",
+     "Input email (username content type, clearButton, returnKey go)",
+     "Button 'Continue' (disabled until an address)",
+     "State 2, returning: password Input appears under the email (QuickType offers the pair) + 'Sign in' + 'Forgot password?' link",
+     "State 2, new: password Input with newPassword + passwordRules (iOS suggests) + 'Create account' + one line 'Free to start. You can add your name later.'",
+     "FailureNotice for refusals; unreachable → notice + retry; RATE_LIMITED shows the server's words"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Email-first single screen",
+      "app": "Notion",
+      "source": "https://www.notion.com/help/log-in-and-out"
+     },
+     {
+      "aspect": "Continue with Apple title, no scrolling",
+      "app": "Apple HIG",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple"
+     },
+     {
+      "aspect": "Name deferred to Profile",
+      "app": "Duolingo / HIG onboarding",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/onboarding"
+     }
+    ],
+    "cost": "Apple: 1 tap + Face ID from Welcome (was 2). Returning email: 2 taps 0 keystrokes with QuickType (unchanged). New email: ~20 keystrokes + 1 tap suggested password + 2 taps (was ~40 + 1).",
+    "tradeoff": "Needs a 'does this address have a password account' step — either a Worker probe (an explicit enumeration oracle; spec 28 §Hardening accepts sign-up as one already, bounded by the 10/min credential bucket) or Better Auth's sign-in-then-sign-up laundering. Decision for Everett. Removes the second Welcome button (agency: fewer forks, same reach)."
+   },
+   {
+    "name": "Code, not password",
+    "pitch": "Email → 6-digit emailed code, auto-filled by iOS; passwords stay for accounts that have them.",
+    "regions": [
+     "Heading",
+     "Apple, Google",
+     "Input email + 'Email me a code'",
+     "State 2: 'We sent a code to {email}' + one-time-code Input (textContentType oneTimeCode, numeric pad) + 'Continue' + 'Use password instead' + 'Resend' (60 s cool-down)",
+     "Neutral copy on every address (no enumeration)",
+     "FailureNotice; unreachable → retry"
+    ],
+    "borrowed": [
+     {
+      "aspect": "6-digit code + Security Code AutoFill",
+      "app": "Craft",
+      "source": "https://support.craft.do/en/introduction/account-setup/create-account"
+     },
+     {
+      "aspect": "Code sign-in as the recovery path",
+      "app": "Slack",
+      "source": "https://slack.com/help/articles/212681477-Sign-in-to-Slack"
+     },
+     {
+      "aspect": "In-app 4-digit verification",
+      "app": "Things Cloud",
+      "source": "https://culturedcode.com/things/support/articles/1481195/"
+     }
+    ],
+    "cost": "New or returning: ~20 keystrokes (email) + 1 tap + 1 QuickType tap + 1 tap; 0 passwords to invent or forget. Forgot-password disappears for code users.",
+    "tradeoff": "Contradicts docs/adr/auth.md O2 (magic-link deliberately omitted for attack surface) — a PR-description escalation, not a silent divergence. Adds a Worker route (Better Auth email-OTP plugin) and a Resend template; an inbox round-trip per sign-in for people without a saved pair; enumeration-neutral copy required."
+   },
+   {
+    "name": "Two screens, two fields",
+    "pitch": "Keep the fork; drop the display-name field so sign-up is email + suggested password.",
+    "regions": [
+     "Welcome unchanged (bordered secondary now exists via P1)",
+     "Sign-up: heading + subtitle, Apple, Google, email, password (newPassword) — no name field",
+     "Create account; refusal → Sign in button (as today)",
+     "Post-sign-up: Profile's 'Your name' row is empty until set; Members list falls back to the email local-part"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Ask only what is required up front",
+      "app": "Apple HIG SiwA / Duolingo",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple"
+     }
+    ],
+    "cost": "Sign-up: 2 fields (~20 keystrokes + 1 suggested-password tap + 1 tap) from 3 (~40 + 1). Sign-in unchanged.",
+    "tradeoff": "Smallest blast radius; keeps two mirrored screens (the duplication the brief dislikes). Needs a display-name fallback wherever a member is named (spec 17 already tolerates an empty name)."
+   }
+  ]
+ },
+ {
+  "screen": "Forgot / reset password",
+  "route": "/(auth)/forgot-password · /(auth)/reset-password",
+  "current_summary": "Forgot: in-screen title, optional expired/unusable notice, explainer, email Input (emailAddress), 'Send reset link' (disabled until an address), 'Back to sign in'; a sent request replaces the form with a mail glyph, the neutral no-enumeration sentence, 'Back to sign in' and 'Use a different email'. Reset (arrives by Universal Link, token held unexamined): title, one new-password field (newPassword + passwordRules), 'Set new password', 'Cancel — back to sign in'; success routes to sign-in with 'Password updated…' because Better Auth issues no session. Cost today: ~20 keystrokes (the email is NOT carried over from sign-in) + 1 tap → Mail → tap link → 1 tap suggested password + 1 tap → sign-in screen → 2 more taps. Three screens plus an inbox round-trip.",
+  "apps": [
+   {
+    "name": "Slack",
+    "what": "Sign in with an emailed confirmation code instead of the password; the password reset itself lives in Account settings → Password → 'Reset your password by email' (8+ chars).",
+    "aspects": [
+     {
+      "aspect": "Recovery = sign in with a code; password change is a settings task",
+      "why": "Most locked-out people just want in; changing the password can happen later, signed in",
+      "source": "https://slack.com/help/articles/201909068-Reset-your-password"
+     }
+    ]
+   },
+   {
+    "name": "Apple Account",
+    "what": "On a trusted iPhone: Settings → [name] → Sign-In & Security → Change Password, gated by the device passcode rather than the old password; borrowed device via the Support app; iforgot.apple.com on the web; account recovery last.",
+    "aspects": [
+     {
+      "aspect": "Possession of a signed-in device is the proof",
+      "why": "Ambry has no 'Change password' inside the app at all — today the only route is signing out and using the forgot flow",
+      "source": "https://support.apple.com/en-us/102656"
+     }
+    ]
+   },
+   {
+    "name": "Instagram",
+    "what": "'Forgot password?' / 'Get help logging in' → enter username, email or phone → choose email or SMS → a login link or code; the link signs you in, then you may reset. Help page covers the not-received case (spam, wrong address).",
+    "aspects": [
+     {
+      "aspect": "Channel choice and a link that logs you in directly",
+      "why": "The reset link doing the sign-in removes the re-sign-in step Ambry pays after 'Set new password'",
+      "source": "https://help.instagram.com/407128569340564"
+     }
+    ]
+   },
+   {
+    "name": "Notion",
+    "what": "Email → temporary login code or magic link; a password is optional, so 'forgot password' is rarely reached.",
+    "aspects": [
+     {
+      "aspect": "Passwordless removes the flow",
+      "why": "Same as Slack; Notion's version is the mainstream mobile shape",
+      "source": "https://www.notion.com/help/log-in-and-out"
+     }
+    ]
+   },
+   {
+    "name": "Baymard / uxpatterns.dev (reset pattern)",
+    "what": "Prefill the address from the sign-in field; tell people what happens next; keep requirements short; validate live.",
+    "aspects": [
+     {
+      "aspect": "Prefill from the sign-in field",
+      "why": "The address was just typed one screen earlier — carrying it over is 20 keystrokes saved",
+      "source": "https://uxpatterns.dev/patterns/authentication/password-reset"
+     },
+     {
+      "aspect": "Avoid complex password requirements",
+      "why": "Ambry's single 8-char floor is right; the suggested-password path keeps it invisible",
+      "source": "https://baymard.com/blog/password-requirements-and-password-reset"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "Reset lands you inside",
+    "pitch": "Carry the address over, stash it with the pending token, and sign in automatically once the new password is set.",
+    "regions": [
+     "Forgot: title, email Input prefilled from sign-in's field (route param), 'Send reset link', 'Back to sign in'",
+     "Sent state as today + an 'Open Mail' button (Linking 'message://') beside 'Use a different email'",
+     "Reset: title, new-password Input, 'Set new password', Cancel",
+     "Success: signInWithPassword(stashed email, new password) → pendingInviteRoute ?? '/' ; if no stash (other device) → today's sign-in notice",
+     "Dead token → forgot with 'expired' notice (unchanged)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Prefill from sign-in",
+      "app": "Baymard / uxpatterns",
+      "source": "https://uxpatterns.dev/patterns/authentication/password-reset"
+     },
+     {
+      "aspect": "The link that logs you in",
+      "app": "Instagram",
+      "source": "https://help.instagram.com/407128569340564"
+     }
+    ],
+    "cost": "0 keystrokes if the email was typed on sign-in + 1 tap; link; 1 QuickType tap + 1 tap → inside. Removes the final 2-tap re-sign-in and one screen visit.",
+    "tradeoff": "Client-only: no server change (Better Auth still issues no session; the client simply signs in with what it holds). Amends spec 28 §UX item 3 (routes to sign-in). The stash is a plain email in AsyncStorage for ≤1 h — same class as the pending invite stash."
+   },
+   {
+    "name": "Sign in with a code instead",
+    "pitch": "'Forgot password?' becomes 'Email me a sign-in code'; changing the password moves into Profile → Account.",
+    "regions": [
+     "Sign-in: link 'Email me a sign-in code'",
+     "Code screen: 'We sent a code to {email}', one-time-code Input (AutoFill), Continue, Resend, 'Back to sign in'; neutral copy for every address",
+     "Profile → Account → 'Change password' SettingsRow → TextPrompt-style sheet (current password not required when signed in on this device; Face ID optional)",
+     "Reset-by-link stays as the fallback for old emails"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Code sign-in as recovery",
+      "app": "Slack",
+      "source": "https://slack.com/help/articles/201909068-Reset-your-password"
+     },
+     {
+      "aspect": "Passcode/possession as proof for a change",
+      "app": "Apple Account",
+      "source": "https://support.apple.com/en-us/102656"
+     }
+    ],
+    "cost": "Locked-out person: 1 tap + 1 QuickType tap + 1 tap, no password invented. Password change: 2 taps + typing, signed in.",
+    "tradeoff": "Escalation against docs/adr/auth.md O2 (no second passwordless deep-link path). Needs a Worker OTP route + email template + a change-password route; the biggest win for the locked-out case of the three."
+   },
+   {
+    "name": "Passkey after first sign-in",
+    "pitch": "Offer Face ID sign-in once inside, so there is nothing to forget next time.",
+    "regions": [
+     "After first sign-in: a one-time card on Profile (or a toast action) 'Sign in with Face ID next time' → enrol",
+     "Sign-in screen unchanged; QuickType offers the passkey above the keyboard",
+     "Profile → Account → 'Face ID sign-in' SettingsRow (on/off)",
+     "Forgot/reset flow unchanged as the fallback"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Passkeys alongside password",
+      "app": "Notion",
+      "source": "https://www.notion.com/help/log-in-and-out"
+     },
+     {
+      "aspect": "AutoFill surfaces the credential",
+      "app": "Apple Password AutoFill",
+      "source": "https://developer.apple.com/documentation/security/password-autofill"
+     }
+    ],
+    "cost": "Returning sign-in: 1 tap + Face ID; the forgot flow is reached far less often.",
+    "tradeoff": "Largest lift: Better Auth passkey plugin, WebAuthn RP on the Worker domain, and a native ASAuthorization module → a new EAS dev build (the §Decisions 5 class of change). Does not fix the locked-out case itself; pairs with either direction above."
+   }
+  ]
+ },
+ {
+  "screen": "Onboarding + first run + add household",
+  "route": "/(auth)/onboarding · /first-run · /add-household",
+  "current_summary": "Onboarding: 'Set up your kitchen' + one-line subtitle; card 'Start a household' (Input prefilled 'Home', chips Home · Our place, 'Create household' live on arrival); card 'Join a household' (Input for code or pasted link, 'Join'); a 44pt 'Sign out'. First run (only after a fresh create): 'You're all set', one step 'Bring your household' (invite lives on Profile), footnote that Pantry/Fridge/Freezer exist, 'Start adding' → /add, 'Look around first' → /. Add household: ScreenHeader + the same two cards without the prefill. Cost today: create = 1 tap (+1 on first-run = 2 to the Add tab); join by pasted link = long-press → Paste → Join → confirm sheet Join = 4 taps; typed code = 16 keystrokes + 1 tap.",
+  "apps": [
+   {
+    "name": "Bring!",
+    "what": "Creating a list asks straight away whether to share it; an existing list is shared by long-press → 'Invite Friends' or ⋯ → Settings; the invite goes to the friend's Bring! email and is also shown inside their app on next open; participants are managed from the list's gear.",
+    "aspects": [
+     {
+      "aspect": "Sharing offered as a yes/no at creation time",
+      "why": "Turns 'Bring your household' from an explanation into the thing itself, at the one moment it is relevant",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     },
+     {
+      "aspect": "The invitation also appears inside the invitee's app",
+      "why": "A second delivery channel that survives a lost email",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     }
+    ]
+   },
+   {
+    "name": "AnyList",
+    "what": "⋯ → Share, Email & Print → Share List → type an email; existing users get a push and the list appears; new users get an email to download and must register with the same address.",
+    "aspects": [
+     {
+      "aspect": "Existing users are added with no accept step",
+      "why": "Counter-example to spec 43's always-confirm rule — right for an addressed invite, wrong for an anonymous link; keep confirm for links",
+      "source": "https://help.anylist.com/articles/share-list/"
+     }
+    ]
+   },
+   {
+    "name": "OurGroceries",
+    "what": "One shared account per household: Settings → 'Share Your Lists' sends an invitation that installs the app if needed and signs the invitee into the same account; alternatively they type the shared email + password.",
+    "aspects": [
+     {
+      "aspect": "The invitation bootstraps install + sign-in in one step",
+      "why": "Ambry's Worker fallback page already does 'get the app'; the missing half is landing the new install on the stashed invite, which spec 43 covers only when the link is tapped after install",
+      "source": "https://www.ourgroceries.com/user-guide"
+     }
+    ]
+   },
+   {
+    "name": "Apple Family Sharing",
+    "what": "Settings → [name] → Family → Add Member → Invite People (Messages/Mail) or in person (they enter their Apple Account password on your device); invitee taps the invitation → Join; status and 'resend' per person under Family.",
+    "aspects": [
+     {
+      "aspect": "Invite in person — the joiner acts on the owner's phone",
+      "why": "Two people in one kitchen is the common case; no link needs to travel",
+      "source": "https://support.apple.com/en-us/108380"
+     },
+     {
+      "aspect": "Per-person invite status with resend",
+      "why": "The owner can see who has not joined yet",
+      "source": "https://support.apple.com/en-us/108380"
+     }
+    ]
+   },
+   {
+    "name": "Splitwise",
+    "what": "Groups tab → 'Start a group' is the primary path; members are added from group settings; a share link lives in group settings; joining happens from the link or by entering a code under 'Join a group'.",
+    "aspects": [
+     {
+      "aspect": "Create and join are not peers on one screen",
+      "why": "Link arrivals never see Ambry's onboarding (they are stashed to the confirm sheet), so the Join card is serving only the typed-code minority",
+      "source": "https://feedback.splitwise.com/knowledgebase/articles/239218-how-do-i-join-an-existing-group"
+     }
+    ]
+   },
+   {
+    "name": "Apple HIG — Onboarding",
+    "what": "Postpone non-essential setup, provide defaults, keep prerequisite flows brief, make tutorials skippable.",
+    "aspects": [
+     {
+      "aspect": "Defaults over setup",
+      "why": "The prefilled 'Home' already follows this; first-run is the remaining prerequisite screen",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/onboarding"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "Create is the screen, join is a row",
+    "pitch": "One primary action and one quiet row; the join card collapses into a TextPrompt.",
+    "regions": [
+     "Title + subtitle",
+     "Household name: Input prefilled 'Home' + chips (as today)",
+     "Button 'Create household' (primary, live)",
+     "SettingsRow 'Have an invite code or link?' (chevron) → TextPrompt with the paste field + Join; a pasted link routes to /join/<token> as today",
+     "Error line under the prompt; 'Sign out' text link at the bottom",
+     "add-household: same body under a ScreenHeader, no prefill"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Create primary, join secondary",
+      "app": "Splitwise",
+      "source": "https://feedback.splitwise.com/knowledgebase/articles/321623-how-do-i-create-a-group"
+     },
+     {
+      "aspect": "Defaults over setup",
+      "app": "Apple HIG",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/onboarding"
+     }
+    ],
+    "cost": "Create 1 tap (unchanged). Typed code: 1 tap + 16 keystrokes + 1 tap (was 16 + 1). Pasted link: 1 tap + paste (2) + Join = 4 (unchanged).",
+    "tradeoff": "Join is one tap further away for the typed-code minority; the screen stops presenting two equal cards for one decision most people have already made. Alert.prompt on iOS cannot show a Paste button, so the paste stays the keyboard's own."
+   },
+   {
+    "name": "Share at creation",
+    "pitch": "First-run becomes the invite: 'Who shares this kitchen?' with one Share button.",
+    "regions": [
+     "'Home is ready' (largeTitle) + footnote about the three locations",
+     "Tile row: household initial + 'Just you so far'",
+     "Button 'Invite your household' → creates a spec-43 link (no limit · 7 days) and opens the share sheet",
+     "Button (bordered) 'Just me for now' → /add",
+     "Toast after sharing: 'Invite link shared · Start adding'"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Ask to share at creation",
+      "app": "Bring!",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     },
+     {
+      "aspect": "Invite people right after the group exists",
+      "app": "Apple Family Sharing",
+      "source": "https://support.apple.com/en-us/108380"
+     }
+    ],
+    "cost": "Solo person: 1 tap (same as today's 'Start adding'). Couple: 1 tap → share sheet, versus today's read-the-explanation → later find Profile → Share (3+ taps).",
+    "tradeoff": "Creates a live 7-day link only when tapped (nothing on arrival). Replaces the one message §Decisions 4 kept with the action it described — arguably the same decision, delivered as a control rather than copy."
+   },
+   {
+    "name": "Delete first-run",
+    "pitch": "Create → straight to Add, with a one-time toast carrying the locations footnote.",
+    "regions": [
+     "Onboarding as today",
+     "On create: router.replace('/add') + toast 'Home created · Pantry, Fridge, Freezer are ready'",
+     "Profile → Members already shows 'Just you so far — share your invite link'",
+     "Optional: one-time Profile tab badge until the first invite is shared"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Postpone non-essential setup; no prerequisite screens",
+      "app": "Apple HIG",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/onboarding"
+     }
+    ],
+    "cost": "−1 tap for everyone (create → Add is 1 tap).",
+    "tradeoff": "Contradicts critique §Decisions 4 (keep first-run) — escalate in the PR. The invite explanation moves to the place it already lives (Members footnote), which is only found by people who open Profile."
+   }
+  ]
+ },
+ {
+  "screen": "Profile tab",
+  "route": "/(tabs)/profile",
+  "current_summary": "LargeTitle 'Profile' over one long inset-grouped scroll: Account (Your name — inline editor; About you bio + links — inline editor; View my public profile), Household (switcher row → sheet with pencil-rename TextPrompt; invite-code row with tap-to-copy, Share, ⋯ Regenerate; Share invite link row → options sheet; Active links list + Revoke all; Leave/Delete household), Behaviour (two dependent switches + footnote), Learned shelf lives (list + Reset), Members (count, per-member ⋯), Notifications (Daily reminder switch, read-only Time), Plan (plan, AI-scans meter, Get/Manage Ambry Plus), About (Privacy Policy, Crash reports), an unheaded exit group (Sign out, Delete account), version, OFF attribution. Cost today: most rows 1 tap; Share invite link 1 tap → sheet → 1 tap; rename 4 taps + typing; the real cost is scrolling ~25 rows across 9 headers to find anything, and two inline save-model editors (name, bio) that S11 still counts.",
+  "apps": [
+   {
+    "name": "Apple Settings (iOS 18)",
+    "what": "Account card (photo + name) at the top pushing to the Apple Account screen; then grouped sections in order of use; search; each section has a short header description.",
+    "aspects": [
+     {
+      "aspect": "Identity card as a header that pushes",
+      "why": "Name, bio, links and public profile are one object (the person) and can live one push away instead of as three top-level rows",
+      "source": "https://9to5mac.com/2024/09/18/ios-18-settings-whats-new/"
+     },
+     {
+      "aspect": "Most-used first, domains not switches at the top level",
+      "why": "Profile's top level today mixes identity, a credential, switches, a meter and legal",
+      "source": "https://appleinsider.com/inside/ios-18/tips/new-settings-in-ios-18-will-take-some-getting-used-to"
+     }
+    ]
+   },
+   {
+    "name": "Apple HIG — Settings",
+    "what": "Keep task-specific options in the screens they affect; minimise the count; defaults over configuration; a custom settings area holds only the rarely changed.",
+    "aspects": [
+     {
+      "aspect": "Options belong with the task",
+      "why": "The two out-lifecycle switches are about the Out/grocery behaviour and could sit on that surface's overflow rather than in a global list",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/settings"
+     }
+    ]
+   },
+   {
+    "name": "Notion — My account",
+    "what": "Photo, name, email → security (password, 2-step, passkeys) → log out of all devices → delete account near the end; preferences after.",
+    "aspects": [
+     {
+      "aspect": "Security-adjacent placement of sign-out-everywhere and delete",
+      "why": "Ambry has no 'sign out other devices' and no in-app change-password; Notion shows where they belong when they arrive",
+      "source": "https://www.notion.com/help/account-settings"
+     }
+    ]
+   },
+   {
+    "name": "Strava — You tab",
+    "what": "The tab is the person (activities, stats); settings are behind a gear: units, feed, privacy, notifications, subscription, integrations, credentials.",
+    "aspects": [
+     {
+      "aspect": "Person page vs settings page",
+      "why": "Ambry's Profile is a settings list wearing a profile name; splitting the two is one option",
+      "source": "https://support.strava.com/en-us/articles/15402087-iphone-app-settings"
+     }
+    ]
+   },
+   {
+    "name": "Overcast",
+    "what": "Settings with a 'Nitpicky Details' section holding rarely-changed playback toggles at the bottom.",
+    "aspects": [
+     {
+      "aspect": "Rarely-touched toggles grouped last under an honest label",
+      "why": "Behaviour + Learned shelf lives + Crash reports are Ambry's nitpicky details",
+      "source": "https://www.podfeet.com/blog/2024/05/overcast-user-guide/"
+     }
+    ]
+   },
+   {
+    "name": "Instagram — Settings and privacy",
+    "what": "Accounts Center pinned at the top; long settings list with search.",
+    "aspects": [
+     {
+      "aspect": "Search over a long settings list",
+      "why": "Only worth it past ~40 rows; Ambry is at ~25 — a reason to reorganise rather than add search",
+      "source": "https://privacyinternational.org/guide-step/5613/guide-instagram-settings-and-good-practices"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "Account card + household hub",
+    "pitch": "Two objects on the tab — you, and your kitchen — each one push away.",
+    "regions": [
+     "LargeTitle 'Profile'",
+     "GroupedRow identity card: initial tile, name, email, 'Free'/'Ambry Plus' → pushes Account (Your name via TextPrompt, About you, public profile, Plan + meter + CTA, Notifications, Sign out, Delete account)",
+     "SectionHeader 'Household' → GroupedRow card 'Home · 3 members' → pushes Household (switcher, rename, Invite people [code copy, Share link, active links], Members, Behaviour, Learned shelf lives, Leave/Delete)",
+     "SectionHeader 'About' → Privacy Policy, Crash reports",
+     "Version + attribution"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Identity card that pushes",
+      "app": "Apple Settings",
+      "source": "https://9to5mac.com/2024/09/18/ios-18-settings-whats-new/"
+     },
+     {
+      "aspect": "Person vs settings",
+      "app": "Strava",
+      "source": "https://support.strava.com/en-us/articles/15402087-iphone-app-settings"
+     }
+    ],
+    "cost": "Every task +1 tap (invite: 2 → 3 taps; sign out: 2). The tab itself drops from ~25 rows to 4.",
+    "tradeoff": "P5 just shipped the flat rebuild; re-nesting is a second rebuild and costs a tap on the invite, the most important row. Do only if the flat list proves hard to scan on device."
+   },
+   {
+    "name": "Flat, three groups, invite as one row",
+    "pitch": "Keep one scroll; regroup You · Your household · Preferences · About; collapse the three invite surfaces into one row.",
+    "regions": [
+     "You: Your name (TextPrompt), About you (pushed editor), Public profile, Plan row + meter + CTA",
+     "Your household: switcher row; 'Invite people' row → BottomSheet with the code (tap to copy), Share invite link, active links list, Regenerate in red; Members list; Leave/Delete",
+     "Preferences (last, Overcast-style): Daily reminder + Time, the two Behaviour switches + footnote, Learned shelf lives, Crash reports",
+     "About: Privacy Policy; exit group; version"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Rarely-changed last",
+      "app": "Overcast",
+      "source": "https://www.podfeet.com/blog/2024/05/overcast-user-guide/"
+     },
+     {
+      "aspect": "Most-used first",
+      "app": "Apple Settings",
+      "source": "https://appleinsider.com/inside/ios-18/tips/new-settings-in-ios-18-will-take-some-getting-used-to"
+     }
+    ],
+    "cost": "Share invite link 1 → 2 taps; every other row unchanged; ~40% shorter scroll; kills the two inline editors (S11's remaining half).",
+    "tradeoff": "Loses the one-tap share; the code and the links stop being three rows. Keeps P5's IA. Bio/links need a pushed screen (the spec 10 follow-up already says so)."
+   },
+   {
+    "name": "Person here, kitchen on the Pantry tab",
+    "pitch": "Profile is the person; household settings open from the Pantry tab's title.",
+    "regions": [
+     "Profile: identity, public profile, plan, notifications, about, exit — no household rows",
+     "Pantry tab: LargeTitle subtitle shows the household name (IA-3) and a header ⋯ OverflowMenu → 'Household settings' (switch, rename, invite, members, behaviour, learned), 'Add location', 'Insights'",
+     "Household screen: same rows as today's Household + Members + Behaviour + Learned groups"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Options live with the task",
+      "app": "Apple HIG Settings",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/settings"
+     },
+     {
+      "aspect": "You tab = person",
+      "app": "Strava",
+      "source": "https://support.strava.com/en-us/articles/15402087-iphone-app-settings"
+     }
+    ],
+    "cost": "Invite: Pantry ⋯ → Household → Share = 3 taps (was 2 from Profile). Profile tab drops to ~10 rows.",
+    "tradeoff": "Two settings homes is a discoverability risk; but it answers IA-3 (nothing outside Profile says which household you are in) by making the household's settings live where the pantry is. Needs the Pantry header overflow P3 did not add."
+   }
+  ]
+ },
+ {
+  "screen": "Join by invite",
+  "route": "/join/[token]",
+  "current_summary": "Reached from a Universal Link (or pantry://join fallback). States: spinner 'Checking the invite'; dead link (glyph + neutral sentence + Close); unreachable (cloud glyph + ErrorState with retry + Close); already a member → toast + switch + home; signed out → token stashed, redirect to sign-in with the 'Sign in to join {name}' banner; signed in → a BottomSheet 'Join {name}?' + 'You'll share this household's pantry, grocery list, and expiry reminders' + Join + Cancel, floating over an empty grey screen. Cost today: 1 tap (happy path).",
+  "apps": [
+   {
+    "name": "Discord",
+    "what": "Opening an invite shows a splash: server icon and name, online and total member counts, then Accept Invite / No Thanks; some privacy settings can be adjusted before joining.",
+    "aspects": [
+     {
+      "aspect": "Show what you are joining — name, icon, how many people",
+      "why": "A join is a commitment; the sheet today shows a name only",
+      "source": "https://support.discord.com/hc/en-us/articles/360034842871-How-do-I-join-a-Server"
+     },
+     {
+      "aspect": "Accept / No Thanks as two equal-weight exits",
+      "why": "Ambry's Cancel is bare text; a bordered secondary now exists",
+      "source": "https://whop.com/blog/how-to-join-a-discord-server/"
+     }
+    ]
+   },
+   {
+    "name": "WhatsApp group links",
+    "what": "Opening a link shows a preview with the group name and member count; the button is Join Group, or Request to Join when admins approve members; a QR sits beside the link; admins can reset the link.",
+    "aspects": [
+     {
+      "aspect": "Preview with member count before the button",
+      "why": "Same argument as Discord, in a household-sized product",
+      "source": "https://faq.whatsapp.com/1110600769849613/?cms_platform=web"
+     },
+     {
+      "aspect": "Request-to-join as the owner-approval mode",
+      "why": "Ambry's analogue is the use cap; an approval mode is a possible future spec, not a screen change",
+      "source": "https://qualimero.com/en/blog/whatsapp-group-link"
+     }
+    ]
+   },
+   {
+    "name": "Apple Family Sharing",
+    "what": "The invitation arrives in Messages/Mail; tap → Join Family → sign in with the invited Apple Account → confirm what you share; the organiser sees per-person status.",
+    "aspects": [
+     {
+      "aspect": "Confirm step says what you will share and which account you are",
+      "why": "Ambry's body line does the first; a 'Signed in as {email} — not you?' line would do the second, which matters because links are opened on shared devices",
+      "source": "https://support.apple.com/en-us/108380"
+     }
+    ]
+   },
+   {
+    "name": "AnyList",
+    "what": "Existing users receive a push and the shared list simply appears — no accept step; new users register with the invited email.",
+    "aspects": [
+     {
+      "aspect": "A push notification carries the invite to a known user",
+      "why": "For an addressed invite (not a link) the notification is the landing; Ambry has push already",
+      "source": "https://help.anylist.com/articles/share-list/"
+     }
+    ]
+   },
+   {
+    "name": "Bring!",
+    "what": "The emailed invitation is also displayed inside the app on next open.",
+    "aspects": [
+     {
+      "aspect": "Second in-app delivery of a pending invite",
+      "why": "Ambry's stash already does this for the signed-out case; the signed-in case could surface a pending invite on Pantry too",
+      "source": "https://www.getbring.com/help-center-main-categories/items-lists"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "A landing, not a sheet on grey",
+    "pitch": "Full-screen invite card: who, how many, what you share, which account, then Join.",
+    "regions": [
+     "Top: household initial tile (category tint) + 'You're invited to Home'",
+     "Line: 'N members' (needs the preview route to return a count — optional; omit if not added)",
+     "Body: what you will share (today's sentence)",
+     "Row: 'Signed in as {email}' + text link 'Not you? Switch account' (signs out and stashes the token)",
+     "Button 'Join' (primary) + Button 'Not now' (bordered)",
+     "Error line (FailureNotice) for RPC refusals; dead/unreachable states reuse the same card with the glyph and a bordered Close"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Splash with name + counts",
+      "app": "Discord",
+      "source": "https://support.discord.com/hc/en-us/articles/360034842871-How-do-I-join-a-Server"
+     },
+     {
+      "aspect": "Confirm which account",
+      "app": "Apple Family Sharing",
+      "source": "https://support.apple.com/en-us/108380"
+     }
+    ],
+    "cost": "1 tap (unchanged); 'Not you' adds an exit that today costs Cancel → Profile → Sign out → link again.",
+    "tradeoff": "Member count in the preview leaks household size to anyone holding the link — small, and the owner shared it deliberately; keep it optional. Retires the BottomSheet here (no backdrop-dismiss ambiguity)."
+   },
+   {
+    "name": "Sheet over the destination",
+    "pitch": "Keep the sheet but raise it over the household it opens into.",
+    "regions": [
+     "Underneath: the Pantry tab rendered dimmed (only when the user already has a household; otherwise fall back to the landing card)",
+     "BottomSheet with title 'Join Home?', initial tile, share line, 'Signed in as' line, Join + Cancel (Cancel row required: the sheet's one action commits)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Confirmation in context",
+      "app": "WhatsApp link preview",
+      "source": "https://faq.whatsapp.com/1110600769849613/?cms_platform=web"
+     }
+    ],
+    "cost": "1 tap.",
+    "tradeoff": "Router complexity: the join route sits outside (tabs); rendering the tab tree under a modal for a user who may be mid-onboarding is the hard case. Least change to copy and state machine."
+   },
+   {
+    "name": "Addressed invites with a push",
+    "pitch": "Invite a person by email; if they already have Ambry, a push opens the same confirm.",
+    "regions": [
+     "Profile → Invite people sheet gains 'Invite by email' (TextPrompt)",
+     "Joiner: push 'Sam invited you to Home' → /join/<token> landing card",
+     "Non-user: the existing email/link fallback page",
+     "Owner: per-invite status row (Sent · Joined) with Resend"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Push to an existing user",
+      "app": "AnyList",
+      "source": "https://help.anylist.com/articles/share-list/"
+     },
+     {
+      "aspect": "Per-person status + resend",
+      "app": "Apple Family Sharing",
+      "source": "https://support.apple.com/en-us/108380"
+     }
+    ],
+    "cost": "Joiner: 1 tap on the push + 1 tap Join.",
+    "tradeoff": "New spec: an email-lookup that must not reveal whether an address has an account (owner always sees 'Invite sent'); a Worker route + Resend template; push only where a device token exists. The always-confirm rule stays."
+   }
+  ]
+ },
+ {
+  "screen": "Delete account",
+  "route": "/delete-account",
+  "current_summary": "ScreenHeader 'Delete account'; red lead 'This is permanent…'; three cards: What gets deleted (4 bullets), What stays (2), Your subscription (+ 'Manage subscriptions' button); a 'Transfer ownership first' card appears on a 409 with the blocking households and 'Go to Profile'; prompt 'Type DELETE to confirm'; Input; 'Delete my account' armed only once the word is typed AND committed (Done/blur); footnote hint. No Alert (S12). Cost today: 6 keystrokes + Done + 1 tap ≈ 8 interactions; the keyboard opens on an irreversible screen.",
+  "apps": [
+   {
+    "name": "Notion",
+    "what": "Settings → your name → 'Delete my account' → a dialog lists which workspaces die with the account → type your account email → button 'Permanently delete account and N workspaces'; 30-day best-effort restore via support.",
+    "aspects": [
+     {
+      "aspect": "The button label carries the consequence count",
+      "why": "Ambry knows which households die (sole member) and how many items they hold; saying '…and 1 household' beats a generic 'Delete my account'",
+      "source": "https://www.notion.com/help/delete-your-account"
+     }
+    ]
+   },
+   {
+    "name": "Instagram (Accounts Center)",
+    "what": "Manage accounts → Deactivation or deletion → pick the account → Delete → reason picker → password → 30-day grace during which logging in cancels the deletion.",
+    "aspects": [
+     {
+      "aspect": "Password/identity as the gate, a reason as a control",
+      "why": "The gate is a credential the person already has; no invented word",
+      "source": "https://www.facebook.com/help/139886812848894"
+     },
+     {
+      "aspect": "Grace period, cancelled by signing in",
+      "why": "Forgiveness (agency principle) for the one action Ambry cannot undo",
+      "source": "https://www.facebook.com/help/139886812848894"
+     }
+    ]
+   },
+   {
+    "name": "Discord",
+    "what": "Password (+2FA) to confirm; the account sits 'pending deletion' ~14 days; opening the app in that window offers Restore Account.",
+    "aspects": [
+     {
+      "aspect": "Pending state with Restore on next sign-in",
+      "why": "The safety net is on the sign-in screen, where a regretful person will be",
+      "source": "https://support.discord.com/hc/en-us/articles/212500837-How-to-Delete-your-Discord-Account"
+     }
+    ]
+   },
+   {
+    "name": "Apple Account",
+    "what": "privacy.apple.com → Request to delete → review what happens → an access code is issued for tracking/cancelling; processing can take days. On a trusted device, security changes are gated by the device passcode.",
+    "aspects": [
+     {
+      "aspect": "Device passcode / biometrics as proof for a critical change",
+      "why": "A Face ID prompt is a keyboard-free gate that is at least as deliberate as typing DELETE",
+      "source": "https://support.apple.com/en-us/102656"
+     }
+    ]
+   },
+   {
+    "name": "Apple — Guideline 5.1.1(v)",
+    "what": "Deletion must be easy to find, must delete (not merely deactivate) the account and data, and must revoke Sign in with Apple tokens.",
+    "aspects": [
+     {
+      "aspect": "Grace periods are allowed only if the deletion actually completes",
+      "why": "Bounds the Instagram/Discord direction: a pending state must still end in deletion",
+      "source": "https://developer.apple.com/news/?id=12m75xbj"
+     }
+    ]
+   },
+   {
+    "name": "iOS power-off slider",
+    "what": "Hold side + volume until the slider appears, then drag 'slide to power off' — a drag/hold gesture as the confirmation for a consequential action.",
+    "aspects": [
+     {
+      "aspect": "A hold or drag as the deliberate act, not a typed word",
+      "why": "A press-and-hold with a progress fill costs one gesture and no keyboard",
+      "source": "https://support.apple.com/guide/iphone/turn-iphone-on-or-off-iph841379c3d/ios"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "Consequence in the button, Face ID as the gate",
+    "pitch": "The screen says exactly what dies, the button repeats it, and Face ID replaces the typed word.",
+    "regions": [
+     "ScreenHeader",
+     "Red lead",
+     "Card 'What gets deleted' with counts from the cache: 'Home — 42 items, 3 locations', 'Your 7 recipes', photos",
+     "Card 'What stays'",
+     "Card 'Your subscription' (as today)",
+     "Blocked card on 409 (as today)",
+     "Button (destructive fill) 'Delete account and 1 household' → LocalAuthentication prompt → run",
+     "Fallback when biometrics are unavailable: today's typed word"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Count in the label",
+      "app": "Notion",
+      "source": "https://www.notion.com/help/delete-your-account"
+     },
+     {
+      "aspect": "Passcode/biometric proof",
+      "app": "Apple Account",
+      "source": "https://support.apple.com/en-us/102656"
+     }
+    ],
+    "cost": "1 tap + Face ID (was ~8 interactions and a keyboard).",
+    "tradeoff": "expo-local-authentication is a native module → a new EAS dev build (§Decisions 5 class). S12's ladder names 'a typed word' for irreversible-and-total; a biometric gate is stronger and keyboard-free — amend the rule in the PR. Counts must come from the cache (no new route)."
+   },
+   {
+    "name": "Hold to delete",
+    "pitch": "Press and hold the button for two seconds; a fill shows progress; release early cancels.",
+    "regions": [
+     "Same cards as today",
+     "A destructive Button with a 2 s hold (reanimated progress fill, haptic at completion), label 'Hold to delete my account'",
+     "Footnote 'Press and hold for two seconds' (also the accessibilityHint); VoiceOver users get an accessibilityAction that opens a one-question Alert instead"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Drag/hold as the deliberate act",
+      "app": "iOS power-off slider",
+      "source": "https://support.apple.com/guide/iphone/turn-iphone-on-or-off-iph841379c3d/ios"
+     }
+    ],
+    "cost": "1 gesture, no keyboard, no native module.",
+    "tradeoff": "A custom gesture is less familiar than a typed word or a system prompt (familiarity principle); needs the VoiceOver fallback; Maestro cannot hold-press reliably, so the acceptance flow stops at the disabled/enabled assertion as it does today."
+   },
+   {
+    "name": "Grace period",
+    "pitch": "Deletion schedules; signing in within 14 days offers Restore.",
+    "regions": [
+     "Same screen and gate as today",
+     "After confirm: signed out, toast 'Your account will be deleted on {date}'",
+     "Sign-in for a pending account: card 'This account is scheduled for deletion on {date}' + Restore account + Continue deleting",
+     "Server: pending flag + a cron that runs today's transactional delete after the window"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Pending deletion + Restore",
+      "app": "Discord",
+      "source": "https://support.discord.com/hc/en-us/articles/212500837-How-to-Delete-your-Discord-Account"
+     },
+     {
+      "aspect": "30-day grace cancelled by logging in",
+      "app": "Instagram",
+      "source": "https://www.facebook.com/help/139886812848894"
+     }
+    ],
+    "cost": "Unchanged taps; adds a safety net.",
+    "tradeoff": "Spec 11 puts grace/soft delete explicitly out of scope — escalation. Shared households: the 409 transfer-first check must run at schedule time AND at execution; a pending owner blocks others for two weeks. Allowed by 5.1.1(v) only if deletion still completes."
+   }
+  ]
+ },
+ {
+  "screen": "Paywall (Ambry Plus)",
+  "route": "/paywall",
+  "current_summary": "Empty ScreenHeader (back chevron) + LargeTitle 'Ambry Plus' with the usage meter as subtitle; lead sentence ('Everything you do by hand is free, forever…'); benefits card (checkmark rows from the server payload); either a 'You're on Ambry Plus' card + Manage subscriptions, or two radio option rows Monthly / Yearly (yearly preselected, savings badge, trial label only when the Apple Account is eligible), the 3.1.2 renewal disclosure ABOVE the CTA, 'Start free trial'/'Subscribe', 'Restore purchases' (secondary), Terms · Privacy links; a dark build shows the prices and a coming-soon line with no CTA. Cost today: 1 tap + the StoreKit sheet (Face ID). Price: the brief's decided figures are $4.99/mo · $29.99/yr · 14-day trial; specs/monetization.md, docs/adr/monetization.md D2 and STATIC_PACKAGES still say $2.99 · $24.99 · 7 days — the PR that changes the screen must move all three.",
+  "apps": [
+   {
+    "name": "Apple HIG — In-app purchase",
+    "what": "Show the total billing price per option; intro price, its duration and the standard price after ('1 month free, then $4.99 per month'); a way to restore; do not upsell existing subscribers; show the store only when payments are possible; use the system confirmation sheet.",
+    "aspects": [
+     {
+      "aspect": "One sentence: trial, then price",
+      "why": "Ambry's disclosure already does this; the design question is what is loudest — the billed price must be",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/in-app-purchase"
+     }
+    ]
+   },
+   {
+    "name": "App Review 3.1.2 (via RevenueCat's rejection guide)",
+    "what": "Price, duration and renewal terms plus Terms/Privacy links on the purchase surface; rejections when the free trial is more conspicuous than the billed amount; restore required.",
+    "aspects": [
+     {
+      "aspect": "Billed price more prominent than the trial",
+      "why": "Today the savings badge and 'Start free trial' are louder than '$29.99 per year'",
+      "source": "https://www.revenuecat.com/blog/growth/the-ultimate-guide-to-app-store-rejections"
+     }
+    ]
+   },
+   {
+    "name": "Bear Pro",
+    "what": "$2.99/mo or $29.99/yr with a 7-day trial on both; the subscribe surface is a 'Bear Pro' header inside Settings; concrete feature nouns (sync, encryption, export, themes, OCR); one subscription covers all devices on the Apple ID.",
+    "aspects": [
+     {
+      "aspect": "The sale lives in Settings as a header card",
+      "why": "The Plan group in Profile could be the paywall for the browsing case, leaving the full screen for the quota-exhausted moment",
+      "source": "https://bear.app/faq/features-and-price-of-bear-pro/"
+     },
+     {
+      "aspect": "Concrete nouns, same price shape as Ambry's decided one",
+      "why": "Bear's $29.99/yr is the exact figure decided for Ambry — a familiar anchor",
+      "source": "https://bear.app/faq/features-and-price-of-bear-pro/"
+     }
+    ]
+   },
+   {
+    "name": "Fantastical Premium",
+    "what": "Individual and Family (up to 5) plans, 14-day trial without a card, feature list (scheduling, calendar sets, conferencing, Watch).",
+    "aspects": [
+     {
+      "aspect": "Family plan beside individual",
+      "why": "A household app selling per-user Plus should at least say how a household is covered (spec 23 §4a left Family Sharing OFF for v1 — the paywall should state the answer either way)",
+      "source": "https://flexibits.com/blog/2020/08/introducing-fantastical-premium-for-families/"
+     },
+     {
+      "aspect": "14-day trial",
+      "why": "Matches the decided trial length; Fantastical is the precedent for 14 over 7",
+      "source": "https://www.morgen.so/blog-posts/fantastical-pricing"
+     }
+    ]
+   },
+   {
+    "name": "CARROT Weather",
+    "what": "Three tiers (Premium / Premium Ultra / Premium Family) with a feature comparison and a 7-day trial.",
+    "aspects": [
+     {
+      "aspect": "Free-vs-paid comparison as the persuasion",
+      "why": "Ambry's story is 'everything by hand is free'; a two-column comparison says it in one glance",
+      "source": "https://apps.apple.com/us/app/carrot-weather-alerts-radar/id961390574"
+     }
+    ]
+   },
+   {
+    "name": "Flighty Pro",
+    "what": "No free trial; weekly/monthly/annual/lifetime plus family tiers; the free app is usable; one headline benefit.",
+    "aspects": [
+     {
+      "aspect": "One headline benefit above the plans",
+      "why": "'World's fastest delay alerts' beats a checklist; Ambry's is the receipt camera",
+      "source": "https://adapty.io/paywall-library/flighty/"
+     }
+    ]
+   },
+   {
+    "name": "Lifesum (anti-pattern)",
+    "what": "Carousel of plan cards; greyed-out locked features and upgrade prompts throughout the free experience.",
+    "aspects": [
+     {
+      "aspect": "Do not gate with greyed-out features everywhere",
+      "why": "Ambry's decided posture is three paywall entrances and no nags",
+      "source": "https://mobbin.com/explore/screens/0bbe5356-e7a9-4e31-b978-841c15abc622"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "One plan, one line",
+    "pitch": "A single headline, a Monthly | Yearly segment, and one big price line — the billed price is the loudest thing on the screen.",
+    "regions": [
+     "ScreenHeader '' + LargeTitle 'Ambry Plus' (subtitle: usage)",
+     "Headline: 'Point the camera at the receipt. Plus files it.'",
+     "Three benefit rows (from the payload: scans, ideas, members)",
+     "SegmentedControl Monthly | Yearly (Yearly default)",
+     "Price line in fontSize.figure: '$29.99 / year' with a caption 'that's $2.50 a month · 2 months free' (badge demoted to caption)",
+     "Disclosure sentence: '14-day free trial, then $29.99 per year. Charged when the trial ends…' (or 'Charged now' when ineligible)",
+     "Button 'Start free trial' / 'Subscribe'",
+     "Button (secondary) 'Restore purchases'; Terms · Privacy",
+     "Dark build: same layout, no CTA, coming-soon line (unchanged)"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Trial-then-price sentence",
+      "app": "Apple HIG IAP",
+      "source": "https://developer.apple.com/design/human-interface-guidelines/in-app-purchase"
+     },
+     {
+      "aspect": "Billed price loudest",
+      "app": "RevenueCat rejection guide",
+      "source": "https://www.revenuecat.com/blog/growth/the-ultimate-guide-to-app-store-rejections"
+     },
+     {
+      "aspect": "One headline benefit",
+      "app": "Flighty",
+      "source": "https://adapty.io/paywall-library/flighty/"
+     }
+    ],
+    "cost": "1 tap + StoreKit sheet (unchanged); one fewer object to read (the radio rows become a segment).",
+    "tradeoff": "A segment for a purchase choice is Ambry's own idiom (ConfirmSheet's location segment) but hides the other price until toggled — both prices must still be visible at once for 3.1.2, so the caption states the monthly figure too."
+   },
+   {
+    "name": "Comparison card",
+    "pitch": "Free vs Plus as a two-column table above the plans.",
+    "regions": [
+     "Header as today",
+     "GroupedRow table: rows Receipt scans / Recipe ideas / Household members / Recipe photos; columns Free | Plus, values from the payload (limit, plus_limit, ideas_limit, ideas_plus_limit; member cap)",
+     "Footnote 'Everything you add by hand stays free.'",
+     "Family line: 'One Plus per person; your household's cap follows its owner' (or Family Sharing, if 4a flips)",
+     "Plans, disclosure, CTA, Restore, links as today"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Tier comparison",
+      "app": "CARROT Weather",
+      "source": "https://apps.apple.com/us/app/carrot-weather-alerts-radar/id961390574"
+     },
+     {
+      "aspect": "Say how a family is covered",
+      "app": "Fantastical",
+      "source": "https://flexibits.com/blog/2020/08/introducing-fantastical-premium-for-families/"
+     }
+    ],
+    "cost": "1 tap + sheet.",
+    "tradeoff": "Tables fight Dynamic Type — needs useLargeText stacking (each row becomes 'Free 10 · Plus 300'); adds reading before the price. Strongest for the browsing entrance from Profile."
+   },
+   {
+    "name": "Settings card as the sale",
+    "pitch": "Profile's Plan group becomes the paywall for browsers; the full screen survives for the quota-exhausted entrance.",
+    "regions": [
+     "Profile → Plan: GroupedRow card with the meter, one benefit line, price line + disclosure sentence, Button 'Start free trial' that calls purchasePlus directly, small 'Restore' + Terms · Privacy links inside the card",
+     "Quota-exhausted → /paywall (as today)",
+     "Plus subscriber: the card shows 'Ambry Plus · renews {date}' + Manage subscriptions"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Subscribe from a Settings header",
+      "app": "Bear",
+      "source": "https://bear.app/faq/features-and-price-of-bear-pro/"
+     }
+    ],
+    "cost": "From Profile: 1 tap + sheet (−1 push).",
+    "tradeoff": "3.1.2 wants price, terms and links on the purchase surface, so the card carries a disclosure paragraph and two links inside a grouped list — crowded, and the riskiest for review. Keep only if the card can carry the full disclosure legibly."
+   }
+  ]
+ },
+ {
+  "screen": "Insights (waste scorecard)",
+  "route": "/insights",
+  "current_summary": "Pushed from the Pantry tab's 'This month' card. ScreenHeader 'This month'; a figure card ('87%' / 'used up' / '20 eaten · 3 went off') or a spinner or 'Not enough this month to say anything useful yet.'; one observation sentence when a food expired 3+ times; SectionHeader 'What went off' + GroupedRow list (name · date); pull-to-refresh. No actions (I-B1 dead end), a failed query reads as 'not enough' (I-A1), the figure card looks tappable and is not (I-C2). Cost today: 1 tap from Pantry; nothing to do once there.",
+  "apps": [
+   {
+    "name": "Apple Fitness — Summary",
+    "what": "Rings first (Move/Exercise/Stand), then sections: workouts, Trends (90 days vs 365, arrows), awards; tap the rings for history; metrics are customisable.",
+    "aspects": [
+     {
+      "aspect": "A trend arrow instead of a chart",
+      "why": "'vs your usual' is one glyph and one number — no time-series screen, which spec 39 forbids",
+      "source": "https://support.apple.com/guide/iphone/see-your-activity-summary-iph4c34a8a95/ios"
+     }
+    ]
+   },
+   {
+    "name": "Oura — Readiness",
+    "what": "A 0–100 score with a label band (Optimal / Good / Fair / Pay attention), a crown at 85+, a list of contributors with bars, one recommendation sentence, tap a contributor for detail.",
+    "aspects": [
+     {
+      "aspect": "Score → contributors → one sentence",
+      "why": "Ambry already has the three parts; the label band and per-contributor detail are the missing shape",
+      "source": "https://support.ouraring.com/hc/en-us/articles/360025589793-Readiness-Score"
+     },
+     {
+      "aspect": "Contributors are tappable for the why",
+      "why": "'Salad leaves went off 3 times' should open the three rows and the fix",
+      "source": "https://support.ouraring.com/hc/en-us/articles/360057791533-Readiness-Contributors"
+     }
+    ]
+   },
+   {
+    "name": "YNAB — Spending Breakdown",
+    "what": "Categories by percentage under the chart; filters for date, categories, accounts; tap a category to see its transactions; on mobile since 2024.",
+    "aspects": [
+     {
+      "aspect": "Group by category with a count, one tap to the rows",
+      "why": "Ambry's list is per row; grouping 'Dairy ×4' makes the pattern visible without a chart",
+      "source": "https://support.ynab.com/en_us/spending-breakdown-H1H7YxmD0"
+     }
+    ]
+   },
+   {
+    "name": "Copilot Money — Month in Review",
+    "what": "Appears in the Transactions tab at the turn of the month as a set of slides (spending, income, investments, trends); any slide can be shared.",
+    "aspects": [
+     {
+      "aspect": "A month-end moment rather than a permanent screen",
+      "why": "Gives the scorecard a reason to be opened on the 1st, when the month is complete",
+      "source": "https://help.copilot.money/en/articles/10310024-month-and-year-in-review"
+     }
+    ]
+   },
+   {
+    "name": "Too Good To Go",
+    "what": "Impact framed per action ('every Surprise Bag equates to 2.7kg of CO2e avoided').",
+    "aspects": [
+     {
+      "aspect": "Per-item equivalence",
+      "why": "Tempting for 'eaten' rows; but spec 39 bans invented numbers (no money) and a kg-CO2e figure per food would be one — record as rejected",
+      "source": "https://apps.apple.com/us/app/too-good-to-go-save-good-food/id1060683933"
+     }
+    ]
+   },
+   {
+    "name": "NoWaste",
+    "what": "A 'My numbers' widget on the profile shows personal food-waste stats.",
+    "aspects": [
+     {
+      "aspect": "Stats on the profile",
+      "why": "Ambry chose the Pantry tab (spec 39); keep it — the profile is the account, not the kitchen",
+      "source": "https://apps.apple.com/us/app/nowaste-food-inventory-list/id926211004"
+     }
+    ]
+   }
+  ],
+  "directions": [
+   {
+    "name": "Contributors and one fix",
+    "pitch": "Group what went off by food, and let each group carry the action the observation implies.",
+    "regions": [
+     "ScreenHeader 'This month'",
+     "Figure (not pressable) with a label band under the %: 'Tight ship' ≥90 · 'Good' 75–89 · 'Worth a look' <75",
+     "Observation sentence",
+     "SectionHeader 'What went off'",
+     "GroupedRow per food: 'Salad leaves' · '×3' · trailing SwipeRow actions 'Remind sooner' (shortens the household's learned shelf life via spec 40's override) and 'Add to list'; tap expands the dated rows",
+     "ErrorState with retry on a failed query; the 'not enough' line only when the query succeeded",
+     "Pull-to-refresh as today"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Score → contributors → sentence, tappable contributors",
+      "app": "Oura",
+      "source": "https://support.ouraring.com/hc/en-us/articles/360057791533-Readiness-Contributors"
+     },
+     {
+      "aspect": "Group with counts, tap to rows",
+      "app": "YNAB",
+      "source": "https://support.ynab.com/en_us/spending-breakdown-H1H7YxmD0"
+     }
+    ],
+    "cost": "1 tap to open (unchanged); 1 swipe + tap to act on a repeat offender (was: navigate to Profile → Learned shelf lives).",
+    "tradeoff": "Closes I-B1, I-A1 and I-C2 in one package. The 'Remind sooner' write needs a spec 39/40 amendment naming which value changes; label-band copy must obey 'never scold' (jest-pinned strings)."
+   },
+   {
+    "name": "Versus your usual",
+    "pitch": "One extra line under the figure: this month against last month, with an arrow.",
+    "regions": [
+     "Figure as today",
+     "Line: '▲ 5 points vs August' or '— about the same' (needs one more month in the outcomes query, no schema change)",
+     "Everything else as today"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Trend arrow, no chart",
+      "app": "Apple Fitness Trends",
+      "source": "https://support.apple.com/guide/iphone/see-your-activity-summary-iph4c34a8a95/ios"
+     }
+    ],
+    "cost": "0 extra interactions.",
+    "tradeoff": "Spec 39 says 'monthly, not lifetime' and puts multi-month trends out of scope; a single prior-month comparison is a small contradiction — escalate. Cheapest of the three."
+   },
+   {
+    "name": "Month-end moment",
+    "pitch": "On the 1st, the finished month arrives as a card (and an optional push) with a shareable line.",
+    "regions": [
+     "Pantry tab, first week of the month: 'August: 87% used up' card above 'This month' (dismissable)",
+     "Push at digest time on the 1st: 'August: 87% used up · 3 went off' → /insights?month=2026-08",
+     "Insights: month picker (This month | Last month segment), a Share button (text only: the counts line) in ScreenHeader's right slot",
+     "Rest of the screen as today"
+    ],
+    "borrowed": [
+     {
+      "aspect": "Turn-of-month review, shareable",
+      "app": "Copilot Money",
+      "source": "https://help.copilot.money/en/articles/10310024-month-and-year-in-review"
+     }
+    ],
+    "cost": "1 tap from the push.",
+    "tradeoff": "Push needs spec 16's scheduler; an image share would need a view-shot native module (new build) so share text only. Keeps one month at a time (a Last-month view is still one month), but the segment is a second header control on a small screen."
+   }
+  ]
+ }
+]
