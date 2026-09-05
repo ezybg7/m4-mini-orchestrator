@@ -6,3 +6,9 @@ queue/failed-*
 builds/
 .env.acceptance
 .env*
+tmp_*.js
+usda/
+worktrees/
+rehearse-*/
+prod-apply-*/
+security/*.json
