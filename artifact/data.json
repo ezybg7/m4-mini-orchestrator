@@ -153,7 +153,7 @@
   {
    "section": "3 \u00b7 Capture",
    "done": false,
-   "text": "Quota meter: visible; free tier = 10 scans/month, 20/day abuse cap; exhausting shows the graceful message (mock a few scans, don't burn all 10)."
+   "text": "Quota meter: visible; free tier = 10 scans/month, 20/day abuse cap; exhausting shows the graceful message (mock a few scans, don't burn all 10). _(2026-09-05: 10 is what is deployed. Spec 23's one-paid-tier amendment makes it 8 + a one-time welcome grant of 10 when the paywall goes live, with grant copy in the meter \u2014 retest this line then.)_"
   },
   {
    "section": "4 \u00b7 Pantry & locations",
@@ -1247,6 +1247,14 @@
   },
   {
    "done": false,
+   "text": "Paywall price prominence (Apple's subscriptions-page rule; 3.1.2(c) is the disclosure half) \u2014 the billed amount is the loudest element in every plan row _(gate added 2026-09-04, specs/monetization.md \u00a7Client surfaces)_. Apple: *\"In the purchase flow, the amount that will be billed must be the most prominent pricing element in the layout\"*, with savings and per-period breakdowns *\"in a subordinate "
+  },
+  {
+   "done": false,
+   "text": "Small Business Program enrolment is APPROVED, not merely submitted _(added 2026-09-04)_. Apple adjusts proceeds *\"fifteen (15) days after the end of the fiscal calendar month in which your enrollment is approved\"* \u2014 their example: approved 10 February, effective 14 March (Small Business Program) \u2014 and Apple's fiscal months do not align with calendar months, so the lag reaches roughly six weeks. En"
+  },
+  {
+   "done": false,
    "text": "Crash-free smoke script on the production build (TestFlight internal) \u2014 full walk, both accounts, receipt + barcode + recipes"
   },
   {
@@ -1269,13 +1277,13 @@
    "scenario": "Scenario 3: Status chip lifecycle (stocked \u2192 low \u2192 out)",
    "step": "4",
    "action": "`` Look at the row",
-   "expected": "Name struck through and greyed; a trash button appears on the row"
+   "expected": "Name struck through and greyed; a trash button appears on the row (Maestro cannot assert text decoration). _Its element, \"Delete Milk\", IS asserted_"
   },
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
    "step": "1",
-   "action": "`` Item screen \u2192 Name \u2192 type \"Blue-top milk\" \u2192 tap anywhere else (or the return key)",
-   "expected": "It saves on the blur \u2014 there is no Save name button. Toast: \"Renamed to \u201cBlue-top milk\u201d. Buying \u201cMilk\u201d again adds its own row.\" Every list row reads \"Blue-top milk\"; catalog search still finds \"Milk\" for everyone _(rule: `itemScreen.test.tsx`)_"
+   "action": "Item screen \u2192 Name \u2192 type \"Blue-top milk\" \u2192 the return key (or tap anywhere else)",
+   "expected": "It saves on the commit \u2014 there is no Save name button. Toast: \"Renamed to \u201cBlue-top milk\u201d. Buying \u201cMilk\u201d again adds its own row.\" Every list row reads \"Blue-top milk\"; catalog search still finds \"Milk\" for everyone _(rule: `itemScreen.test.tsx`; `04-item-screen.yaml` drives it with the return key and asserts the toast and the Fridge row \u2014 the tap-elsewhere blur is `[manual]`, because the simulator"
   },
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
@@ -1286,20 +1294,14 @@
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
    "step": "2",
-   "action": "`` Clear the Name field \u2192 blur",
-   "expected": "The name falls back to the catalog's \"Milk\"; toast \"Name reset to \u201cMilk\u201d.\" On a free-text item (no catalog row) the emptied field is put back and nothing is written _(rule: same file)_"
+   "action": "Clear the Name field \u2192 return",
+   "expected": "The name falls back to the catalog's \"Milk\"; toast \"Name reset to \u201cMilk\u201d.\" On a free-text item (no catalog row) the emptied field is put back and nothing is written _(rule: same file; the catalog-row half is `04-item-screen.yaml`, the free-text half `[manual]`)_"
   },
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
    "step": "3",
    "action": "`` Item screen, top to bottom",
    "expected": "Grouped cards throughout: STORAGE (Location \u25b8 / Zone \u25b8 / Status) \u00b7 EXPIRY (value, `+3d +1w +2w +1m`, Type a date \u25b8, Clear date) \u00b7 NOTES \u00b7 Nutrition \u00b7 Delete item. Expiry reads \"<Mon D> \u00b7 Nd\" over \"estimated from shelf life\"; the meta line reads \"Produce \u00b7 added <Mon D>\" \u2014 no `YYYY-MM-DD` anywhere"
-  },
-  {
-   "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
-   "step": "3b",
-   "action": "`` Tap +1w",
-   "expected": "The date moves a week and a toast says \"\u201cMilk\u201d now expires <Mon D>\" with Undo; Undo puts back the previous date *and* its provenance caption, not a freshly-derived one _(rule: same file)_"
   },
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
@@ -1408,12 +1410,6 @@
    "step": "13c",
    "action": "`` A user in two or more households, Pantry tab",
    "expected": "The active household's name sits beside the \"Pantry\" title; with one household there is nothing there (IA-3)"
-  },
-  {
-   "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
-   "step": "14",
-   "action": "`` Zones editor (\u22ef \u2192 Zones) \u2192 delete a zone with nothing pinned",
-   "expected": "Still asks first \u2014 the confirm is no longer skipped on a cached count of zero (FIND-015)"
   },
   {
    "scenario": "Scenario 3b: Inventory integrity pass \u2014 rename, location delete, bulk move, refresh (2026-09-04)",
@@ -1591,15 +1587,9 @@
   },
   {
    "scenario": "Scenario 8: Household invite + RLS isolation",
-   "step": "5",
-   "action": "`` Owner: Profile \u2192 Household row \u2192 pencil on the selected household in the switcher sheet \u2192 rename in the prompt \u2192 Save",
-   "expected": "Name updates everywhere (the household row and the switcher). _(Rebuilt 2026-09-04, design critique A14/S11: the name was printed twice back to back \u2014 a switcher row and a Name row \u2014 and the second was an inline editor. There is now ONE row, and the pencil lives on the household it renames. iOS gets `Alert.prompt`; Android gets a one-field sheet. A non-owner sees no pencil.)_"
-  },
-  {
-   "scenario": "Scenario 8: Household invite + RLS isolation",
    "step": "6",
-   "action": "`` Owner: invite row \u2192 \u22ef \u2192 \"Regenerate invite code\" \u2192 confirm \"Regenerate\"",
-   "expected": "Toast \"New invite code ready\"; the code becomes 16 hex chars (64-bit, audit H1); the OLD code now fails to join (\"invalid invite code\"), the new one works. _(2026-09-04: \"New\" and \"Share\" were identical accent words and one of them rotated a credential \u2014 rotation moved into the row's overflow menu, in red and spelled out.)_"
+   "action": "Owner: invite row \u2192 \u22ef (`More invite code actions`) \u2192 \"Regenerate invite code\" \u2192 confirm \"Regenerate\"",
+   "expected": "Toast \"New invite code ready\"; the code becomes 16 hex chars (64-bit, audit H1) \u2014 `06-households.yaml` copies the row's label before, asserts `Invite code [a-f0-9]{16}` after, and asserts the two differ. `[manual]`: the OLD code now fails to join (\"invalid invite code\") and the new one works \u2014 a second account. _(2026-09-04: \"New\" and \"Share\" were identical accent words and one of them rotated a c"
   },
   {
    "scenario": "Scenario 8: Household invite + RLS isolation",
@@ -1903,6 +1893,12 @@
   },
   {
    "scenario": "Spec 11: Account deletion \u2014 the explainer and the typed-DELETE gate",
+   "step": "5",
+   "action": "Type `DELETE` into the confirmation field",
+   "expected": "The button becomes enabled and the footnote disappears \u2014 once the word is COMMITTED (Done / return key, or leaving the field). The flow commits with the return key; the commit-by-dismissing-tap variant is `[manual]` on a device with the software keyboard up (jest pins it: `deleteAccount.test.tsx`)"
+  },
+  {
+   "scenario": "Spec 11: Account deletion \u2014 the explainer and the typed-DELETE gate",
    "step": "8",
    "action": "`` Tap \"Delete my account\" with the field armed",
    "expected": "The deletion runs. There is no confirmation alert: the typed word is the gate (design critique S12/A16, 2026-09-04 \u2014 three gates for one action made the last dialog a reflex, and everything the alert said is already on the screen at length). The screen's no-alert wiring is pinned by `src/test/screens/deleteAccount.test.tsx`; do this only on a throwaway account, per row 9"
@@ -1932,88 +1928,142 @@
    "expected": "The field announces \"Type DELETE to confirm\"; the button announces its disabled state before the word is typed rather than reading as an ordinary button"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "1",
    "action": "`` Account B: Profile \u2192 About you pencil \u2192 280-char bio, three links (`Site`/`Newsletter`/`Video`, all `https://`) \u2192 Save",
    "expected": "The editor closes; the row shows the bio and `Site \u00b7 Newsletter \u00b7 Video`"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "2",
    "action": "`` Account B: type a 281st bio character",
    "expected": "Impossible \u2014 the field stops at 280 and the counter reads `280/280` (`maxLength` mirrors `profiles_bio_len`)"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "3",
    "action": "`` Account B: put `http://example.com` in a link slot \u2192 Save",
    "expected": "Inline, under that slot: \"Links must start with https://\". Nothing is written and the other two slots keep what was typed"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "4",
    "action": "`` Account B: publish a recipe `public`; Account A: Community \u2192 tap \"by <B>\" on its card",
    "expected": "B's profile opens: an initials circle (never a remote image \u2014 `avatar_url` is deliberately not rendered until an upload path with a pinned-path CHECK exists, spec \u00a7History), name, `1 recipe \u00b7 0 followers \u00b7 0 following`, the bio, the three link rows, and the recipe as a Community-style card. Nothing about B's household, email, or private recipes"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "5",
    "action": "`` Account A: tap the Newsletter row",
    "expected": "The system browser opens that https URL. The row shows `news.example.com` under the label \u2014 the destination is visible, not only spoken, because the label is author-controlled text. VoiceOver announces \"Newsletter, opens news.example.com\" before the tap"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "6",
    "action": "`` Account A: open the recipe, tap \"\u00b7 by <B>\" in the meta line",
    "expected": "Same profile. On your OWN recipe the byline is plain text with no button role"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "7",
    "action": "`` Account A: profile \u2192 flag \u2192 Report this profile \u2192 a reason \u2192 Send",
    "expected": "Toast \"Report sent \u2014 thank you.\""
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "8",
    "action": "`` Account A: report the same profile again",
    "expected": "Toast \"You've already reported this profile \u2014 we're looking at it.\" \u2014 the 23505 from the PARTIAL open unique, surfaced rather than swallowed. (Once an admin resolves it, a fresh report is accepted again: that half is proven in `db/asserts/0054_creator_profiles.sql` P5, which is why it is not run here)"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "9",
-   "action": "`` Account A: open your own profile (Profile \u2192 View my public profile)",
-   "expected": "No flag in the header at all, and the byline on your own cards leads nowhere"
+   "action": "Account A: open your own profile (Profile \u2192 View my public profile)",
+   "expected": "No flag in the header at all _(`07-profile.yaml` asserts `Report profile` absent)_; `[manual]`: the byline on your own cards leads nowhere"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "10",
-   "action": "`` Account A: a profile with no bio, no links and no public recipes",
-   "expected": "Avatar, name, `0 recipes \u00b7 0 followers \u00b7 0 following`, then \"No public recipes yet.\" \u2014 no placeholder rows, no empty link chrome"
+   "action": "Account A: a profile with no links and no public recipes",
+   "expected": "Avatar, name, `0 recipes \u00b7 0 followers \u00b7 0 following`, then \"No public recipes yet.\" \u2014 no placeholder rows, no empty link chrome _(`07-profile.yaml` asserts the stats line and the empty state on the seeded account's own profile, bio set; the no-bio rendering is `[manual]`)_"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "11",
    "action": "`` Save a bio with the phone in airplane mode",
    "expected": "Failure toast; the editor stays open with the draft in it and nothing is written"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "12",
    "action": "`` VoiceOver + largest Dynamic Type",
    "expected": "The stats row reads as ONE sentence (\"3 recipes \u00b7 0 followers \u00b7 0 following\"), not three fragments; link rows are \u226544pt and announce label + host; the bio wraps rather than clipping"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "13",
    "action": "`` VoiceOver on a Community card, and on a recipe detail meta line",
    "expected": "The card announces \"Open <title>\" and the actions rotor offers \"View profile \u2014 <name>\"; performing that action opens the profile. This is the ONLY route the byline has to a screen reader: the card is one accessibility element and swallows the nested pressable text, so the inline link is touch-only (spec \u00a7History, rewritten in review round 1 \u2014 the original claim that the nested role/label reached V"
   },
   {
-   "scenario": "Spec 51 (creator profiles) \u2014 `e2e: n/a`",
+   "scenario": "Spec 51 (creator profiles) \u2014 `07-profile.yaml` for the own-profile half; the two-account matrix `[manual]`",
    "step": "14",
    "action": "`` Report a profile with a full-length detail note",
    "expected": "Sends. The field stops ~20 characters short of 1000 because the stored reason is `\"<reason>: <detail>\"` \u2014 capping at the column's own limit let the composition overflow into an unretryable constraint error"
+  },
+  {
+   "scenario": "Spec 23 (monetization) \u2014 `08-paywall.yaml` for the Plan group; the paywall screen `[manual]`",
+   "step": "2",
+   "action": "`` Reach the paywall (a lit build: Profile \u2192 Get Ambry Plus; a dark build: exhaust the quota \u2192 About Ambry Plus)",
+   "expected": "Large title Ambry Plus with the usage line as its subtitle; the lead; the benefit card; two plan options, each announced `<title>, <price> <period>` (annual preselected); the renewal disclosure BEFORE any button (guideline 3.1.2); Terms of Use \u00b7 Privacy Policy"
+  },
+  {
+   "scenario": "Spec 23 (monetization) \u2014 `08-paywall.yaml` for the Plan group; the paywall screen `[manual]`",
+   "step": "3",
+   "action": "`` Dark build, same screen",
+   "expected": "No purchase button and no Restore purchases \u2014 there is nothing to restore \u2014 only \"Ambry Plus is coming soon. Nothing to buy yet \u2014 your free scans reset on the 1st of each month, at 00:00 UTC.\""
+  },
+  {
+   "scenario": "Spec 23 (monetization) \u2014 `08-paywall.yaml` for the Plan group; the paywall screen `[manual]`",
+   "step": "4",
+   "action": "`` Lit build (RevenueCat key set, a sandbox Apple Account)",
+   "expected": "Start free trial / Subscribe and Restore purchases (guideline 3.1.1); Restore with no purchase \u2192 \"No previous purchase found on this Apple Account.\"; a purchase \u2192 the server confirms Plus before \"Welcome to Ambry Plus.\""
+  },
+  {
+   "scenario": "Spec 23 (monetization) \u2014 `08-paywall.yaml` for the Plan group; the paywall screen `[manual]`",
+   "step": "5",
+   "action": "`` VoiceOver over the Plan row",
+   "expected": "`Plan` and `Free` are two stops, not one: the non-pressable `SettingsRow` renders label and value as separate elements, where the pressable rows merge them (`Household, Test Home`). Found by `08-paywall` on 2026-09-05 \u2014 its first selector, `Plan, Free`, matched nothing \u2014 and recorded here rather than changed in a test PR"
+  },
+  {
+   "scenario": "Spec 18 (dark mode) \u2014 `e2e: [manual]`",
+   "step": "1",
+   "action": "`` Switch the device (or `xcrun simctl ui <udid> appearance dark`) with the app open",
+   "expected": "Every screen re-themes live \u2014 no restart, no mixed-mode flash"
+  },
+  {
+   "scenario": "Spec 18 (dark mode) \u2014 `e2e: [manual]`",
+   "step": "2",
+   "action": "`` Walk the smoke script in dark",
+   "expected": "Every screen readable and intentional; the status and urgency colours (badges, chips) in their dark-tuned variants; nav chrome and the keyboard follow the scheme"
+  },
+  {
+   "scenario": "Spec 18 (dark mode) \u2014 `e2e: [manual]`",
+   "step": "3",
+   "action": "`` Repeat in light",
+   "expected": "Same walk, same result"
+  },
+  {
+   "scenario": "Spec 45 (catalog nutrition matching) \u2014 `e2e: n/a`",
+   "step": "1",
+   "action": "`` Scan a barcode Open Food Facts does not know, name the item \"peanut butter\", then run a shelf-life pass (add any dateless item to the same household) and open item detail",
+   "expected": "No panel. The card is absent and the \"No nutrition info available for this food.\" placeholder shows instead. The barcode names one manufactured product, so the panel is OFF's to supply or nobody's \u2014 no USDA generic stands in, however well the name matches (Everett 2026-08-22; ADR catalog O1's residual choice)"
+  },
+  {
+   "scenario": "Spec 45 (catalog nutrition matching) \u2014 `e2e: n/a`",
+   "step": "2",
+   "action": "`` Add \"peanut butter\" as free text with no scan, same pass, open item detail",
+   "expected": "Panel present, with the \"Estimated for a generic food \u2014 actual products vary.\" footnote. Same name, opposite outcome: the rule keys on the barcode, not on `source`, so a typed name is a name and gets matched like an `ai` row"
   },
   {
    "scenario": "Spec 12 (offline read cache) \u2014 `e2e: [manual]`",
@@ -2074,11 +2124,125 @@
    "step": "9",
    "action": "`` Reinstall-free corruption check: nothing to do by hand \u2014 `offlineCache.test.tsx` boots the provider over a deliberately corrupt blob",
    "expected": "The app comes up unpersisted and the bad blob is deleted. Recorded here because it is the failure that would otherwise present as \"the app won't start\""
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "1",
+   "action": "`` Sign up with address A \u2192 force-quit \u2192 relaunch",
+   "expected": "\"Check your email\" replaces the form, naming A; the relaunch lands on Welcome \u2014 no session exists"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "2",
+   "action": "`` Mail \u2192 tap the link",
+   "expected": "Ambry foregrounds directly (no Safari); \"Email confirmed \u2014 signing you in\u2026\"; onboarding"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "3",
+   "action": "`` Sign out \u2192 sign in as A",
+   "expected": "Tabs. A verified account never sees the sent state again"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "4",
+   "action": "`` Sign up with address B; tap Resend email twice; force-quit; tap the link",
+   "expected": "The button counts down from 60 s and refuses the second tap; exactly one extra email; the tap opens sign-in with \"Email confirmed. Sign in to continue.\", QuickType fills, tabs"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "5",
+   "action": "`` Sign up with A again",
+   "expected": "Byte-identical \"Check your email\"; A receives \"You already have an Ambry account\" \u2014 with no link in it"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "6",
+   "action": "`` Alter one character of a link's token and open it; open a link older than an hour",
+   "expected": "\"That link couldn't be used\u2026\" / \"That link has expired\u2026\" on sign-in; nothing else changes"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "7",
+   "action": "`` Open a fresh link on a Mac",
+   "expected": "The Worker page reads \"Email confirmed\"; the phone's next sign-in succeeds"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "8",
+   "action": "`` Sign in as an unverified account with the right password (more than a minute after the last send, then again inside a minute), then with a wrong one",
+   "expected": "Right: the sent state with the hedged \"If it hasn't arrived in a minute\u2026\" body and a new email; inside the minute, the same state with the countdown already running and no new email. Wrong: \"Invalid email or password\""
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "9",
+   "action": "`` Continue with Apple using a verified password account's address",
+   "expected": "The same account, linked; no \"already have an Ambry account\" copy"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "10",
+   "action": "`` VoiceOver over the sent state; Dynamic Type at AX5",
+   "expected": "The heading is announced on arrival; the countdown label is read; nothing clips"
+  },
+  {
+   "scenario": "Spec 57 (email verification) \u2014 `e2e: [manual]`",
+   "step": "11",
+   "action": "`` Ask for one address's link a sixth time within a day (sign-up + 403s + Resend taps)",
+   "expected": "The button stays inert with \"You've asked for this link 5 times today\u2026\"; no sixth email arrives; the Worker log shows a refusal count, never the address"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "1",
+   "action": "`` Sign out (which purges the cache) \u2192 relaunch \u2192 sign in",
+   "expected": "After the relaunch the first screen after the splash is Welcome (signed out). After sign-in, the gate skeleton \u2014 the \"Pantry\" large title, the search field's slot and grey cards (spec 58 D2 keys this shape on the device's household hint; PR 1 draws it for every gate but a recovery session until the hint lands) \u2014 then the pantry with nothing shifting. Never a blank frame, never a centred spinner, i"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "1b",
+   "action": "`` Relaunch signed in on that device, online; then again in airplane mode",
+   "expected": "Online: splash \u2192 the pantry directly, no gate skeleton (spec 58 D1 \u2014 `['households']` is restored from disk). Airplane mode: splash \u2192 the tabs from cache under the Offline banner \u2014 spec 12's first acceptance row, reachable for the first time"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "1c",
+   "action": "`` Fresh install \u2192 sign up; and, separately, open a password-reset link on a device with nothing cached",
+   "expected": "Sign-up: the gate shows the neutral skeleton (one grey card, no title \u2014 no household hint), then onboarding; never \"Pantry\" over a screen that is not coming _(waits for the hint \u2014 PR 2)_. Recovery: the neutral card, no \"Pantry\", then the reset screen _(walkable since review round 1 of PR 1 \u2014 both layouts key it on the recovery session)_"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "2",
+   "action": "`` A fresh account on a device that has never cached it; airplane mode ON before opening Insights and the Recipes \u2192 Community segment",
+   "expected": "Both show a static skeleton under the Offline banner (no pulse \u2014 nothing is arriving). Airplane mode OFF \u2192 both pulse briefly, then fill"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "3",
+   "action": "`` Profile \u2192 Add household \u2192 create one",
+   "expected": "The Pantry tab shows the three-card skeleton for one round trip, then three default location cards in the same positions \u2014 nothing shifts, the Expiring Soon row does not move"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "4",
+   "action": "`` Settings \u2192 Accessibility \u2192 Motion \u2192 Reduce Motion ON; walk Pantry, Lists, Community cold",
+   "expected": "Static fills, no pulse"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "5",
+   "action": "`` VoiceOver on a cold Community load",
+   "expected": "\"Loading community\", once; swiping cannot land on a grey block; the rows are reachable as soon as they render"
+  },
+  {
+   "scenario": "Spec 58 (skeleton loading) \u2014 `e2e: [manual]`",
+   "step": "6",
+   "action": "`` Dark mode, any cold screen",
+   "expected": "Blocks read one step lighter than their card (`thumbFill` on `surface`); bars on the screen ground read as `border`"
   }
  ],
  "everett_only": {
   "DB applies (apply-before-merge; rehearse on a Neon branch first; psql on the dir": [
-   "Update 2026-09-04 21:50 EDT \u2014 all three rehearsed clean tonight on `acceptance-2026-09-03` (`br-damp-art-a6r6pyld`, reset from production at ~21:40 EDT, expiry now 2026-09-05 21:42 EDT), psql direct endpoint as neondb_owner, `-v ON_ERROR_STOP=1 -1` per file, order 0054 (8/8) \u2192 0053 (16/16) \u2192 #161 neon-grants.sql replay (119 stmts) \u2192 0054 asserts 8/8 \u2192 0047 (7/7) \u2192 0053 asserts 16/16. Production applies still need Everett's explicit \"apply to production\" (and the production direct URL, never pasted in chat: same Connect-dialog copy flow into ~/agents/.env.acceptance as NEON_DIRECT_URL). The 0047 seed still needs his yes to the ~200 MB FDC downloads.",
+   "APPLIED 2026-09-05 11:17\u201311:18 EDT by the orchestrator at Everett's word (\"you apply 0054 and 0053, merge #161\"): 0054 8/8 live, 0053 16/16 live, grants replayed (122), both suites green again; production direct URL now in ~/agents/.env.acceptance as NEON_DIRECT_URL (600; never print it). Remaining: 0047 + the USDA seed. Update 2026-09-04 21:50 EDT \u2014 all three rehearsed clean tonight on `acceptance-2026-09-03` (`br-damp-art-a6r6pyld`, reset from production at ~21:40 EDT, expiry now 2026-09-05 21:42 EDT), psql direct endpoint as neondb_owner, `-v ON_ERROR_STOP=1 -1` per file, order 0054 (8/8) \u2192 0053 (16/16) \u2192 #161 neon-grants.sql replay (119 stmts) \u2192 0054 asserts 8/8 \u2192 0047 (7/7) \u2192 0053 asser",
    "0047_usda_foods.sql (spec 45, PR #156) \u2014 7 assertions. Also its data seed: approve downloading the three FDC datasets (~200 MB; URLs in scripts/usda-match/README.md on the PR branch), run `python3 scripts/usda-match/export-usda-foods.py` \u2192 db/apply/usda-foods-seed.sql, apply the seed after the migration; then `db/neon-grants.sql` (it now names usda_foods). Then I merge #156.",
    "0053_merge_integrity.sql (PR #161) \u2014 16 assertions; then re-apply `db/neon-grants.sql` (column-scoped UPDATE grants). Then I merge #161.",
    "0054_creator_profiles.sql (spec 51, already on main) \u2014 8 assertions. Users see \"Couldn't load your profile\" on the Profile tab until this is applied.",
@@ -2101,14 +2265,16 @@
    "Design: primary button = ink (contrast-measured); \"Cook becomes the tab\" not now; visibility memory: remember private\u2194household only; first-run cut to one message; native date picker + clipboard paste wait for a native build; reminder time picker queued; A7's one-tap add supersedes ADR capture-vision D3's 2026-07-26 revision; grocery row lost its trash while expiring keeps one (SPEC.md \u00a74); haptics seam admits one success tick.",
    "PR #176 (specs 55/56 Obsidian + Codex): approve with the amendments in my consolidated comment; six questions answered there. Merge is yours.",
    "PR #142 (spec 54 load testing): yours.",
-   "Monetization \u2b50: price $4.99/mo \u00b7 $29.99/yr \u00b7 14-day trial (fallback $3.99/$29.99) \u2014 decide before anything is sold; ASC + STATIC_PACKAGES must match. Welcome grant 10 scans + 3 ideas; free scans 10 \u2192 8; free members 2 \u2192 3; barcode never metered; community publishing free; no lifetime SKU; paywall 3.1.2 price-prominence fix; Apple Small Business Program enrol before launch."
+   "Monetization \u2b50 DECIDED 2026-09-04 22:19 EDT (page reply \"sure go ahead\"): $4.99/mo \u00b7 $29.99/yr \u00b7 14-day trial with an in-trial cap (60 scans / 20 ideas); ASC + STATIC_PACKAGES must match. Also decided the same minute: perks default (drop priority learning, defer themes/rich export), hashed-email grant ledger, email verification at sign-up ON (K7), #176 parked until the project is done, #142 reviewed by the orchestrator. Welcome grant 10 scans + 3 ideas; free scans 10 \u2192 8; free members 2 \u2192 3; barcode never metered; community publishing free; no lifetime SKU; paywall 3.1.2 price-prominence fix; Apple Small Business Program enrol before launch."
   ],
   "Phone / device passes": [
    "Airplane-mode matrix (spec 12); AutoFill with an empty keychain after the AASA deploy + new build; camera-first receipt flow; swipe gestures (expiring leading/trailing, grocery trailing); zones drag; OverflowMenu sheet\u2192second-modal timing (ten opens each); the Add tab badge label order with a staged basket; acceptance scenario 1's reset half."
   ],
   "Acceptance (delegated 2026-09-04 21:20 EDT: Everett gives the branch's DIRECT UR": [
    "The Neon branch acceptance-2026-09-03 expired 20:47 EDT before a clean run. Create a fresh branch AFTER the applies above (so it carries 0047/0053/0054), enable its Data API, put `ACCEPTANCE_BRANCH_URL=https://<ep>.apirest.<region>.aws.neon.tech/neondb/rest/v1` and the branch's direct URL as `NEON_BRANCH_DIRECT_URL=postgresql://\u2026` into ~/agents/.env.acceptance (chmod 600); I run ~/agents/scripts/acceptance-cycle.sh. The sign-out regression fix must be merged first or scenario 1 fails.",
-   "Acceptance update 2026-09-04 21:50 EDT: Everett let me drive his Chrome (\"M4 Mini\") in the Neon console instead of handing over URLs. Done there with his approval: 8 stale rehearsal branches deleted (project 2/10), `acceptance-2026-09-03` reset from production, its direct URL copied via the clipboard into `~/agents/.env.acceptance` (`NEON_BRANCH_DIRECT_URL`, plus `ACCEPTANCE_BRANCH_URL`; both single-quoted because the URL carries `&`). Cycle c3 (`~/agents/scripts/acceptance-cycle.sh c3`, log `~/agents/logs/acceptance-c3.log`) launched 21:47 EDT against the branch with 0054/0053/0047 applied, main at dfcd0f0 (includes the #181 sign-out fix)."
+   "Acceptance update 2026-09-04 21:50 EDT: Everett let me drive his Chrome (\"M4 Mini\") in the Neon console instead of handing over URLs. Done there with his approval: 8 stale rehearsal branches deleted (project 2/10), `acceptance-2026-09-03` reset from production, its direct URL copied via the clipboard into `~/agents/.env.acceptance` (`NEON_BRANCH_DIRECT_URL`, plus `ACCEPTANCE_BRANCH_URL`; both single-quoted because the URL carries `&`). Cycle c3 (`~/agents/scripts/acceptance-cycle.sh c3`, log `~/agents/logs/acceptance-c3.log`) launched 21:47 EDT against the branch with 0054/0053/0047 applied, main at dfcd0f0 (includes the #181 sign-out fix).",
+   "Update 2026-09-05 07:10 EDT: #142 (spec 54) merged by the orchestrator at Everett's delegation. New for Everett's approval: #182 (spec 23, decisions written in; round 2 in flight) and #185 (spec 57 email verification, strict gate default). Screen-directions gallery published for his per-screen decisions: https://claude.ai/code/artifact/35a97b24-9c2f-4841-b4e1-d3f130bb31d9 (decisions land in the artifact's `decisions` collection \u2014 read with read_db). Acceptance 12/12 on the reset branch (PR #186).",
+   "Rotation list 2026-09-05 (see ~/agents/security/rotation-2026-09-05.md): (1) Neon `neondb_owner` password \u2014 the branch direct URL (same password) sat in the private vault repo for one push; reset in the console, then update `~/agents/.env.acceptance` and any Worker secret using the owner role. (2) test@pantry.dev / password123 \u2014 documented in the repo and a live production credential; rotate, move the value to env, strip it from docs/seed script. (3) Delete the three `@ambry-test.invalid` residue accounts on production auth."
   ]
  },
  "merged_prs": [
@@ -2296,6 +2462,101 @@
    "merged": "2026-09-05T01:28",
    "number": 181,
    "title": "Stop sign-out waiting on the network: bound the push retire, send the revocation"
+  },
+  {
+   "merged": "2026-09-05T02:04",
+   "number": 183,
+   "title": "Record the design wave's landing, the evening's rehearsals, and the changelog"
+  },
+  {
+   "merged": "2026-09-05T06:13",
+   "number": 184,
+   "title": "Add route suites for barcode-lookup, recipe-ideas and import-recipe"
+  },
+  {
+   "merged": "2026-09-05T10:54",
+   "number": 142,
+   "title": "Spec 54: Artillery load and concurrency testing against a dedicated load environment"
+  },
+  {
+   "merged": "2026-09-05T10:59",
+   "number": 186,
+   "title": "Re-selector the acceptance flows for the design wave and record the 12/12 run"
+  },
+  {
+   "merged": "2026-09-05T11:02",
+   "number": 187,
+   "title": "Refund import claims on catalog failures, keep product names out of logs, answer null bodies with 422"
+  },
+  {
+   "merged": "2026-09-05T11:23",
+   "number": 188,
+   "title": "Untrack the node_modules symlinks #187 committed and ignore the name, not just the directory"
+  },
+  {
+   "merged": "2026-09-05T12:06",
+   "number": 189,
+   "title": "Coverage wave: six new acceptance flows (item screen, status chip, households, profile, plan group, zones) and the sixth run"
+  },
+  {
+   "merged": "2026-09-05T12:19",
+   "number": 190,
+   "title": "Record 2026-09-05 in the changelog: readiness evidence, eighteen flows, specs 23 and 57 for approval"
+  },
+  {
+   "merged": "2026-09-05T12:36",
+   "number": 191,
+   "title": "Re-send a ledger insert the Data API refused, and stop dropping endings in silence"
+  },
+  {
+   "merged": "2026-09-05T13:48",
+   "number": 192,
+   "title": "Make the status chip its own accessibility element, and tap it by label in flow 05"
+  },
+  {
+   "merged": "2026-09-05T15:26",
+   "number": 161,
+   "title": "Converge the spice merge, cap the add payload, scope zone pins, and column-scope two UPDATE grants"
+  },
+  {
+   "merged": "2026-09-05T16:23",
+   "number": 195,
+   "title": "Delete the Supabase CLI config and edge-function env example, retire spec 14, repoint the stale instructions"
+  },
+  {
+   "merged": "2026-09-05T19:48",
+   "number": 193,
+   "title": "Spec skeleton loading: never blank while data loads \u2014 inventory, primitives, delay/minimum rules, three-PR rollout (spec 58)"
+  },
+  {
+   "merged": "2026-09-05T19:59",
+   "number": 196,
+   "title": "Skeleton loading PR 1: primitives, useDelayedPending, design-system rule 8, and the Pantry, Location and Lists tabs plus both gates (spec 58)"
+  },
+  {
+   "merged": "2026-09-05T20:06",
+   "number": 182,
+   "title": "Spec 23: one paid tier \u2014 the free taste, the welcome grant, the lapse contract, and the price decision"
+  },
+  {
+   "merged": "2026-09-05T20:06",
+   "number": 198,
+   "title": "Skeleton loading PR 2: the Recipes tab, the recipe screens, folders, the add-to-folder sheet and the creator profile (spec 58)"
+  },
+  {
+   "merged": "2026-09-05T20:16",
+   "number": 197,
+   "title": "Skeleton loading PR 3: the Profile slots, Item, Expiring, Zones, Insights, Recent, the review lists and the receipt wait (spec 58)"
+  },
+  {
+   "merged": "2026-09-05T20:29",
+   "number": 185,
+   "title": "Spec email verification at sign-up (K7 decided): spec 57, ADR auth D12, and the board, audit, privacy and acceptance cross-references"
+  },
+  {
+   "merged": "2026-09-05T20:38",
+   "number": 156,
+   "title": "Fill new catalog rows' nutrition by name-matching USDA FDC (spec 45) \u2014 0047 + the USDA seed applied to production first"
   }
  ]
 }

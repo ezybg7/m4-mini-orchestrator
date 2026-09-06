@@ -51,7 +51,7 @@
 .screen .seg .on{background:#fff;font-weight:600;color:#000;box-shadow:0 3px 4px rgba(0,0,0,.12)}.screen .chips{display:flex;flex-wrap:wrap;gap:8px}
 .screen .chips.line{flex-wrap:nowrap;overflow:hidden}
 .screen .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#3C3C43;border:1px solid #E5E5EA;background:#fff;border-radius:999px;padding:6px 12px;white-space:nowrap}
-.screen .chip.c{padding:4px 9px}.screen .chip.on{background:#000;border-color:#000;color:#fff}
+.screen .chip.c{padding:4px 7px}.screen .chips.tight{gap:5px}.screen .chip.on{background:#000;border-color:#000;color:#fff}
 .screen .chip.tint{background:#E4F7E9;border-color:#A7DBB6;color:#1F7A35;font-weight:600}
 .screen .chip.warn{background:#FFF3E0;border-color:#FFF3E0;color:#C93400;font-weight:600}.screen .chip.out{background:#EFEFF1;border-color:#EFEFF1;color:#6D6D72}
 .screen .card{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E5E5EA;border-radius:10px;padding:10px}
@@ -142,8 +142,8 @@
 .screen .ic.clk::after{left:9px;top:5px;width:1.8px;height:6px;background:currentColor;box-shadow:1.5px 4.5px 0 -0.3px currentColor}
 .screen .ic.open::before{left:8px;top:4px;width:8px;height:8px;border-top:1.8px solid;border-right:1.8px solid}
 .screen .ic.open::after{left:4px;top:10px;width:14px;height:1.8px;background:currentColor;transform:rotate(-45deg)}
-.screen .ic.fk::before{left:6px;top:3px;width:1.8px;height:14px;background:currentColor}
-.screen .ic.fk::after{left:12px;top:3px;width:1.8px;height:14px;background:currentColor}
+.screen .ic.fk::before{left:3px;top:3px;width:9px;height:14px;background:linear-gradient(currentColor,currentColor) 50% 0/1.8px 100% no-repeat,linear-gradient(currentColor,currentColor) 0 0/1.8px 6px no-repeat,linear-gradient(currentColor,currentColor) 100% 0/1.8px 6px no-repeat,linear-gradient(currentColor,currentColor) 0 5px/100% 1.8px no-repeat}
+.screen .ic.fk::after{left:14px;top:3px;width:4px;height:14px;background:currentColor;clip-path:polygon(0 0,100% 0,100% 100%,50% 100%,50% 55%,0 50%)}
 .screen .ic.ppl::before{left:2px;top:5px;width:8px;height:8px;border:1.8px solid;border-radius:50%}
 .screen .ic.ppl::after{left:10px;top:7px;width:7px;height:7px;border:1.8px solid;border-radius:50%}.screen .ic.glb::before{inset:2px;border:1.8px solid;border-radius:50%}
 .screen .ic.glb::after{left:7px;top:2px;width:6px;height:16px;border:1.8px solid;border-radius:50%}

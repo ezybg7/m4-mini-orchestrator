@@ -1,0 +1,96 @@
+# Diagnostic: two Out->Delete endings in ONE app session (the app was launched by
+# simctl with CFNETWORK_DIAGNOSTICS so the ledger POSTs' responses are logged).
+# No launchApp here on purpose. Butter first, Parmesan second.
+appId: com.everettyan.ambry
+---
+- extendedWaitUntil:
+    visible: 'Search your whole pantry'
+    timeout: 60000
+- extendedWaitUntil:
+    visible: '.*Fridge.*|Nothing in your pantry yet'
+    timeout: 25000
+- tapOn: 'Add, tab.*'
+- tapOn: 'Search for a food'
+- inputText: 'Butter'
+- extendedWaitUntil:
+    visible: '.*Butter.*'
+    timeout: 10000
+- pressKey: Enter
+- waitForAnimationToEnd
+- tapOn: '.*Butter, Fridge.*'
+- tapOn: 'Add to Fridge'
+- extendedWaitUntil:
+    visible: 'Added .* to Fridge'
+    timeout: 15000
+- tapOn: 'Pantry, tab.*'
+- tapOn: '.*Fridge.*'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 10000
+- tapOn: 'Butter, added.*'
+- extendedWaitUntil:
+    visible: 'Stocked'
+    timeout: 10000
+- tapOn: 'Out'
+- extendedWaitUntil:
+    visible:
+      text: 'Out'
+      selected: true
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: 'Delete item'
+    direction: DOWN
+    timeout: 10000
+- tapOn: 'Delete item'
+- tapOn:
+    text: '^Delete$'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 15000
+- tapOn: 'Back'
+- tapOn: 'Add, tab.*'
+- tapOn: 'Search for a food'
+- inputText: 'Parmesan'
+- extendedWaitUntil:
+    visible: '.*Parmesan.*'
+    timeout: 10000
+- pressKey: Enter
+- waitForAnimationToEnd
+- tapOn: '.*Parmesan, Fridge.*'
+- tapOn: 'Add to Fridge'
+- extendedWaitUntil:
+    visible: 'Added .* to Fridge'
+    timeout: 15000
+- tapOn: 'Pantry, tab.*'
+- tapOn: '.*Fridge.*'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 10000
+- tapOn: 'Parmesan, added.*'
+- extendedWaitUntil:
+    visible: 'Stocked'
+    timeout: 10000
+- tapOn: 'Out'
+- extendedWaitUntil:
+    visible:
+      text: 'Out'
+      selected: true
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: 'Delete item'
+    direction: DOWN
+    timeout: 10000
+- tapOn: 'Delete item'
+- tapOn:
+    text: '^Delete$'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 15000
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'This month'
+    timeout: 15000
+- copyTextFrom: '.*percent used up.*'
+- evalScript: '${console.log("CARD: " + maestro.copiedText)}'

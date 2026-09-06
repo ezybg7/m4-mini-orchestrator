@@ -100,7 +100,8 @@ CSS_SRC = r'''
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips.line{flex-wrap:nowrap;overflow:hidden}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#3C3C43;border:1px solid #E5E5EA;background:#fff;border-radius:999px;padding:6px 12px;white-space:nowrap}
-.chip.c{padding:4px 9px}
+.chip.c{padding:4px 7px}
+.chips.tight{gap:5px}
 .chip.on{background:#000;border-color:#000;color:#fff}
 .chip.tint{background:#E4F7E9;border-color:#A7DBB6;color:#1F7A35;font-weight:600}
 .chip.warn{background:#FFF3E0;border-color:#FFF3E0;color:#C93400;font-weight:600}
@@ -220,8 +221,8 @@ CSS_SRC = r'''
 .ic.clk::after{left:9px;top:5px;width:1.8px;height:6px;background:currentColor;box-shadow:1.5px 4.5px 0 -0.3px currentColor}
 .ic.open::before{left:8px;top:4px;width:8px;height:8px;border-top:1.8px solid;border-right:1.8px solid}
 .ic.open::after{left:4px;top:10px;width:14px;height:1.8px;background:currentColor;transform:rotate(-45deg)}
-.ic.fk::before{left:6px;top:3px;width:1.8px;height:14px;background:currentColor}
-.ic.fk::after{left:12px;top:3px;width:1.8px;height:14px;background:currentColor}
+.ic.fk::before{left:3px;top:3px;width:9px;height:14px;background:linear-gradient(currentColor,currentColor) 50% 0/1.8px 100% no-repeat,linear-gradient(currentColor,currentColor) 0 0/1.8px 6px no-repeat,linear-gradient(currentColor,currentColor) 100% 0/1.8px 6px no-repeat,linear-gradient(currentColor,currentColor) 0 5px/100% 1.8px no-repeat}
+.ic.fk::after{left:14px;top:3px;width:4px;height:14px;background:currentColor;clip-path:polygon(0 0,100% 0,100% 100%,50% 100%,50% 55%,0 50%)}
 .ic.ppl::before{left:2px;top:5px;width:8px;height:8px;border:1.8px solid;border-radius:50%}
 .ic.ppl::after{left:10px;top:7px;width:7px;height:7px;border:1.8px solid;border-radius:50%}
 .ic.glb::before{inset:2px;border:1.8px solid;border-radius:50%}
@@ -421,13 +422,14 @@ def lists_today():
 def lists_a():
     right = f'<div class="btn tint sm" style="margin-bottom:6px">{ic("bask")}Restock 1</div>'
     ghost = '<div class="row" style="--ins:93px;opacity:.3"><span class="chk"></span><span class="tile">🧁</span><span class="grow t16">Bread</span></div>'
-    target = '<div class="row" style="min-height:51px;justify-content:center"><span class="c13 acc b">Drop here — Ambry files Bread here for Test Home from now on</span></div>'
+    target = ('<div class="row" style="min-height:51px;justify-content:center"><span class="c13 acc b">Drop here</span></div>'
+              '<div class="row" style="--ins:16px;min-height:34px;padding:6px 16px;justify-content:center"><span class="c13 acc">Ambry files Bread here for Test Home from now on</span></div>')
     return [SB, lt('Lists', right),
             '<div class="px" style="padding-top:12px"><div class="srch">' + ic('mag') + 'Add to your list…</div></div>',
             sh('Produce', 1), grp(grow('Apples', '🥬', 'low')),
             sh('Dairy & Eggs', 1), grp(grow('Butter', '🥚', 'out')),
             sh('Baking', 1), grp(ghost),
-            sh('Grains & Pasta', 0), grp(target, cls='tgt'),
+            sh('Grains & Pasta'), grp(target, cls='tgt'),
             sh('Bought', 1, right=f'<span class="acc">{ic("morec")}</span>'),
             grp('<div class="row" style="--ins:16px"><span class="grow acc b">Show 1 bought</span><i class="chev dn"></i></div>'),
             SUGGESTED,
@@ -694,8 +696,8 @@ def editor_today():
 def editor_a():
     def ing(name, qty):
         return f'<div class="row" style="--ins:16px"><span class="grow t16">{name}</span><span class="mu">{qty}</span>{ic("link", "acc s15")}</div>'
-    tchips = chips(chip('15', 'c'), chip('30', 'c'), chip('45', 'c'), chip('1 h', 'c'), chip('1 h 30', 'c'), chip('2 h', 'c'), chip('More…', 'c on'), line=True)
-    gchips = chips(chip('Breakfast', 'c on'), chip('Quick', 'c on'), chip('Dinner', 'c'), chip('Vegetarian', 'c'), chip('More…', 'c'), line=True)
+    tchips = chips(chip('15', 'c'), chip('30', 'c'), chip('45', 'c'), chip('1 h', 'c'), chip('1 h 30', 'c'), chip('2 h', 'c'), chip('More…', 'c on'), line=True).replace('chips line', 'chips line tight')
+    gchips = chips(chip('Breakfast', 'c on'), chip('Quick', 'c on'), chip('Dinner', 'c'), chip('Vegetarian', 'c'), chip('More…', 'c'), line=True).replace('chips line', 'chips line tight')
     more = grp('<div class="row" style="--ins:16px"><span class="grow b">More details</span><i class="chev dn"></i></div>',
                srow('Add a photo', '', ic('cam', 'mu'), ins=48),
                f'<div class="row" style="--ins:16px"><span class="grow">Serves</span>{stepper(4)}</div>',

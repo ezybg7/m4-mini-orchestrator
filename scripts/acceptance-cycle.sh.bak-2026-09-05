@@ -7,7 +7,7 @@
 # Usage: acceptance-cycle.sh <label> [--build-only|--run-only]
 set -u
 LABEL=${1:-cycle}; MODE=${2:-}
-REPO=${REPO:-$HOME/code/pantry}; UDID='70893D75-19E3-4CF2-8DBC-84B6BD00C3C7'
+REPO=/Users/orchestrator/code/pantry; UDID='70893D75-19E3-4CF2-8DBC-84B6BD00C3C7'
 source $HOME/agents/.env.acceptance
 BRANCH_URL=${ACCEPTANCE_BRANCH_URL:?set ACCEPTANCE_BRANCH_URL in ~/agents/.env.acceptance}
 BRANCH_HOST=$(echo "$BRANCH_URL" | sed -E 's#https://([^/]+).*#\1#'); BRANCH_ID=$(echo "$BRANCH_HOST" | cut -d. -f1)
@@ -16,8 +16,7 @@ PROD_ID=$(grep -oE 'EXPO_PUBLIC_DATA_API_URL=https://[^.]+' $REPO/.env 2>/dev/nu
 cd $REPO || exit 2
 APP=$REPO/ios/build/Build/Products/Release-iphonesimulator/Ambry.app
 if [ "$MODE" != "--run-only" ]; then
-  # Pull only on main: a worktree on a feature branch (REPO=… override, 2026-09-05) builds what it has.
-  if [ "$(git rev-parse --abbrev-ref HEAD)" = main ]; then echo "== $(date '+%H:%M:%S') pull main"; git pull -q --rebase origin main; else echo "== $(date '+%H:%M:%S') branch $(git rev-parse --abbrev-ref HEAD) — no pull"; fi; git log --oneline -1
+  echo "== $(date '+%H:%M:%S') pull main"; git pull -q --rebase origin main; git log --oneline -1
   echo "== $(date '+%H:%M:%S') clear metro cache"; setopt null_glob 2>/dev/null; rm -rf ${TMPDIR:-/tmp}/metro-cache ${TMPDIR:-/tmp}/metro-file-map-* 2>/dev/null; unsetopt null_glob 2>/dev/null
   echo "== $(date '+%H:%M:%S') prebuild"; cp package.json /tmp/ambry-package.json.bak
   npx expo prebuild --platform ios --no-install >/dev/null 2>&1 && echo prebuild-ok || { cp /tmp/ambry-package.json.bak package.json; echo "prebuild FAILED"; exit 3; }

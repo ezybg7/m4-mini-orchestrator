@@ -1,15 +1,45 @@
 {
- "as_of": "Draft \u2014 numbers update when verification finishes",
- "lede": "Everything below happened on 2026-09-04 (EDT) through the orchestrator queue: the feature-by-feature review, the fix wave, the design wave, and the readiness pass. Automated evidence is in the last two sections; the middle sections are the checks only you can run on a phone, in a console, or as a decision.",
+ "as_of": "As of 2026-09-05 20:50 EDT · 34 PRs merged Sep 4 · 22 merged Sep 5",
+ "lede": "Everything below happened between 2026-09-04 and the evening of 2026-09-05 through the orchestrator queue: the feature-by-feature review, the fix wave, the design wave, the readiness pass, the monetization and verification specs, the skeleton-loading stack — and, at 19:40 EDT tonight, your blanket approval: every approved PR is merged, migration 0047 and the 13,587-row USDA seed are on production, and the branches are swept. Automated evidence is in the last two sections; the middle sections are the checks only you can run on a phone, in a console, or as a decision.",
  "stats": {
-  "acceptance": "6 / 12",
-  "unit": "170 \u00b7 2,907"
+  "acceptance": "18 / 18",
+  "unit": "3,413 tests (final pre-merge tree) · CI green on main at 03077b4"
  },
- "callout": "Tick as you go. With the shared record on, I can read your ticks and notes back and pick up the fixes without you writing a message.",
- "changes_intro": "Thirty-seven pull requests merged since Sep 3, grouped by the wave they belonged to. Every one went through an advocate + critic review pair before merge.",
+ "callout": "Tick as you go. Your ticks and notes are shared with Claude on this page (the shared record), so a note here is enough — no message needed. Your six answers from last night are already recorded below.",
+ "changes_intro": "56 pull requests merged since Sep 3, grouped by the wave they belonged to. Every one went through an advocate + critic review pair before merge. Tonight's wave is first: read each PR for what it changes, then find its manual rows under \"What only you can test\".",
  "waves": [
   {
-   "name": "Design wave (critique packages P0\u2013P7)",
+   "name": "Approval wave (Sep 5 evening)",
+   "prs": [
+    193,
+    196,
+    198,
+    197,
+    182,
+    185,
+    156
+   ],
+   "blurb": "At 19:40 EDT you approved everything. Merged in dependency order: the skeleton-loading spec (#193) and its three PRs (#196 primitives, timing hook, launch gate, Pantry/Location/Lists; #198 recipes, community, cook mode, folders, creator profile; #197 Profile slots, Item, Expiring, Zones, Insights, Recent, review lists, receipt wait), spec 23 one paid tier (#182), spec 57 email verification (#185), and the USDA nutrition matcher (#156) after its migration 0047 and seed went to production. Each dependent PR was retargeted to main and re-stacked on the squash below it before merging; every merged head had its own green CI run. What to review in depth: the skeleton rules (150 ms delay, 300 ms minimum, Reduce Motion, one announcement), the spec 23 contracts you decided last night (price, trial, welcome grant, lapse), spec 57's strict gate, and spec 45's fail-open nutrition fill on the shelf-life route."
+  },
+  {
+   "name": "Readiness pass (Sep 5)",
+   "blurb": "After the design wave: the acceptance flows re-selectored, six new golden paths, the status chip made its own accessibility element (18/18), route-level Worker tests and the three defects they caught, the ledger write hardened against a Neon Data API race, the node_modules cleanup, the load-testing spec reviewed at your request, and the records.",
+   "prs": [
+    195,
+    192,
+    191,
+    189,
+    186,
+    184,
+    187,
+    188,
+    190,
+    142,
+    183
+   ]
+  },
+  {
+   "name": "Design wave (critique packages P0–P7)",
    "blurb": "Every screen re-read against the design brief: minimal interactions, no keyboard where a control will do, no duplicated headers. The foundation package gates the rest.",
    "prs": [
     171,
@@ -58,8 +88,7 @@
     152,
     159,
     166,
-    147,
-    183
+    147
    ]
   },
   {
@@ -78,40 +107,35 @@
   }
  ],
  "extra_titles": {},
- "actions_intro": "In order. The database applies come first because the Profile tab already depends on 0054 and two merged-ready PRs wait on 0047 and 0053. Every apply was rehearsed tonight on a fresh copy of production.",
+ "actions_intro": "In order. 0054, 0053, 0047 and the USDA seed are on production (asserts live). What is left is consoles, secrets, builds, a phone, and four decisions. Items 1–3 use your credentials or your console; I take over again right after each.",
  "actions": [
   {
-   "title": "Apply 0054 to production",
-   "detail": "Rehearsed 8/8 on the reset acceptance branch. Users see \"Couldn't load your profile\" until this is applied.",
-   "command": "cd ~/code/pantry && git pull\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0054_creator_profiles.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0054_creator_profiles.sql   # expect: ALL 8 ASSERTIONS PASSED"
+   "title": "Rotate the Neon neondb_owner password",
+   "detail": "The acceptance branch's direct connection string (same role password as production) was committed to your private m4-mini-orchestrator backup repo by the 02:30 backup on Sep 5 (one push; now untracked and ignored). Console → Roles → neondb_owner → Reset password; then update both NEON_*_URL lines in ~/agents/.env.acceptance on the mini and any Worker secret that uses the owner role (check `wrangler secret list` for NEON_DATABASE_URL and redeploy if it is the owner). Everything else that role touched is unchanged. Step-by-step on the mini: ~/agents/security/rotation-steps-2026-09-05.md §1. AFTER rotating: put the new owner connection strings into ~/agents/.env.acceptance on the mini (chmod 600; the NEON_DIRECT_URL and NEON_BRANCH_DIRECT_URL lines) — never in chat — and update the Worker's NEON_DATABASE_URL secret if it uses that role. Until then I have no database access, so do the two console steps below in the same sitting.",
+   "command": "chmod 600 ~/agents/.env.acceptance && $EDITOR ~/agents/.env.acceptance   # replace NEON_DIRECT_URL / NEON_BRANCH_DIRECT_URL"
   },
   {
-   "title": "Apply 0053 to production, then replay the grants",
-   "detail": "From PR #161's branch. Rehearsed 16/16, grants replay clean, 0054 still 8/8 afterwards. Tell me when it is in and I merge #161.",
-   "command": "git fetch origin && git checkout fix/db-integrity-2026-09-04\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0053_merge_integrity.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0053_merge_integrity.sql   # expect: ALL 16 ASSERTIONS PASSED\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -f db/neon-grants.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0054_creator_profiles.sql   # still ALL 8"
+   "title": "Sign the Neon CLI in on the mini (one time)",
+   "detail": "You asked for the Neon skills (neon, neon-postgres) — installed tonight, project-scoped. The CLI has no account on this machine (profile DEFAULT, account \"-\"), so it cannot reach your project. One `neon auth` in a terminal on the mini (browser sign-in) fixes that; an API key in the env file (NEON_API_KEY=…) is the alternative. Then I can list branches, reset roles and check the Auth integration without the console.",
+   "command": "cd ~/code/pantry && npx neon@latest auth && npx neon@latest profile list"
   },
   {
-   "title": "Apply 0047 to production",
-   "detail": "From PR #156's branch. Creates the empty USDA mirror; inert until the seed. Rehearsed 7/7. Then I merge #156.",
-   "command": "git checkout feat/catalog-nutrition-matching\npsql \"$NEON_DIRECT_URL\" -v ON_ERROR_STOP=1 -1 -f supabase/migrations/0047_usda_foods.sql\npsql \"$NEON_DIRECT_URL\" -f db/asserts/0047_usda_foods.sql   # expect: ALL 7 ASSERTIONS PASSED"
-  },
-  {
-   "title": "Say yes or no to the USDA downloads",
-   "detail": "The 0047 seed needs three FDC datasets (~200 MB) from fdc.nal.usda.gov. With a yes I download, generate db/apply/usda-foods-seed.sql, rehearse it on the branch and hand you the apply line."
+   "title": "Disable Neon Managed Auth, then say so; delete the old Supabase project",
+   "detail": "Console-only. Neon: project → Auth → disable the 'BetterAuth — Enabled' feature (the app runs its own Better Auth on the Worker since Aug 22; the legacy neon_auth schema is empty and unreferenced — I drop it with migration 0055 once you confirm). Supabase: delete project vetlkzfzvwrqgblaszbq if it still exists. Steps: ~/agents/security/rotation-steps-2026-09-05.md §2. After you disable it I cut a branch from production, rehearse 0055 (expects ALL 9 ASSERTIONS PASSED), apply, and merge #194 — already rebased onto tonight's main and green. Production tonight: neon_auth exists, owned by role neon_auth, tables empty except jwks 1 · verification 4 · project_config 1."
   },
   {
    "title": "Deploy the Worker",
-   "detail": "`wrangler deploy` from workers/ with your token; confirm BETTER_AUTH_SECRET, AUTH_BASE_URL, RESEND_API_KEY, ANTHROPIC_API_KEY are set (`wrangler secret list`). The mini's wrangler is not logged in.",
+   "detail": "`wrangler deploy` from workers/ with your token; confirm BETTER_AUTH_SECRET, AUTH_BASE_URL, RESEND_API_KEY, ANTHROPIC_API_KEY are set (`wrangler secret list`). The mini's wrangler is not logged in. New since the last deploy: spec 45's fail-open USDA nutrition fill on the shelf-life route (reads usda_foods as table owner; answers gain nutrition_filled). Until deployed, the route behaves exactly as before.",
    "command": "cd ~/code/pantry/workers && npx wrangler secret list && npx wrangler deploy"
   },
   {
    "title": "Cut a new EAS development build",
-   "detail": "app.json gained the webcredentials association (#174); the installed dev client runs the old native runtime until this is done.",
+   "detail": "app.json gained the webcredentials association (#174) and the JS bundle now carries the whole skeleton stack; the installed dev client runs the old runtime until this is done. Do it before the device pass.",
    "command": "cd ~/code/pantry && eas build --profile development --platform ios"
   },
   {
-   "title": "Rotate the seeded dev account",
-   "detail": "test@pantry.dev's password is documented in the repo; rotate before beta and put the new value in ~/agents/.env.acceptance on the mini (chmod 600)."
+   "title": "Device pass",
+   "detail": "Three scripts, all under \"What only you can test\" below: spec 58 rows 1–6 (launch gate → Pantry handoff with no blank frame and one announcement; Profile slots at 150 ms; Reduce Motion static fills; VoiceOver \"Loading community\" once; dark-mode block contrast; large-text row heights), spec 45's two rows (a generic item you type in that OFF does not know gets a USDA panel on the item screen; a barcoded product never does), and the untouched runbook scenarios (second account/RLS, cellular sign-up, camera)."
   },
   {
    "title": "Anthropic console budget alert",
@@ -124,66 +148,103 @@
   {
    "title": "RevenueCat go-live gate",
    "detail": "Do not set REVENUECAT_WEBHOOK_SECRET / REVENUECAT_SECRET_KEY yet. Condition (1), the webhook assert suite, is now green 12/12 on a production copy; (2) the last_event_at ordering migration and (3) the stale-event assert case are still open."
+  },
+  {
+   "title": "Raise the Data API auth.uid() race with Neon support",
+   "detail": "Reproduction: one JWT; DELETE an item, then the app's four concurrent refetches plus one POST → 403 42501 on the POST in 2 of 65 rounds; lone requests never fail (probe scripts on the mini: ~/agents/scripts/probe-outcome-race.mjs, probe-outcome-variants.mjs). Project red-water-68835077, PG 17.11, pg_session_jwt 0.5.0. Our side is defended by the retry in #191, but reads could be affected too (an RLS-empty result was not reproduced)."
+  },
+  {
+   "title": "Four decisions",
+   "detail": "(1) PR #176 (specs 55/56 Obsidian + Codex lane) stays parked per your note — it now conflicts with main; say \"un-park\" and I rebase it. (2) The Neon skill files (.agents/, .claude/skills/neon*, skills-lock.json) are untracked in the repo: commit them so agents in fresh worktrees get them, or add them to .gitignore. (3) Dependabot #155 (jest 30 · eslint 10 · RNTL 14 · @types/jest 30, CI red) is closed; those majors land as one deliberate upgrade PR when you want it. (4) The gallery: 24 screens × 3 directions still have no picks recorded."
+  },
+  {
+   "title": "Start the coding waves",
+   "detail": "Specs 23 and 57 are merged. Their implementation (migrations 0060–0063, the Worker paywall/grant/verification routes, the client paywall, sent state and Universal Link) is the next queue for Opus agents — a word from you starts it; nothing else blocks it. Same for any gallery direction you pick and the skeleton follow-ups (D2 household hint, keepPreviousData on the community feed, ConfirmSheet CTA colour)."
   }
  ],
  "decisions": [
   {
    "q": "Ambry Plus price and trial",
-   "default": "$2.99/mo \u00b7 $24.99/yr \u00b7 7-day trial stays locked until you decide; recommended $4.99 \u00b7 $29.99 \u00b7 14-day with an in-trial cap of 60 scans / 20 ideas. Decide before any product is created in App Store Connect (PR #182).",
+   "default": "$2.99/mo · $24.99/yr · 7-day trial stays locked until you decide; recommended $4.99 · $29.99 · 14-day with an in-trial cap of 60 scans / 20 ideas. Decide before any product is created in App Store Connect (PR #182).",
    "answer": "sure go ahead",
-   "resolution": "Locked: $4.99/mo \u00b7 $29.99/yr \u00b7 14-day trial with an in-trial cap of 60 scans / 20 ideas. Being written into spec 23 and ADR D2 (PR #182); App Store Connect products and STATIC_PACKAGES must match when you create them.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "resolution": "Locked: $4.99/mo · $29.99/yr · 14-day trial with an in-trial cap of 60 scans / 20 ideas. Being written into spec 23 and ADR D2 (PR #182); App Store Connect products and STATIC_PACKAGES must match when you create them.",
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   },
   {
    "q": "Plus perks that have no spec yet",
    "default": "Themes and rich export deferred to their own specs; \"priority shelf-life learning\" dropped (spec 40 already applies corrections at once). Launch-day Plus = 300 scans / 100 ideas, unlimited members in owned households, 2000 photos (PR #182).",
    "answer": "works",
    "resolution": "Default stands: priority learning dropped; themes and rich export deferred to their own specs; launch-day Plus = 300 scans / 100 ideas, unlimited members in owned households, 2000 photos.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   },
   {
    "q": "Welcome-grant farming bound",
    "default": "A hashed-email grant ledger kept 13 months and disclosed in the policy; the alternative is granting only after email verification (PR #182).",
    "answer": "sure",
    "resolution": "Hashed-email grant ledger, kept 13 months, disclosed in the policy.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   },
   {
    "q": "Specs 55 + 56 (Obsidian workspace, Codex QA lane)",
    "default": "Approve with the amendments in my consolidated comment on PR #176; the merge is yours.",
    "answer": "no, not right now, after we finish this project",
    "resolution": "PR #176 parked until this project is finished.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   },
   {
    "q": "Spec 54 load testing",
    "default": "PR #142 is yours to review.",
    "answer": "no, you review it",
    "resolution": "Claude runs the advocate + critic pair on PR #142 and reports.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   },
   {
    "q": "Email verification at sign-up (K7)",
    "default": "Unset; it also decides the grant-farming bound above.",
    "answer": "sure",
    "resolution": "Verification goes ON: an auth-spec amendment and its implementation (Better Auth verification through Resend) are queued; the welcome grant is issued only to verified accounts.",
-   "answered_at": "Sep 4, 22:19\u201322:20 EDT (release-pass page)"
+   "answered_at": "Sep 4, 22:19–22:20 EDT (release-pass page)"
   }
  ],
- "device_intro": "From docs/device-test-plan.md \u2014 the boxes not yet ticked. Sections tagged 2-DEVICE need a second phone or account; DARK needs the dark theme.",
- "runbook_intro": "From docs/ACCEPTANCE_TESTS.md \u2014 every step the simulator suite cannot prove (camera, airplane mode, a second device, native pickers). Grouped by scenario; each row says what to do and what you should see.",
+ "device_intro": "From docs/device-test-plan.md — the boxes not yet ticked. Sections tagged 2-DEVICE need a second phone or account; DARK needs the dark theme.",
+ "runbook_intro": "From docs/ACCEPTANCE_TESTS.md — every step the simulator suite cannot prove (camera, airplane mode, a second device, native pickers). Grouped by scenario; each row says what to do and what you should see.",
  "release_intro": "Spec 19's pre-submission gates and the production checklist's remaining boxes.",
  "evidence_intro": "What I could prove without a phone, tonight, against a fresh copy of production on a Neon branch.",
  "evidence": [
   [
-   "Typecheck \u00b7 lint \u00b7 jest",
+   "Migration 0047 + USDA seed on production",
    "pass",
-   "CI green on main at dfcd0f0: 170 suites, 2,907 tests (2 skipped), plus the four-timezone re-run; secret scan and disclosures green."
+   "Applied 2026-09-05 19:48 EDT at your word: 0047 (asserts 7/7 on the empty table), the seed (13,587 rows in 4 s: foundation 363 · sr_legacy 7,793 · survey_fndds 5,431), asserts 7/7 again; the runbook's worst-case prefilter (\"chicken\", 812 survivors → 400) ran in 50.9 ms on production. One incident, fixed in three minutes and recorded in MIGRATIONS.md: the first grants replay used PR #156's pre-0053 copy of db/neon-grants.sql, which re-granted table-level UPDATE on households and INSERT/UPDATE on grocery_items to authenticated (19:48–19:51). 0053's suite caught it (N12 FAIL); the three-way-merged file put the column scoping back. Afterwards: 0047 7/7 · 0053 16/16 · 0054 8/8 · 0050 12/12, no client-role privilege on usda_foods, RLS on with zero policies, service_role SELECT only; 2 profiles / 13 inventory rows / 431 catalog rows intact before and after."
+  ],
+  [
+   "Skeleton loading (spec 58)",
+   "pass",
+   "Merged 2026-09-05 19:48–20:16 EDT as #193 → #196 → #198 → #197, each re-stacked onto the squash below it with its own green run; 3,477 jest tests on the final stacked tree; bare spinner sites 38 → 14, the remainder pinned by tests/spinner-ratchet.test.ts; the device rows are spec 58 rows 1–6 below."
+  ],
+  [
+   "Typecheck · lint · jest",
+   "pass",
+   "CI green on main at 03077b4 (push runs at e304ff7, 0faefd4 and 03077b4 all green); every PR merged tonight had the full suite plus the four-timezone re-run green on its rebased head; secret scan and disclosures green."
+  ],
+  [
+   "Secret scan (repo + backup vault)",
+   "open",
+   "gitleaks over 657 commits clean with and without the allowlist; a custom sweep found no provider keys, tokens or private keys in history. The private backup vault had tracked the acceptance env file for one push (fixed) — the three rotation actions above follow from that and from the documented seeded login. Full report on the mini: ~/agents/security/rotation-2026-09-05.md."
+  ],
+  [
+   "Test residue on production auth",
+   "pass",
+   "The three @ambry-test.invalid accounts (Aug 26; no households, items or data) deleted 2026-09-05 11:48 EDT after a branch rehearsal; 2 accounts remain (yours and the seeded one). test@pantry.dev left as is at your word."
+  ],
+  [
+   "Migrations 0054 + 0053 on production",
+   "pass",
+   "Applied 2026-09-05 11:17–11:18 EDT at your word, in the rehearsed order: 0054 (asserts 8/8), 0053 (16/16), db/neon-grants.sql replay (122 statements), then 8/8 and 16/16 again; 5 profiles and 13 inventory rows intact. The Profile tab's bio and links now load in production."
   ],
   [
    "Worker route tests",
    "pass",
-   "PR #184 merged: barcode, ideas and import routes have route-level tests (242 cases); the three defects it caught are being fixed in their own PR."
+   "PR #184 merged: barcode, ideas and import routes have route-level tests; PR #187 merged: the three defects they caught (import refund guard, a product name in logs, null bodies → 500) are fixed."
   ],
   [
    "Full-history secret scan",
@@ -208,7 +269,7 @@
   [
    "Outbound timeouts",
    "pass",
-   "JWKS 5 s \u00b7 Data API 10 s \u00b7 OFF 5 s \u00b7 import sidecar 6 s \u00b7 billing 10 s \u00b7 Anthropic 45/60/30 s."
+   "JWKS 5 s · Data API 10 s · OFF 5 s · import sidecar 6 s · billing 10 s · Anthropic 45/60/30 s."
   ],
   [
    "Client env hygiene",
@@ -218,12 +279,12 @@
   [
    "Privacy policy hosted",
    "pass",
-   "ezybg7.github.io/pantry/privacy responds 200, effective 3 Sep 2026, linked from Profile \u2192 About."
+   "ezybg7.github.io/pantry/privacy responds 200, effective 3 Sep 2026, linked from Profile → About."
   ],
   [
    "Migration rehearsals",
    "pass",
-   "0054 8/8 \u2192 0053 16/16 \u2192 grants replay \u2192 0054 8/8 \u2192 0047 7/7 \u2192 0053 16/16, on a branch reset from production."
+   "0054 8/8 → 0053 16/16 → grants replay → 0054 8/8 → 0047 7/7 → 0053 16/16, on a branch reset from production."
   ],
   [
    "Assert suites on the production copy",
@@ -232,8 +293,8 @@
   ],
   [
    "Acceptance suite (simulator)",
-   "open",
-   "6/12 on the first rerun after the design wave; selector repairs in flight."
+   "pass",
+   "18/18 in 12m03s on 2026-09-05 (Release build of PR #192's branch against the production-copy Neon branch): the twelve repaired flows (#186), the six coverage-wave flows (#189), the waste-ledger retry proven (#191), and the status chip now addressable by its own accessibility label (#192 — also a real VoiceOver fix: the chip and the trash were swallowed by the row's single element)."
   ],
   [
    "Per-user AI cap against production",
@@ -243,21 +304,28 @@
   [
    "RLS with a second real account",
    "yours",
-   "Runbook scenario 8 \u2014 needs a second phone or account."
+   "Runbook scenario 8 — needs a second phone or account."
   ],
   [
    "Vision accuracy eval (F4)",
    "yours",
    "Needs your real receipts."
+  ],
+  [
+   "Branch and worktree hygiene",
+   "pass",
+   "44 local branches deleted after a bundle backup (~/agents/backups/pantry-local-branches-2026-09-05.bundle); stale remote-tracking refs pruned; the two closed-PR remote branches (#58, #97) deleted; origin now holds main plus the branches of #194 and #176; no agent worktrees remain."
   ]
  ],
  "open_items": [
-  "PR #182 (spec 23: one paid tier) \u2014 round-1 fixes in, rebased on main, CI running; your six answers are written into the spec and ADR; a round-2 critic pass is running; then your approval.",
-  "PR #156 (USDA nutrition matching) and PR #161 (merge integrity) \u2014 green, rebased, waiting on the 0047 and 0053 applies.",
-  "PR #182 (spec 23: one paid tier) \u2014 review round 1 applied; your approval and the price decision come next; implementation PRs follow.",
-  "PR #176 (specs 55/56) and PR #142 (spec 54) \u2014 yours.",
-  "PR #155 \u2014 Dependabot majors, parked under the weekly policy.",
-  "Design package P8 (recipes + insights) \u2014 with the recipes session."
+  "PR #194 (migration 0055: drop the empty legacy neon_auth schema) — rebased onto tonight's main and green; waits for you to disable Neon Managed Auth, then I rehearse, apply and merge.",
+  "PR #176 (specs 55/56) — parked per your note; now conflicting with main (board + ADR index); rebased on your word.",
+  "PR #155 (Dependabot majors) — closed tonight with a note; jest 30 / eslint 10 / RNTL 14 / @types/jest 30 land as one deliberate upgrade PR.",
+  "Spec 23 (one paid tier) and spec 57 (email verification) implementation — specs merged; migrations 0060–0063 reserved; the coding waves run on Opus agents on your go.",
+  "Screen directions gallery — 24 screens × (Today + 3 directions); no picks recorded yet.",
+  "Design and skeleton follow-ups queued: ConfirmSheet CTA colour (design-system rule 2); spec 28 reset mail via app_auth.email_sends; D2 household hint on the launch gate; keepPreviousData on the community feed; the Icon act() warnings in other suites.",
+  "Neon Data API auth.uid() race — defended by #191's retry; the support ticket is yours (reproduction in the actions above).",
+  "Neon skills (neon, neon-postgres) installed at your request — untracked in the repo until you decide; the CLI still needs your sign-in."
  ],
  "overrides_done": [
   "Turn GitHub Pages on",

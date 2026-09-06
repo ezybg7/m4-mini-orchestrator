@@ -7,7 +7,7 @@ Currently in use:
  powernap             1
  networkoversleep     0
  disksleep            0
- sleep                0 (sleep prevented by Claude, xcodebuild, coreaudiod, Google Chrome)
+ sleep                0
  ttyskeepawake        1
  displaysleep         10
  tcpkeepalive         1

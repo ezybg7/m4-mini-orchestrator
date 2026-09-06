@@ -1,0 +1,57 @@
+# One-off residue cleanup through the app UI (never SQL): the grocery "Milk"
+# row 12-expiring-swipe left `needed`, and the `out` Milk row in the Fridge it
+# left behind when it ran "Used". Deleting an out row on its item screen
+# records one `used` ending — the app's own semantics — which is also what the
+# ledger needs to reach the scorecard floor on this re-used branch.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+# --- Grocery list: Milk (needed) -> cart -> clear without restocking ---------
+- tapOn: 'Lists, tab.*'
+- extendedWaitUntil:
+    visible: '.*Milk.*'
+    timeout: 10000
+- tapOn: '.*Milk.*'
+- extendedWaitUntil:
+    visible: 'In Your Cart'
+    timeout: 10000
+- tapOn: 'More actions for bought items'
+- extendedWaitUntil:
+    visible: 'Clear without restocking'
+    timeout: 10000
+- tapOn: 'Clear without restocking'
+- tapOn: 'Clear'
+- extendedWaitUntil:
+    visible: 'Your list is empty — add something above to get started.'
+    timeout: 10000
+# --- Fridge: the out Milk row -> item screen -> Delete item -------------------
+- tapOn: 'Pantry, tab.*'
+- tapOn: '.*Fridge.*'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 10000
+- tapOn: 'Milk, added.*'
+- extendedWaitUntil:
+    visible: 'Stocked'
+    timeout: 10000
+- assertVisible:
+    text: 'Out'
+    selected: true
+- scrollUntilVisible:
+    element:
+      text: 'Delete item'
+    direction: DOWN
+    timeout: 10000
+- tapOn: 'Delete item'
+- tapOn:
+    text: '^Delete$'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 15000
+- assertNotVisible: 'Milk, added.*'
+- tapOn: 'Back'
+# The ledger now holds five `used` endings, so the card must render.
+- extendedWaitUntil:
+    visible: 'This month'
+    timeout: 15000
+- assertVisible: '.*100 percent used up, 5 eaten, 0 went off.*'
