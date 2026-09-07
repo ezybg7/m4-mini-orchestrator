@@ -7,19 +7,12 @@
 # Usage: acceptance-cycle.sh <label> [--build-only|--run-only]
 set -u
 LABEL=${1:-cycle}; MODE=${2:-}
-REPO=${REPO:-$HOME/code/pantry}; UDID=${UDID:-70893D75-19E3-4CF2-8DBC-84B6BD00C3C7}
+REPO=${REPO:-$HOME/code/pantry}; UDID='70893D75-19E3-4CF2-8DBC-84B6BD00C3C7'
 source $HOME/agents/.env.acceptance
 BRANCH_URL=${ACCEPTANCE_BRANCH_URL:?set ACCEPTANCE_BRANCH_URL in ~/agents/.env.acceptance}
 BRANCH_HOST=$(echo "$BRANCH_URL" | sed -E 's#https://([^/]+).*#\1#'); BRANCH_ID=$(echo "$BRANCH_HOST" | cut -d. -f1)
 export TEST_EMAIL TEST_PASSWORD LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true SENTRY_ALLOW_FAILURE=true CI=1
 PROD_ID=$(grep -oE 'EXPO_PUBLIC_DATA_API_URL=https://[^.]+' $REPO/.env 2>/dev/null | sed 's#.*https://##' | head -1)
-# A worktree checkout has no .env (it is gitignored), which used to make PROD_ID empty —
-# and `grep -c ""` then counts EVERY line of the bundle, so the "prod must be 0" guard
-# printed 14778 and meant nothing while the real signal, "branch id hits: 0", scrolled
-# past. Nothing was baked at all: EXPO_PUBLIC_* comes from .env, not from the xcodebuild
-# environment alone. Refuse to build rather than run the suite against a bundle with no
-# endpoint in it (2026-09-06).
-[ -n "$PROD_ID" ] || { echo "no EXPO_PUBLIC_DATA_API_URL in $REPO/.env — copy one in before building (it is gitignored, so a fresh worktree has none)"; exit 2; }
 cd $REPO || exit 2
 APP=$REPO/ios/build/Build/Products/Release-iphonesimulator/Ambry.app
 if [ "$MODE" != "--run-only" ]; then
@@ -31,16 +24,11 @@ if [ "$MODE" != "--run-only" ]; then
   cp /tmp/ambry-package.json.bak package.json   # prebuild rewrites scripts/version; never commit that
   echo "== $(date '+%H:%M:%S') pod install"; (cd ios && pod install --silent >/dev/null 2>&1 && echo pods-ok || echo "pod install failed (continuing)")
   echo "== $(date '+%H:%M:%S') xcodebuild Release (branch URL baked)"
-  (cd ios && SENTRY_DISABLE_AUTO_UPLOAD=true EXPO_PUBLIC_DATA_API_URL="$BRANCH_URL" xcodebuild -workspace Ambry.xcworkspace -scheme Ambry -configuration Release -sdk iphonesimulator -derivedDataPath build -destination "platform=iOS Simulator,id=$UDID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build -quiet 2>&1 | grep -E 'error:|BUILD (SUCCEEDED|FAILED)' | tail -5)
+  (cd ios && EXPO_PUBLIC_DATA_API_URL="$BRANCH_URL" xcodebuild -workspace Ambry.xcworkspace -scheme Ambry -configuration Release -sdk iphonesimulator -derivedDataPath build -destination "platform=iOS Simulator,id=$UDID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build -quiet 2>&1 | grep -E 'error:|BUILD (SUCCEEDED|FAILED)' | tail -5)
   [ -d "$APP" ] || { echo "no .app produced"; exit 4; }
   echo "prod id hits: $(strings $APP/main.jsbundle | grep -c "$PROD_ID")  branch id hits: $(strings $APP/main.jsbundle | grep -c "$BRANCH_ID")  (prod must be 0)"
   rm -rf $HOME/agents/builds/Ambry-sim-release-branch-$(date +%F)-$LABEL.app; cp -R "$APP" $HOME/agents/builds/Ambry-sim-release-branch-$(date +%F)-$LABEL.app
   echo "== $(date '+%H:%M:%S') device"; for d in $(xcrun simctl list devices booted | grep -oE '[0-9A-F-]{36}'); do [ "$d" != "$UDID" ] && { echo "shutting down other booted simulator $d"; xcrun simctl shutdown $d >/dev/null 2>&1; }; done; xcrun simctl bootstatus $UDID -b >/dev/null 2>&1 && echo "booted $UDID" || { echo "could not boot $UDID"; exit 4; }
-  # iOS offers to save the password on first sign-in after an erase; the alert is
-  # another process's window, so Maestro sees only the status bar and every assertion
-  # after sign-in fails (run 9, 2026-09-06). scripts/run-acceptance.mjs applies this
-  # too — repeated here so a --build-only cycle leaves the device ready as well.
-  xcrun simctl spawn $UDID defaults write com.apple.WebUI AutoFillPasswords -bool false 2>/dev/null && echo "autofill passwords off"
   echo "== $(date '+%H:%M:%S') install"; xcrun simctl uninstall $UDID com.everettyan.ambry >/dev/null 2>&1; xcrun simctl install $UDID "$APP" && echo installed
   [ "$MODE" = "--build-only" ] && exit 0
 fi
