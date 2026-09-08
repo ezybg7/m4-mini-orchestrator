@@ -1,0 +1,117 @@
+# Codex configuration for the pantry (Ambry) QA + implementation lanes.
+# Canonical copy: ~/agents/codex/config.toml  →  installed at ~/.codex/config.toml
+# Spec: pantry specs/codex-qa-lane.md (spec 56).  Contains NO secrets.
+# ~/.codex/auth.json is NEVER backed up and never read by a sandboxed child.
+#
+# SCHEMA NOTE (verified against codex-cli 0.153.2, 2026-09-07):
+#   Only two things here are statically validated:
+#     * `default_permissions` must name a profile defined below
+#       (bogus -> "default_permissions refers to undefined profile `x`")
+#     * `extends` must name a real built-in
+#       (bogus -> "cannot extend unsupported built-in profile `:x`")
+#   EVERYTHING ELSE IS SILENTLY IGNORED IF MISSPELLED. `access = "bogus-value"`
+#   and invented field names both load without error. A typo in a file_system
+#   entry therefore yields a profile with NO denial and a config that looks
+#   correct. This is why ~/agents/codex/probe.sh is a hard gate before the first
+#   real run and after every `codex update` — static review cannot substitute.
+#   Field names below come from the binary's own serde symbols
+#   (FileSystemSandboxEntry = glob + access; access in none|read-only|read-write).
+
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+approval_policy = "never"
+default_permissions = "pantry-review"
+web_search = "disabled"
+
+# Repo text stays out of ~/.codex/history.jsonl.
+[history]
+persistence = "none"
+
+# Drops names containing KEY/SECRET/TOKEN from every child environment.
+[shell_environment_policy]
+inherit = "core"
+
+# Project .codex/rules/*.rules load only for a trusted project.
+[projects."/Users/orchestrator/code/pantry"]
+trust_level = "trusted"
+
+# ---------------------------------------------------------------------------
+# Lane R (review) and lane H (bug hunt): read the worktree, write nothing.
+# ---------------------------------------------------------------------------
+[permissions.pantry-review]
+extends = ":read-only"
+
+[permissions.pantry-review.network]
+enabled = false
+
+# VERIFIED 2026-09-07 against codex-cli 0.153.2 by running `codex sandbox -P
+# <profile> -- cat <path>`: the MAP form below actually denies ("Operation not
+# permitted"). The array form ([[permissions.X.file_system]] with glob/access)
+# is REJECTED as a config error, and the near-miss key `file_system` with
+# glob/access silently loads while denying NOTHING — under it the sandbox read
+# ~/.claude/oauth_token in full. Struct is PermissionProfileToml{description,
+# extends, workspace_roots, filesystem, network}; FileSystemAccessMode is
+# read|write|deny|none. Do not "tidy" these keys.
+[permissions.pantry-review.filesystem]
+"/Users/orchestrator/.claude/**" = "deny"
+"/Users/orchestrator/.codex/**" = "deny"
+"/Users/orchestrator/.config/gh/**" = "deny"
+"/Users/orchestrator/.ssh/**" = "deny"
+"/Users/orchestrator/agents/**" = "deny"
+"/Users/orchestrator/.zshenv" = "deny"
+"/Users/orchestrator/.aws/**" = "deny"
+"/Users/orchestrator/.cloudflare/**" = "deny"
+"/Users/orchestrator/code/pantry/.env*" = "deny"
+"/Users/orchestrator/codex-worktrees/**/.env*" = "deny"
+
+
+
+
+
+# ~/agents holds .env.acceptance (Neon owner connection string, mode 600),
+# security/rotation-*.md and the orchestrator's own tooling. Codex never needs
+# any of it — the wrapper runs outside the sandbox and writes lane output
+# itself. Worktrees therefore live in ~/codex-worktrees, NOT under ~/agents,
+# so this denial can stay total. (Deviation from spec 56 §How it is wired,
+# which put worktrees at ~/agents/worktrees; reason recorded here and in the
+# spec amendment.)
+
+
+
+# ---------------------------------------------------------------------------
+# Lane I (implement), T (tests), F (fix): write inside the worktree only.
+# `.git` stays read-only inside a writable root by construction, so Codex
+# cannot commit or stash; network is off, so npm ci must run BEFORE Codex.
+# ---------------------------------------------------------------------------
+[permissions.pantry-fix]
+extends = ":workspace"
+
+[permissions.pantry-fix.network]
+enabled = false
+
+# VERIFIED 2026-09-07 against codex-cli 0.153.2 by running `codex sandbox -P
+# <profile> -- cat <path>`: the MAP form below actually denies ("Operation not
+# permitted"). The array form ([[permissions.X.file_system]] with glob/access)
+# is REJECTED as a config error, and the near-miss key `file_system` with
+# glob/access silently loads while denying NOTHING — under it the sandbox read
+# ~/.claude/oauth_token in full. Struct is PermissionProfileToml{description,
+# extends, workspace_roots, filesystem, network}; FileSystemAccessMode is
+# read|write|deny|none. Do not "tidy" these keys.
+[permissions.pantry-fix.filesystem]
+"/Users/orchestrator/.claude/**" = "deny"
+"/Users/orchestrator/.codex/**" = "deny"
+"/Users/orchestrator/.config/gh/**" = "deny"
+"/Users/orchestrator/.ssh/**" = "deny"
+"/Users/orchestrator/agents/**" = "deny"
+"/Users/orchestrator/.zshenv" = "deny"
+"/Users/orchestrator/.aws/**" = "deny"
+"/Users/orchestrator/.cloudflare/**" = "deny"
+"/Users/orchestrator/code/pantry/.env*" = "deny"
+"/Users/orchestrator/codex-worktrees/**/.env*" = "deny"
+
+
+
+
+
+
+

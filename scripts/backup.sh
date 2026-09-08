@@ -10,6 +10,8 @@ ollama list                                       > system-config/ollama-models.
 cp ~/.hermes/SOUL.md                                system-config/SOUL.md            2>/dev/null || true
 cp ~/.claude/CLAUDE.md                              system-config/CLAUDE.global.md   2>/dev/null || true
 cp ~/.tmux.conf                                     system-config/tmux.conf          2>/dev/null || true
+cp ~/.codex/config.toml                             system-config/codex.config.toml  2>/dev/null || true
+# NEVER back up ~/.codex/auth.json (credentials).
 cp ~/Library/LaunchAgents/com.user.*.plist            system-config/                   2>/dev/null || true
 
 # 2. Commit + push ~/agents (exit quietly if nothing changed)
