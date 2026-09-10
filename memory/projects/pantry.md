@@ -1,6 +1,10 @@
 ---
+type: project
 title: pantry
-type: note
+description: 'Ambry - mobile pantry tracker. Hub note: what it is, where it stands, what Everett owes, and links to every other Ambry concept.'
+resource: https://github.com/ezybg7/pantry
+tags: [pantry, release, database, acceptance]
+timestamp: 2026-09-05T00:00:00Z
 permalink: agents/projects/pantry
 ---
 
@@ -10,26 +14,24 @@ _Updated: 2026-09-03 · Repo: github.com/ezybg7/pantry (private) · Local on the
 
 **2026-09-03 ground-truth reset.** Rewritten from GitHub + `origin/main` the day Everett made the M4 Mac mini the primary workplace. The previous version of this note had a Status board that stopped at 2026-08-19 while ~400 commits (PRs #11–#139) landed from the laptop and Claude Code web sessions; the mini's clone was never pulled, so the nightly reflection kept re-reporting carry-overs that had been resolved for weeks (see "Retired carry-overs" — do not resurrect them). The old note, including its fold-provenance ledger, is in this vault's git history (`ezybg7/m4-mini-orchestrator`, commit `ca6fc07` = backup 2026-09-03); `daily-log/archive/` remains the record of the folds.
 
+## Related concepts
+
+This note is the hub. Detail lives in its own file, one concept per file:
+
+- [Ambry stack](pantry-stack.md) — app, backend, AI, hard rules, env, CI gates
+- [Ambry operational gotchas](pantry-gotchas.md) — traps that have cost time before
+- [Ambry retired carry-overs](pantry-retired.md) — closed items; do not resurrect
+- [Ambry state 2026-09-04](pantry-state-2026-09-04.md) — historical snapshot
+- [Everett-only items 2026-09-04](pantry-everett-only-2026-09-04.md) — DB applies and deploys
+- [Monetization plan](pantry-monetization-plan-2026-09-04.md) — Ambry Plus pricing and scope
+- [Machines & roles](../../references/machines.md) — Layer 3 reference
+- [Working conventions](../../references/conventions.md) — Layer 3 reference
+- Build plans: [specs 50/51](plans/pantry-specs-50-51-build-plan-2026-09-04.md) ·
+  [specs 52/53/45](plans/pantry-specs-52-53-45-build-plan-2026-09-04.md)
+
 ## What it is
 
 Mobile pantry tracker: household inventory with auto-estimated expirations, self-organizing storage locations, capture by type-ahead / barcode / receipt photo, grocery list, and recipes (deterministic "what can I make" + AI ideas + a growing community layer). Public multi-user app, iOS first. **SPEC.md in the repo is product truth; specs/README.md is the status board; this note is the summary plus the machine/orchestration facts the repo deliberately does not hold.**
-
-## Machines & roles (2026-09-03)
-
-- **M4 Mac mini** (`m4-mini`, user `orchestrator`) — **primary workplace from 2026-09-03.** Hosts the orchestration: Hermes gateway (launchd `com.user.hermes`), the Claude worker queue (launchd `com.user.claude-worker` watching `~/agents/queue`), and cron — hc-ping every 10 min, `watchdog.sh` every 30 min, `backup.sh` 02:30 (commits + pushes `~/agents` to `ezybg7/m4-mini-orchestrator`, pushes `~/agents/skills` all branches), `nightly-reflection.sh` 03:00 (queues the reflect task), `pantry-weekly-maintenance.sh` Mon 09:00 (Dependabot triage + Apple-secret expiry watch).
-- **MacBook** (user `ezy`, repo `~/Code/pantry`) — still in use. It is where Xcode, the simulator, Maestro and the EAS device loop live (the 08-30/31 smoke + acceptance runs happened there). `gh` is not installed there, so the GitHub MCP server is the PR interface on that machine; the repo CLAUDE.md is written from its point of view.
-- **Windows box**: `C:\Users\evere\projects\pantry`.
-- **Sync is GitHub only**: code via `ezybg7/pantry`, this vault via the nightly backup of `ezybg7/m4-mini-orchestrator`. Nothing else syncs between machines — `git pull` first, every session, on every machine.
-
-## Stack (since the 2026-07-29 cutover, spec 36)
-
-- **App**: Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6 · Expo Router. Device loop = **EAS development build on Everett's iPhone** (`npx expo start --dev-client`); Expo Go and the SDK-54 pin were retired 2026-08-08 (spec 15). Native changes (new module, config plugin, SDK bump) need a fresh `eas build --profile development --platform ios`.
-- **Backend**: **Neon** Postgres (RLS, PostgREST-compatible Data API spoken by `@supabase/postgrest-js` in `src/lib/dataClient.ts`) + **self-hosted Better Auth on the Worker** (spec 46, cut over 2026-08-22 — replaced Neon Managed Auth; migrations 0048/0049, PRs #109/#120) + **Cloudflare Workers** (`workers/`, API `https://pantry-api.everettzyan.workers.dev`), R2 photos, one Durable Object per household for realtime.
-- **AI**: Claude **Haiku 4.5** for every AI route (receipt vision, shelf-life, ideas, import), server-side only; `RECEIPT_PROVIDER=mock` is the one key-free dev switch; escalate per route with `IDEAS_MODEL` / `IMPORT_MODEL` / `ANTHROPIC_MODEL`. The Gemini arm was deleted in the 08-22 security pass.
-- **Hard rules** (enforced by `.claude/hooks/guard-bash.mjs`, which inspects every Bash command — even quoting the forbidden commands inside a heredoc gets blocked): no Docker, no local Supabase, no emulator — everything runs against Neon branches; never force `npm audit fix` (it downgrades expo). `supabase/migrations/` is only the historical directory name; migrations are rehearsed on a Neon branch then applied by hand with psql on the direct endpoint (`specs/MIGRATIONS.md`).
-- **Env**: `.env` needs `EXPO_PUBLIC_DATA_API_URL`, `EXPO_PUBLIC_AUTH_URL`, `EXPO_PUBLIC_WORKER_URL` (the client throws without them); the values equal `eas.json`'s profiles. Worker secrets go through `wrangler secret put` from `workers/` (`ANTHROPIC_API_KEY`, `RECEIPT_PROVIDER`, `APPLE_CLIENT_SECRET`, `YOUTUBE_API_KEY`, `REVENUECAT_WEBHOOK_SECRET`, …).
-- **Identifiers**: display name **Ambry** (rebrand 2026-07-31, PR #68), bundle id `com.everettyan.ambry`, Apple team `SANRTXS285`; repo/package/slug/infra stay `pantry`. Dev login **test@pantry.dev / password123** (household "Test Home", invite `testhome`) lives in production Neon — read freely, **write only on a disposable Neon branch** (rule of 2026-08-31); the acceptance flows assume that account owns zero recipes/folders.
-- **Gates**: `npm run typecheck` · `npm run lint` · `npm test` · workers `npm run typecheck` — `ci.yml` runs all four on push/PR. `npm run test:acceptance` = Maestro (needs a signed simulator build + a warm Neon branch; deliberately not in CI). `nightly-sync.yml` reports branch drift into issue #26. `pages.yml` publishes `docs/privacy.md` + `site/` to https://ezybg7.github.io/pantry/ (`site/` is PUBLIC — never a secret there).
 
 ## Where things stand (2026-09-03 · main = `838f135` · last merge PR #139 on 2026-09-01)
 
@@ -49,57 +51,8 @@ Mobile pantry tracker: household inventory with auto-estimated expirations, self
 4. **Decisions waiting**: multi-list grocery go/no-go (spec 30 G1); member-limit upsell wording (PR #100); adaptive shelf-life announcement copy (spec 40); Plus ideas bucket 100/mo.
 5. **Next agent build work**: wave 2 (51 → 52 → 53) through the review loop; spec 50's migration; spec 45 (0047); the 3 Dependabot PRs (the weekly job's job).
 
-## Standing gotchas that still apply
-
-- Never pin a dated Claude model id in code; resolution is `claude-haiku-4-5*` + env-var escalation.
-- Receipt/photo images are never persisted (privacy invariant) — only the `ai_calls` row survives; scans and ideas are monthly-bucketed (ideas 3/mo free, 100/mo Plus).
-- Every migration ships its own GRANTs (Neon applies no default privileges either); `db/neon-grants.sql` restates them idempotently; `recipes` grants are **column-scoped** since 0050 — new author-editable columns must be granted explicitly.
-- Both colour schemes are live (spec 18, `src/lib/theme.ts`, ≥4.5:1 contrast asserted in `theme.test.ts`) — never hardcode light colours.
-- Toolchain: `create-expo-app` is broken under npm 12 (extract the template tarball); CocoaPods dies silently without a UTF-8 locale; Maestro needs Homebrew's JDK on `JAVA_HOME`; the auth service rejects foreign `Origin` headers; unattended suite runs need the lid open + `caffeinate`.
-- The Sign-in-with-Apple client secret (ES256 JWT) **expires 2027-02-18**; the weekly script warns under 30 days and prints the regeneration commands (`scripts/apple-client-secret.mjs`, key id `YK8V7A579F`).
-- Orchestrator/infra tooling never goes in the pantry repo (PR #101 was closed for exactly that) — it lives in `~/agents`.
-
-## Mini-specific dev facts (set up 2026-09-03)
-
-- Clone fast-forwarded `53ab58f` → `838f135`; `npm ci` in root (711 packages) and `workers/` (45; **wrangler 4.125 is available as `npx wrangler` from `workers/`**); **typecheck (root + workers), lint and jest (110/1715) all green** on Node 26.5 / npm 12 (CI pins Node 22). CodeGraph daemon running, index 380 files.
-- `.env` rewritten to the Neon + Cloudflare values (identical to eas.json's `development` profile, plus the public Google iOS client id); the Supabase-era file is kept as `.env.supabase-era.local` (gitignored).
-- **Present** (after the 2026-09-03 install pass): node 26.5, npm 12, gh 2.96 (authed `ezybg7`, ssh), codegraph 1.4.1, **eas-cli 23.2** (not logged in — `eas login` is Everett's interactive step), **maestro 2.10** + **openjdk 26** (`JAVA_HOME` and the keg-only bin dirs are exported from `~/.zshenv`, which every zsh reads — the Claude tool shell is a non-interactive login shell and never sources `~/.zshrc`), **psql 18.4** (libpq, force-linked), **cocoapods 1.17**, **watchman**, **mas 7**, Homebrew, Command Line Tools, ollama, tailscale, hermes, basic-memory, supabase CLI 2.109 (obsolete for this project). OrbStack/Docker 29 stay installed but unused: the `.mcp.json` `docker-gateway` MCP (Context7 + sequentialthinking) is optional agent tooling unrelated to the database, deliberately not set up here (Everett's call 2026-09-03) — its "Connection closed" at session start is expected noise.
-- **Xcode 26.6 (17F113) installed and configured 2026-09-03** — Everett installed it from the App Store (the CLI route needs root) and ran `~/agents/scripts/finish-xcode-setup.sh` (xcode-select → Xcode.app, license accepted, first-launch components, iOS 26.5 simulator runtime). Simulators present: iPhone 17 / 17 Pro / 17 Pro Max / 17e / Air. **`eas login` done the same day** (team `evvveretts-team`, role Owner). So the mini can now do everything the laptop could: `npm run ios`, Release simulator builds, the Maestro acceptance suite, and EAS builds. `~/.zshenv` also exports a UTF-8 `LANG`/`LC_ALL` (CocoaPods dies silently without one). The Claude desktop app's simulator panel needs a one-time "Let Claude use it" grant per device before agents can screenshot/tap through it; headless `xcrun simctl io <udid> screenshot` works regardless.
-- **Verified 2026-09-03 (late): a Release simulator build was built, installed and launched on the mini** — `npx expo run:ios --configuration Release --device generic --output <dir>` (0 errors, 4 warnings), then `xcrun simctl install booted …/Ambry.app` + `xcrun simctl launch booted com.everettyan.ambry` → the Ambry welcome screen rendered on the iPhone 17 Pro simulator. That .app is kept at `~/agents/builds/Ambry-sim-release-2026-09-03.app` (gitignored) for the Maestro suite. **Gotcha: plain `npx expo run:ios` — with `--device <sim udid>`, `--device "<sim name>"`, or no flag — aborts here with "No code signing certificates are available to use"**: Ambry's entitlements (`aps-environment`, Sign in with Apple, associated domains) make Expo CLI 57.0.17 require a signing team for any *named* simulator target (`run/ios/XcodeBuild.js:279` → `simulatorBuildRequiresCodeSigning`), and the mini has no Apple ID in Xcode. The `--device generic` route skips that gate and the unsigned app runs fine. **`~/agents/scripts/ambry-sim-build.sh [Debug|Release]`** wraps it (build → boot the sim if needed → install → launch; Debug pairs with `npx expo start --dev-client`). Adding the developer account in Xcode → Settings → Accounts (team SANRTXS285) would make plain `run:ios` work — Everett's call, not required. `ios/` now exists in the clone (gitignored `expo prebuild` output; delete freely). **The Maestro suite ran on the mini the same night** — see the next bullets.
-- **Acceptance run 2026-09-03 (late) on the mini.** Everett created Neon branch `acceptance-2026-09-03` (`br-damp-art-a6r6pyld`, project `red-water-68835077`, endpoint `ep-still-sun-a6sf0f5w`, auto-deletes 2026-09-04 ~20:47 EDT) in the console via Claude-in-Chrome; **a child branch's Data API inherits production's auth providers** (the "Other" provider = the Worker JWKS `https://pantry-api.everettzyan.workers.dev/auth/.well-known/jwks.json`), so no auth setup was needed — a Worker-minted JWT read the seeded household on the branch immediately (1 profile, 1 membership, 3 locations, same as prod). Keep-alive: `~/agents/scripts/neon-branch-keepalive.mjs` (signs in as the seeded account, authenticated read every 20 s, Origin = the auth service's own origin). Runner env: `EXPO_PUBLIC_DATA_API_URL=<branch> ACCEPTANCE_TARGET_HOST=<branch host> TEST_EMAIL=test@pantry.dev TEST_PASSWORD=<README> npm run test:acceptance`. **First run 8/10**: 01-auth blocked by the simulator's "Save Password?" AutoFill prompt over the tab bar (host setting — **AutoFill Passwords and Passkeys is now OFF on the iPhone 17 Pro sim**, Settings → General → AutoFill & Passwords; the laptop's sim already had it off); 10-recipes-crud typed the difficulty into the Minutes field (`time_minutes` 4543) because the Difficulty input sat behind the open number pad — Maestro taps through the keyboard overlay — fixed on branch `fix/acceptance-difficulty-selector` (testIDs `recipe-time-hours|minutes` / `recipe-difficulty` on the form inputs; the flow taps by id and drops the keyboard with the accessory bar's "Dismiss the keyboard" button between fields). The failed flow left a "Test Pancakes" recipe on the branch only (deleted by hand). **Final: 10/10 in 5 m 57 s on the third full run** (Release build carrying PRs #140 + #141). A second full run on the same device also surfaced that 47-ratings' exact match on "Sort recipes" fails once the per-device sort preference is persisted — fixed by prefix match (`Sort recipes.*`) in #140. Re-run hygiene on one branch: 47 leaves "Rated Pancakes" behind on purpose and 48 deletes it, so a run that stops between them (or a 10 that fails mid-way, leaving "Test Pancakes") needs the stray recipe deleted via the Data API before the next run.
-- **PRs opened 2026-09-03 (late)**: **#140** `fix/acceptance-difficulty-selector` (testIDs on the recipe time/difficulty inputs + centred taps in flow 10 + prefix match in flow 47; base main) and **#141** `fix/lists-content-rhythm` (Lists chrome `paddingBottom: 8`, container flex gap removed → 24 to the first section label like the location screen; stacked on #140). Everett asked for the Lists fix ("the space between the header and what's below"); the title→field gap was already identical across tabs, the header-block→content gap was not. Both await Everett's merge (bottom-up).
-- **Simulator-build gotchas that cost three rebuilds (2026-09-03):** (1) **Metro's transform cache inlines `EXPO_PUBLIC_*` at transform time and its cache key ignores env values** — after the first bundle, every later bundle kept the FIRST endpoint no matter what `.env`, `.env.local` or the process env said. Before building for a different target: `rm -rf "$TMPDIR/metro-cache"` and `"$TMPDIR"/metro-file-map-*`. (2) `expo run:ios`'s Xcode bundling phase ("Eager bundle does not match new options, bundling again") rebundles with its own env, so a CLI-level env override never reaches it; the runbook's direct `xcodebuild … -derivedDataPath build` from `ios/` with `EXPO_PUBLIC_DATA_API_URL=<branch>` in the environment is the reliable way to bake a branch URL (`~/agents/scripts/ambry-sim-build.sh` is fine for production-pointed builds). (3) Verify with `strings Ambry.app/main.jsbundle | grep -c <endpoint id>` — it is Hermes bytecode, plain `grep -c` reports 0 for everything. (4) A `.env.local` with the branch URL is gitignored and layered above `.env`; delete it after the run so the next dev build points at production again.
-- Cleaned 2026-09-03: the twelve July-era local branches with no remote and the locked, directory-less `worktree-pantry` worktree entry were deleted/pruned — the clone is `main` only (the reflog keeps the old tips for ~90 days).
-- **Weekly maintenance** (`~/agents/pantry-weekly-maintenance.sh`, Mon 09:00) had failed on 08-24 and 08-31 with "Not logged in" because cron's `claude -p` had no OAuth token. Fixed 2026-09-03: it now exports `CLAUDE_CODE_OAUTH_TOKEN` from `~/.claude/oauth_token` exactly as `claude-worker.sh` does, and its prompt says `gh` IS installed here (the GitHub MCP plugin does not connect on the mini — "does not support dynamic client registration"). First real run: Mon 2026-09-07 09:00, with the 3 Dependabot PRs waiting. Not test-run by hand (it merges PRs).
-- `~/.claude/settings.json`: the two dead `Write(...)` allow rules that printed a warning on every headless run were removed 2026-09-03; the `Edit(...)` rules already cover both paths.
-
-## Retired carry-overs (verified against GitHub 2026-09-03 — do NOT repeat)
-
-- "Review PR #10" → **MERGED 2026-07-21.**
-- "Open a PR for `feat/nightly-pull-routine`" → **MERGED as PR #15 on 2026-07-23** (`npm run sync` + `nightly-sync.yml` are on main).
-- "Open a PR for `feat/receipt-parsing`" → never opened; branch deleted from origin; the PDF + purchase-date work is on main (spec 1 row). Dead local branch.
-- "`chore/spec-audit-tracking-issues` / run `create-tracking-issues.sh` for 18 issues" → obsolete: the roadmap was rebuilt around specs/README.md (53 specs, board + dependency graph); branch deleted from origin; no `spec-tracking` issues exist and none are wanted.
-- "Review PR #101 (Jetson Orin spec)" → **CLOSED 2026-08-22 without merge** (infra tooling stays out of the pantry repo). Parked unless Everett reopens it.
-- "Provision `ANTHROPIC_API_KEY`" → the production Worker has served the Claude routes since the 08-08/08-11 deploys; the only remaining key-flavoured item is the pre-beta accuracy eval on real receipts.
-- "Flip Gemini to the paid tier" → moot, the adapter is gone (`wrangler secret delete GEMINI_API_KEY` if it was ever set).
-- "OrbStack docker.sock / `supabase start` / `supabase db reset` to seed the catalog" → retired with the 07-29 cutover; the 421-item catalog is seeded in production Neon.
-- Skills-chain note: the `nightly-2026-*` branches of `~/agents/skills` (84 commits ahead of that repo's main) still await Everett's review/merge — that one is real and unchanged.
-
 ## Pointers
 
 - Repo entry points: `CLAUDE.md` → `SPEC.md` → `specs/README.md` → owning `docs/adr/<area>.md` → `specs/MIGRATIONS.md`; changelog `site/updates.md`; what's-next `site/tasks.md`; device checklist `docs/device-test-plan.md`; E2E policy `docs/ACCEPTANCE_TESTS.md`; PRD `docs/prd/recipe-engagement.md`; project skills `.claude/skills/pantry-*`.
 - Public: https://ezybg7.github.io/pantry/ (landing · `/privacy` · `/dev/…` dashboard). Worker: https://pantry-api.everettzyan.workers.dev. Neon Data API host `ep-autumn-dew-a6utgshf.apirest.us-west-2.aws.neon.tech` (production; drop `-pooler` for psql/DDL).
 - Orchestrator skills on the mini (`~/agents/skills`, symlinked as `~/.claude/skills`): `hermes-local-gateway-ops`, `delegate-to-claude`, `claude-worker-env`, `nightly-maintenance`, `github-workflow`, `memory-protocol`, `typescript-style`.
-
-## State 2026-09-04 ~23:00 EDT (orchestrator session, goal: production-ready + e2e + handoff artifact)
-- main = dfcd0f0 + #183 (docs sweep). Design wave P0–P7 merged (#171 #172 #174 #173 #177 #178 #179 #180); #181 sign-out fix merged. P8 (recipes/insights) belongs to the recipes session.
-- Held for Everett's applies: #156 (0047, 7/7 rehearsed), #161 (0053, 16/16 rehearsed, rebased e50bda5). 0054 on main (8/8 rehearsed). All three rehearsed in order on `acceptance-2026-09-03` (reset from production 21:40 EDT, expires 2026-09-05 21:42 EDT); direct URL in `~/agents/.env.acceptance` (600).
-- Acceptance: main@dfcd0f0 Release build installed on iPhone 17 Pro sim; first rerun 6/12 (selector gaps from the design packages + one first-RPC-after-DDL failure); flow-repair PR in flight; coverage-wave brief at `~/agents/reviews/coverage-wave-brief.md`.
-- Monetization: #182 spec amendment reviewed (advocate 15 + critic 14 findings → `~/agents/reviews/pr182-findings.md`, decisions recorded in `pantry-monetization-plan-2026-09-04.md`); fix agent in flight; then Everett's approval + implementation PRs (0061–0063, Worker, client).
-- Worker route tests for barcode/ideas/importRecipe in flight (PR pending).
-- Handoff artifact generator: `~/agents/artifact/{extract.py,build.py,summary.json,data.json}` → `ambry-release-pass.html` (publish via the Artifact tool with `capabilities: {db: {}}` so ticks/notes are readable back).
-- Readiness evidence (all on the production copy): RLS 25/25, anonymous 0 privileges, TRUNCATE only service_role, outbound timeouts everywhere, gitleaks clean (637 commits), CI green (170 suites / 2,907 tests), privacy policy live, RevenueCat webhook asserts 12/12, assert sweep green (0046 F10 / 0045 E6 superseded by 0054 / 0046 by design; 0023/0038 harnesses pre-cutover).
-- 2026-09-04 ~23:30 EDT: process restart killed 7 agents; all relaunched (flow repair resumes from 4 edited flows in ~/agents/worktrees/flows; #182 fix now carries Everett's decisions — price $4.99/$29.99/14-day + in-trial cap 60/20, perks default, hashed-email ledger, email verification ON (K7), #176 parked, #142 reviewed by the orchestrator; Worker route tests; research R1–R4 → ~/agents/research/screens/*.json feeding ~/agents/artifact/build-gallery.py). Everett answers decisions inside the handoff page (see auto-memory feedback-decisions-via-page).
-
-## Model roles (Everett, 2026-09-05)
-Fable plans (PRDs, specs, review decisions, merges/ops). Opus 5 codes — every implementation, fix-round and test change is an `Agent` launch with `model: "opus"`. Fable never edits source files.

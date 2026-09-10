@@ -1,6 +1,9 @@
 ---
+type: project
 title: pantry-monetization-plan-2026-09-04
-type: note
+description: Review round 1 (2026-09-04 ~22:20 EDT) — decisions folded into the plan
+tags: [pantry, infra, database, release, acceptance, memory]
+timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/pantry-monetization-plan-2026-09-04
 ---
 

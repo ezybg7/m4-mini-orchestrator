@@ -7,8 +7,11 @@ builds/
 .env.acceptance
 .env*
 tmp_*.js
+# archived July scratch: ignored at the root, kept in the backup here
+!_archive/2026-07-tmp/*.js
 usda/
 worktrees/
 rehearse-*/
 prod-apply-*/
 security/*.json
+_archive/*.tgz

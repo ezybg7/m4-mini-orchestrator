@@ -1,6 +1,9 @@
 ---
+type: project
 title: pantry-everett-only-2026-09-04
-type: note
+description: DB applies (apply-before-merge; rehearse on a Neon branch first; psql on the direct endpoint; -1 per file; asserts must read ALL n PASSED); Deploys; Consoles / secrets; +3 more
+tags: [pantry, infra, database, release, acceptance, memory]
+timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/pantry-everett-only-2026-09-04
 ---
 

@@ -1,6 +1,9 @@
 ---
+type: plan
 title: pantry specs 50+51 build plan (2026-09-04)
-type: note
+description: Shape; Gotchas the plan surfaced
+tags: [pantry, infra, database, acceptance]
+timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/plans/pantry-specs-50-51-build-plan-2026-09-04
 ---
 

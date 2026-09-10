@@ -1,10 +1,32 @@
 #!/bin/bash
+# Schedules the nightly reflection. It does NOT define it.
+#
+# What the run does lives in the stage contracts under
+# ~/agents/pipelines/nightly-reflection/ -- editable without touching this file,
+# which is the point (ICM: the filesystem is the orchestration).
 set -euo pipefail
 d=$(date +%F)
+P=~/agents/pipelines/nightly-reflection
+
 cat > ~/agents/queue/reflect-$d.task <<TASK
-Nightly maintenance for $d:
-1. SKILLS: Read today's session logs in ~/.hermes/logs and ~/agents/logs. Identify repeated procedures, failures, and near-misses. Refine or create SKILL.md files in ~/agents/skills on a new branch named nightly-$d; commit with clear messages and push the branch. Do NOT merge to main.
-2. MEMORY: Summarize daily-log files older than 7 days into their matching files in ~/agents/memory/projects/, then move the originals to ~/agents/memory/daily-log/archive/.
-3. Append a 5-line summary of what you changed to ~/agents/memory/daily-log/$d.md under a "## Nightly reflection" heading.
+Nightly reflection for $d.
+
+Read $P/CONTEXT.md, then run its stages in order, each against its own contract:
+
+  1. $P/01_survey/CONTEXT.md
+  2. $P/02_skills/CONTEXT.md
+  3. $P/03_memory_fold/CONTEXT.md
+  4. $P/04_report/CONTEXT.md
+
+Load only what each stage's \`## Inputs\` names -- not the whole workspace.
+Write each stage's output where its \`## Outputs\` says, and satisfy its
+\`## Verify\` before moving on. Use the date $d throughout.
+
+Two gates that are not yours to cross: stage 2 pushes but never merges, and
+stage 3 leaves the vault staged, never committed.
+
+An idle night is a valid outcome. If stage 1 finds nothing, say so and make no
+edits rather than manufacturing one.
 TASK
+
 ~/agents/scripts/claude-worker.sh

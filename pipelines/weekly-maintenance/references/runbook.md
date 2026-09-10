@@ -10,7 +10,7 @@ exactly that).
 The script does **not** install itself. Run `crontab -e` and add:
 
 ```
-0 9 * * 1 /Users/ezy/agents/pantry-weekly-maintenance.sh
+0 9 * * 1 /Users/orchestrator/agents/scripts/pantry-weekly-maintenance.sh
 ```
 
 Monday 09:00. No redirect needed — the script writes everything to
@@ -86,8 +86,8 @@ grep 'dependabot:' ~/agents/logs/pantry-weekly.log       # one line per run
 ## Checks and manual runs
 
 ```
-~/agents/pantry-weekly-maintenance.sh --check   # self-tests the date arithmetic, no side effects
-~/agents/pantry-weekly-maintenance.sh           # a real run, right now
+~/agents/scripts/pantry-weekly-maintenance.sh --check   # self-tests the date arithmetic, no side effects
+~/agents/scripts/pantry-weekly-maintenance.sh           # a real run, right now
 ```
 
 `--check` exists because BSD-vs-GNU `date` is the one thing here that can break

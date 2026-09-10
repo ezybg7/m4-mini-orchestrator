@@ -14,10 +14,21 @@ cp ~/.codex/config.toml                             system-config/codex.config.t
 # NEVER back up ~/.codex/auth.json (credentials).
 cp ~/Library/LaunchAgents/com.user.*.plist            system-config/                   2>/dev/null || true
 
-# 2. Commit + push ~/agents (exit quietly if nothing changed)
+# 2. Converge the OKF bundle before committing.
+#    basic-memory is a second producer on this vault: it canonicalizes YAML and
+#    asynchronously re-prepends its own permalink block after any external edit,
+#    which leaves two stacked frontmatter blocks. Normalizing here means the
+#    committed state is always conformant, whoever wrote last.
+find memory references -name '*.md' -print0 2>/dev/null \
+  | xargs -0 python3 scripts/okf-normalize.py >/dev/null 2>&1 || true
+python3 scripts/okf-index.py memory references   >/dev/null 2>&1 || true
+python3 scripts/okf-check.py                     >  logs/okf-check.log 2>&1 || \
+  echo "okf-check FAILED — see logs/okf-check.log" >&2
+
+# 3. Commit + push ~/agents (exit quietly if nothing changed)
 git add -A
 git commit -m "backup $(date +%F)" || exit 0
 git push origin main
 
-# 3. Push the skills repo (all branches, so unreviewed nightly-* branches survive too)
+# 4. Push the skills repo (all branches, so unreviewed nightly-* branches survive too)
 cd ~/agents/skills && git push origin --all
