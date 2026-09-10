@@ -28,13 +28,15 @@ file, not to the hub:
 | a machine, repo, or service | `entities/` |
 
 A fact already present elsewhere is a **verified no-op fold** — say so and move on.
-Then `git mv` the log to `daily-log/archive/`.
+Then `git mv` the log to **`daily-log/archive/<YYYY-MM>/`** — the month folder,
+creating it if this is the month's first fold. A flat archive grew one index row
+per day forever; by month it grows one row per month.
 
 New files need OKF frontmatter (`scripts/okf-normalize.py` fills it) and a link
 from the enclosing `index.md` (`scripts/okf-index.py` regenerates it).
 
 ## Outputs
-- Updated concept files; the log moved to `daily-log/archive/`.
+- Updated concept files; the log moved to `daily-log/archive/<YYYY-MM>/`.
 
 ## Verify
 - `scripts/okf-check.sh` exits 0.

@@ -23,7 +23,7 @@ to [`archive/`](archive/index.md). Look for current state in
 
 ## Subdirectories
 
-- [archive/](archive/index.md) — Index of 48 concept(s) under archive/.
+- [archive/](archive/index.md) — Index of 0 concept(s) and 3 subdirectory(ies) under archive/.
 
 ## Concepts
 
