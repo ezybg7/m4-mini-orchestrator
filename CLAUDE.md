@@ -1,3 +1,11 @@
+---
+type: index
+title: Layer 0 — Workspace identity
+description: Where you are, what is here, and the rules that govern work in this workspace.
+tags: [protocol, index]
+timestamp: 2026-09-10T00:00:00Z
+---
+
 # Layer 0 — Workspace identity
 
 You are in `~/agents`, the **M4 Mac mini orchestrator workspace** (user

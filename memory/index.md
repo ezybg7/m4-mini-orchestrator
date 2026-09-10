@@ -2,10 +2,8 @@
 type: index
 title: memory
 description: Index of 0 concept(s) and 5 subdirectory(ies) under memory/.
-tags:
-- index
-timestamp: 2026-09-10 00:00:00+00:00
-permalink: agents/index
+tags: [index]
+timestamp: 2026-09-10T00:00:00Z
 ---
 
 # memory

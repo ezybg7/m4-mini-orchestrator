@@ -1,3 +1,11 @@
+---
+type: index
+title: AGENTS.md — shared entry point
+description: The same Layer 0 door for agent runtimes that read AGENTS.md rather than CLAUDE.md.
+tags: [protocol, index, tooling]
+timestamp: 2026-09-10T00:00:00Z
+---
+
 # AGENTS.md — shared entry point
 
 Any agent runtime that reads `AGENTS.md` rather than `CLAUDE.md` starts here.

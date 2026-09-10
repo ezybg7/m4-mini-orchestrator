@@ -1,3 +1,11 @@
+---
+type: runbook
+title: pantry-weekly-maintenance runbook
+description: Prose runbook for the weekly dependency and security pass - install, what one run does, and the triage policy.
+tags: [pantry, infra, security]
+timestamp: 2026-08-23T00:00:00Z
+---
+
 # pantry-weekly-maintenance — runbook
 
 Weekly dependency + security pass for **Ambry** (`ezybg7/pantry`, checkout

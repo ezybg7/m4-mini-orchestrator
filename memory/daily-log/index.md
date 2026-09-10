@@ -2,10 +2,8 @@
 type: index
 title: daily-log
 description: Index of 8 concept(s) and 1 subdirectory(ies) under daily-log/.
-tags:
-- index
-timestamp: 2026-09-10 00:00:00+00:00
-permalink: agents/daily-log/index
+tags: [index]
+timestamp: 2026-09-10T00:00:00Z
 ---
 
 # daily-log
