@@ -9,6 +9,8 @@ timestamp: 2026-09-10T00:00:00Z
 # 01_rehearse
 
 ## Inputs
+- Layer 4 (working): [Everett-only items](../../../memory/projects/pantry-everett-only-2026-09-04.md)
+  — **which** migrations are outstanding, in what order, and their assert counts
 - Layer 4 (working): the migration files, in dependency order
 - Layer 4 (working): `db/neon-grants.sql` from the PR branch
 - Layer 3 (reference): [Neon project](../../../memory/entities/neon-project.md)

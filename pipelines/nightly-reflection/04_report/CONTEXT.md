@@ -9,7 +9,7 @@ timestamp: 2026-09-10T00:00:00Z
 # 04_report
 
 ## Inputs
-- Layer 4 (working): `../01_survey/output/findings.md`
+- Layer 4 (working): `../01_survey/output/findings-<YYYY-MM-DD>.md`
 - Layer 4 (working): what stages 2 and 3 actually did
 
 ## Process

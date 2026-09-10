@@ -25,11 +25,13 @@ You have read [CLAUDE.md](CLAUDE.md). This answers: **where do I go next?**
 
 - [safety-rules.md](references/safety-rules.md) — **before any production action**
 - [machines.md](references/machines.md) — what runs where
-- [conventions.md](references/conventions.md) — git/PR flow, model roles, session hygiene
-- [tool-harmony.md](references/tool-harmony.md) — who else reads and writes these files
+- [conventions.md](references/conventions.md) · [model-roles.md](references/model-roles.md)
+- [tool-harmony.md](references/tool-harmony.md) — who else writes these files
 - [references/](references/index.md) · [memory/](memory/index.md)
 
 ## If no pipeline fits
 
-Do not create a folder at the workspace root. Work in `runs/`, or — if this will
-recur and wants review between steps — add a pipeline per [SPEC.md](SPEC.md) §2.2.
+Never create a folder at the workspace root. Work in `runs/`, or — if this will
+recur and wants review between steps — scaffold one:
+`python3 scripts/new-pipeline.py <name> <stage>...` writes conformant contracts
+and registers them. Fill the TODOs, then `okf-check.py`. Rules: [SPEC.md](SPEC.md) §2.2.

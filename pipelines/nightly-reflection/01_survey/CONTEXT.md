@@ -22,7 +22,9 @@ A finding with no evidence line is not a finding.
 Classify each: repeated procedure (→ a skill), failure, or near-miss.
 
 ## Outputs
-- `output/findings.md` — one bullet per finding, each with its evidence.
+- `output/findings-<YYYY-MM-DD>.md` — one bullet per finding, each with its
+  evidence. **Dated**: an undated name lets a later run read a previous run's
+  evidence and act on it as if it were tonight's.
   Write "No findings; idle night." and stop if that is the truth.
 
 ## Verify
