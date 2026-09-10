@@ -49,6 +49,13 @@ the wrong tool for real-time multi-agent collaboration, concurrent serving, and
 automated mid-pipeline branching. Those belong in `scripts/` or in application
 code — do not force them into a stage contract.
 
+## Other runtimes
+
+[`AGENTS.md`](AGENTS.md) is the same door for agent runtimes that read that file
+instead of this one (Codex). Neither is authoritative over the other; both point
+here and at `CONTEXT.md`. Several tools read and write these files —
+[`references/tool-harmony.md`](references/tool-harmony.md) is the contract.
+
 ## Above this file
 
 `~/.claude/CLAUDE.md` is the machine-wide preamble (shared-memory protocol,

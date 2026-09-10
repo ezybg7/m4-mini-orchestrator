@@ -80,6 +80,7 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)#\s]+\.md)[^)]*\)")
 link_graph = collections.defaultdict(set)
 for p in all_md + sorted(PIPELINES.rglob("*.md")) + [HOME / "CLAUDE.md",
                                                      HOME / "CONTEXT.md",
+                                                     HOME / "AGENTS.md",
                                                      HOME / "SPEC.md"]:
     if not p.exists():
         continue
@@ -95,7 +96,7 @@ for p in all_md + sorted(PIPELINES.rglob("*.md")) + [HOME / "CLAUDE.md",
 # ---- O4: no orphans — reachable from memory/index.md --------------------
 root = (HOME / "memory" / "index.md").resolve()
 seen, stack = {root}, [root]
-for extra in (HOME / "CLAUDE.md", HOME / "CONTEXT.md"):
+for extra in (HOME / "CLAUDE.md", HOME / "CONTEXT.md", HOME / "AGENTS.md"):
     if extra.exists():
         seen.add(extra.resolve()); stack.append(extra.resolve())
 while stack:

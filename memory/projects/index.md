@@ -25,7 +25,7 @@ already closed — do not resurrect them).
 
 ## Subdirectories
 
-- [plans/](plans/index.md) — Index of 4 concept(s) under plans/.
+- [plans/](plans/index.md) — Index of 5 concept(s) under plans/.
 
 ## Concepts
 

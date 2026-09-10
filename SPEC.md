@@ -191,7 +191,28 @@ independent consumers of one bundle.
 7. `crontab -l` still resolves every path it names.
 8. basic-memory can still read a normalized note.
 
-## 8. Open questions
+## 8. Tool integration
+
+There is no integration layer, by design. Tools cooperate because they share a
+directory of markdown files with frontmatter — OKF O8 (producer/consumer
+independence) is the whole mechanism. The register of who reads what, who owns
+which field, and the four rules that keep them from fighting is
+[`references/tool-harmony.md`](references/tool-harmony.md).
+
+| Tool | State |
+|------|-------|
+| Claude Code | integrated — enters at Layer 0 |
+| basic-memory | integrated — second producer; conflict resolved (see §9.4) |
+| `okf-*` tools | integrated — the checker gates every commit |
+| Obsidian | **content-ready**; `.obsidian/app.json` committed. Open `~/agents` as the vault. Not yet pointed there — its only vault is `~/.hermes`. |
+| CodeGraph | **scoped, deliberately separate** — indexes code, not this bundle. `~/agents` is not indexed and should not be. |
+| Codex | **entry point done** (`AGENTS.md`); lanes-as-contracts planned in [the plan](memory/projects/plans/codex-icm-integration-plan.md) |
+
+Adding a tool means teaching it the format, or teaching it nothing if it already
+reads markdown. Nothing here may become a required dependency: the bundle stays
+readable with `cat`.
+
+## 9. Open questions
 
 1. **Automated branching.** ICM §5.2 says branching on AI decisions mid-pipeline
    is where the approach breaks down. `db-apply` needs exactly one branch —
@@ -204,3 +225,9 @@ independent consumers of one bundle.
    dated file per day for the whole workspace. Deferred: the nightly fold already
    moves dated files into project notes, and changing the filename would break
    `nightly-reflection.sh`.
+
+4. **Frontmatter must be valid YAML.** An unquoted scalar containing `": "` is
+   not — and basic-memory, unable to parse such a file, prepends its own block
+   rather than merging, which the normalizer then removes, forever.
+   `okf-normalize.py` quotes on write and this is settled; recorded here because
+   the failure was invisible (0 errors, only warnings) and cost the most time.

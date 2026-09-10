@@ -15,3 +15,6 @@ rehearse-*/
 prod-apply-*/
 security/*.json
 _archive/*.tgz
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache

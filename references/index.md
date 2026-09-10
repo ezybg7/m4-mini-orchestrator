@@ -1,7 +1,7 @@
 ---
 type: index
 title: references
-description: Index of 3 concept(s) under references/.
+description: Index of 4 concept(s) under references/.
 tags: [index]
 timestamp: 2026-09-10T00:00:00Z
 ---
@@ -25,3 +25,4 @@ Durable *knowledge* (what is true about a project) lives in
 | [Working conventions](conventions.md) | `reference` | Model roles, the review loop, and the working rules code follows on this workspace. |
 | [Machines & roles](machines.md) | `reference` | Which box does what, what is installed where, and how the three machines sync. |
 | [Safety rules](safety-rules.md) | `reference` | What requires Everett's explicit word, how secrets are handled, and the operations that are never taken unilaterally. |
+| [Producers and consumers](tool-harmony.md) | `reference` | 'Every tool that reads or writes this workspace: what it owns, what it must not touch, and the contract between them.' |
