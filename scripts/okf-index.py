@@ -20,7 +20,13 @@ INTRO_RE = re.compile(r"<!--okf:intro-->(.*?)<!--/okf:intro-->", re.S)
 
 
 def frontmatter(path):
-    return okf_fm.get(path.read_text())
+    """Frontmatter with YAML quoting removed -- an index row is display text.
+
+    Values containing ": " must be quoted in the file to stay valid YAML, but the
+    quotes are syntax, not content, and rendering them makes every such row read
+    as 'Some description... instead of Some description...
+    """
+    return {k: v.strip().strip("'\"") for k, v in okf_fm.get(path.read_text()).items()}
 
 
 def build(d: pathlib.Path, root_name: str):

@@ -1,7 +1,7 @@
 ---
 type: project
-title: pantry-monetization-plan-2026-09-04
-description: Review round 1 (2026-09-04 ~22:20 EDT) — decisions folded into the plan
+title: Ambry monetization plan
+description: 'Ambry Plus pricing and tier split - what stays free forever, the free AI taste, Plus limits, the lapse contract, and the cost basis per AI call.'
 tags: [pantry, infra, database, release, acceptance, memory]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/pantry-monetization-plan-2026-09-04

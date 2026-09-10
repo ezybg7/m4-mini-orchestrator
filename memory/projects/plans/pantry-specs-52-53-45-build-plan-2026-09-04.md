@@ -1,7 +1,7 @@
 ---
 type: plan
-title: pantry specs 52+53+45 build plan (2026-09-04)
-description: Cross-cutting mechanics (tripwires); Spec 52 — comments → migration 0055recipecomments.sql; Spec 53 — following → migration 0056userfollows.sql; +2 more
+title: 'Build plan: specs 52 + 53 + 45 (2026-09-04)'
+description: 'Build plan for spec 52 (comments), 53 (following) and 45 (catalog nutrition matching) - cross-cutting tripwires and the per-spec migrations.'
 tags: [pantry, infra, database, acceptance]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/plans/pantry-specs-52-53-45-build-plan-2026-09-04

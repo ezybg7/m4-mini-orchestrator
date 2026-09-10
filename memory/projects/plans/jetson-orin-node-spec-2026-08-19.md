@@ -1,7 +1,7 @@
 ---
 type: plan
-title: 'Jetson Orin Nano local AI node for Hermes (spec from closed PR #101, 2026-08-19)'
-description: Purpose & motivation; Goals & non-goals; Hardware target; +24 more
+title: Jetson Orin node spec (2026-08-19)
+description: 'Spec for a Jetson Orin Nano 8 GB local AI node for Hermes - motivation, goals and non-goals, hardware target. From closed PR #101; parked.'
 tags: [pantry, skills, hermes, infra, database, acceptance]
 timestamp: 2026-08-19T00:00:00Z
 permalink: agents/projects/plans/jetson-orin-node-spec-2026-08-19

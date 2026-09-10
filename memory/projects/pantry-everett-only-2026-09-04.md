@@ -1,7 +1,7 @@
 ---
 type: project
-title: pantry-everett-only-2026-09-04
-description: DB applies (apply-before-merge; rehearse on a Neon branch first; psql on the direct endpoint; -1 per file; asserts must read ALL n PASSED); Deploys; Consoles / secrets; +3 more
+title: Everett-only items (2026-09-04)
+description: 'The DB applies and deploys only Everett can do: migrations 0047/0053/0054 with their assert counts, the USDA seed, and the Worker deploys.'
 tags: [pantry, infra, database, release, acceptance, memory]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/pantry-everett-only-2026-09-04

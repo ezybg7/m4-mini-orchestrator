@@ -1,7 +1,7 @@
 ---
 type: plan
-title: pantry specs 50+51 build plan (2026-09-04)
-description: Shape; Gotchas the plan surfaced
+title: 'Build plan: specs 50 + 51 (2026-09-04)'
+description: 'Build plan for spec 50 (moderation-admin) and spec 51 (creator profiles) - the shape of the work and the gotchas planning surfaced.'
 tags: [pantry, infra, database, acceptance]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/plans/pantry-specs-50-51-build-plan-2026-09-04

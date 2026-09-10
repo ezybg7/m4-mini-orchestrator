@@ -1,7 +1,11 @@
 ---
+permalink: agents/projects/plans/jetson-hermes-brain-runbook-2026-09-04
+---
+
+---
 type: plan
-title: Jetson Orin Nano 8 GB as Hermes's local brain — runbook (2026-09-04)
-description: 0. Where things stand (verified on the mini, 2026-09-04); 1. What changed since the 08-19 plan; 2. Decide first (Everett); +8 more
+title: Jetson Hermes brain runbook (2026-09-04)
+description: 'Runbook for standing up the Jetson Orin Nano as Hermes's local inference node: where it stands, what changed, and the steps to bring it up.'
 tags: [pantry, skills, hermes, infra, database, acceptance, memory]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/plans/jetson-hermes-brain-runbook-2026-09-04
