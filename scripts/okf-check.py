@@ -85,6 +85,16 @@ for p in concepts:
         if v[:1] not in ("'", '"', "[", "{", "") and (": " in v or v.endswith(":")):
             err(f"{rel(p)}: `{k}` is invalid YAML — unquoted value contains ': ' "
                 f"(run okf-normalize.py)")
+        # A quoted value can be just as broken: inside single quotes an internal
+        # apostrophe must be doubled. "Hermes's" silently breaks the quoting, and
+        # a parser that then cannot read the file prepends its own frontmatter
+        # block instead of merging -- which is the write loop, all over again.
+        if v[:1] == "'" and v[-1:] == "'" and len(v) > 1:
+            inner = v[1:-1]
+            if len(re.findall(r"(?<!')'(?!')", inner.replace("''", ""))) or \
+               inner.replace("''", "").count("'"):
+                err(f"{rel(p)}: `{k}` has an unescaped apostrophe inside single "
+                    f"quotes — double it as '' (run okf-normalize.py)")
 
 # ---- O5: an index at every level, listing everything in it ----------------
 for area in AREAS:

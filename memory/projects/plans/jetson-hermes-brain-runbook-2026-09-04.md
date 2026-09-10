@@ -1,7 +1,7 @@
 ---
 type: plan
 title: Jetson Hermes brain runbook (2026-09-04)
-description: 'Runbook for standing up the Jetson Orin Nano as Hermes's local inference node: where it stands, what changed, and the steps to bring it up.'
+description: 'Runbook for standing up the Jetson Orin Nano as Hermes''s local inference node: where it stands, what changed, and the steps to bring it up.'
 tags: [pantry, skills, hermes, infra, database, acceptance, memory]
 timestamp: 2026-09-04T00:00:00Z
 permalink: agents/projects/plans/jetson-hermes-brain-runbook-2026-09-04
