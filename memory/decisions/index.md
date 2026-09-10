@@ -2,9 +2,8 @@
 type: index
 title: decisions
 description: Index of 6 concept(s) under decisions/.
-tags:
-- index
-timestamp: 2026-09-10 00:00:00+00:00
+tags: [index]
+timestamp: 2026-09-10T00:00:00Z
 permalink: agents/decisions/index
 ---
 

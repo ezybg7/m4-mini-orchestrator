@@ -2,9 +2,8 @@
 type: index
 title: plans
 description: Index of 5 concept(s) under plans/.
-tags:
-- index
-timestamp: 2026-09-10 00:00:00+00:00
+tags: [index]
+timestamp: 2026-09-10T00:00:00Z
 permalink: agents/projects/plans/index
 ---
 

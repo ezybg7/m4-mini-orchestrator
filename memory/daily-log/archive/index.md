@@ -2,9 +2,8 @@
 type: index
 title: archive
 description: Index of 48 concept(s) under archive/.
-tags:
-- index
-timestamp: 2026-09-10 00:00:00+00:00
+tags: [index]
+timestamp: 2026-09-10T00:00:00Z
 permalink: agents/daily-log/archive/index
 ---
 

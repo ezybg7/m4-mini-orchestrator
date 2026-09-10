@@ -33,6 +33,15 @@ def build(d: pathlib.Path, root_name: str):
                    if p.suffix == ".md" and p.name != "index.md")
 
     title = d.name if d.name != root_name else root_name
+
+    # Carry through any frontmatter key this generator does not own -- notably
+    # basic-memory's `permalink`. Rebuilding the block from scratch dropped it,
+    # basic-memory re-added it on its next sync, and the two tools rewrote these
+    # index files against each other forever: 8 files of churn on every run.
+    OWNED = {"type", "title", "description", "tags", "timestamp"}
+    carried = [(k, v) for k, v in frontmatter(d / "index.md").items()
+               if k not in OWNED] if (d / "index.md").exists() else []
+
     lines = [
         "---",
         "type: index",
@@ -42,6 +51,7 @@ def build(d: pathlib.Path, root_name: str):
         + f" under {d.name}/.",
         "tags: [index]",
         "timestamp: 2026-09-10T00:00:00Z",
+    ] + [f"{k}: {v}" for k, v in carried] + [
         "---",
         "",
         f"# {title}",
