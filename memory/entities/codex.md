@@ -38,14 +38,23 @@ cannot substitute for it.
 
 ## Status here
 
-**Configured, not integrated.** It has no Layer 0/1 entry of its own, does not
-read the vault, and its five lanes are not stage contracts. [`AGENTS.md`](../../AGENTS.md)
-now gives it the same door Claude uses; the rest is planned in
-[the integration plan](../projects/plans/codex-icm-integration-plan.md).
+**Validated 2026-09-10**: `probe.sh` passes **14/14** on codex-cli 0.153.2 —
+every sandbox denial holds, `git commit` is blocked inside the worktree, network
+is off, and `.env.acceptance` and `oauth_token` are unreadable under both
+profiles. The canonical config matches the installed one.
 
-The reason this integration is cheap: a sandbox with no network can still read a
-folder of markdown. A knowledge format that needs an SDK or an API could not
-cross that boundary at all.
+**It cannot read `~/agents` — that is deliberate and must stay.** The profiles
+deny `/Users/orchestrator/agents/**` because that tree holds `.env.acceptance`
+(a Neon owner connection string). Codex's instruction file is
+**`~/code/pantry/AGENTS.md`**, inside the repo, reachable from the worktree.
+
+**Do not put an `AGENTS.md` in `~/agents` or above it.** Codex walks up for the
+nearest one at session start; finding one it is denied makes it fail fatally
+("failed to load AGENTS.md instructions for environment `local`"), which takes
+`probe.sh` down with it. → [the decision](../decisions/no-agents-md-in-agents-workspace-2026-09-10.md)
+
+Claude drives the lanes through [codex-lanes](../../pipelines/codex-lanes/CONTEXT.md);
+`lane.sh` stages any Layer 3 context into the worktree, outside the sandbox.
 
 Related: [Producers and consumers](../../references/tool-harmony.md) ·
 [Working conventions](../../references/conventions.md)

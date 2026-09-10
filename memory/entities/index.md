@@ -2,8 +2,10 @@
 type: index
 title: entities
 description: Index of 6 concept(s) under entities/.
-tags: [index]
-timestamp: 2026-09-10T00:00:00Z
+tags:
+- index
+timestamp: 2026-09-10 00:00:00+00:00
+permalink: agents/entities/index
 ---
 
 # entities

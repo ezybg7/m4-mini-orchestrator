@@ -2,8 +2,10 @@
 type: index
 title: sources
 description: Index of 2 concept(s) under sources/.
-tags: [index]
-timestamp: 2026-09-10T00:00:00Z
+tags:
+- index
+timestamp: 2026-09-10 00:00:00+00:00
+permalink: agents/sources/index
 ---
 
 # sources

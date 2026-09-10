@@ -59,9 +59,14 @@ code — do not force them into a stage contract.
 
 ## Other runtimes
 
-[`AGENTS.md`](AGENTS.md) is the same door for agent runtimes that read that file
-instead of this one (Codex). Neither is authoritative over the other; both point
-here and at `CONTEXT.md`. Several tools read and write these files —
+**Never put an `AGENTS.md` in this workspace or above it.** Codex walks up for
+the nearest one at session start, and its own sandbox profile denies
+`~/agents/**` — so an `AGENTS.md` here kills every Codex invocation whose cwd is
+under `~/agents`, including its safety gate. Codex's instruction file belongs in
+the repo it works on. See
+[the decision](memory/decisions/no-agents-md-in-agents-workspace-2026-09-10.md).
+
+Several tools read and write these files —
 [`references/tool-harmony.md`](references/tool-harmony.md) is the contract.
 
 ## Above this file

@@ -28,7 +28,9 @@ AREAS = [
     {"root": "runs",       "index": None,         "exempt": set(),
      "root_index": "index.md"},          # run folders are disposable, exempt
 ]
-ROOT_DOCS = ["CLAUDE.md", "CONTEXT.md", "AGENTS.md", "SPEC.md"]
+# NOTE: no AGENTS.md. Codex walks up for the nearest one and its sandbox denies
+# ~/agents/**, so an AGENTS.md here is fatal to it. See the 2026-09-10 decision.
+ROOT_DOCS = ["CLAUDE.md", "CONTEXT.md", "SPEC.md"]
 
 errors, warns = [], []
 def err(m): errors.append(m)
@@ -160,7 +162,7 @@ for c in sorted((HOME / "pipelines").rglob("CONTEXT.md")):
         err(f"{rel(c.parent)}/: no output/ — nothing for a human to edit (ICM I4)")
 
 # ---- ICM budgets (advisory) --------------------------------------------
-BUDGET = {"CLAUDE.md": 800, "CONTEXT.md": 300, "AGENTS.md": 800}
+BUDGET = {"CLAUDE.md": 800, "CONTEXT.md": 300}
 for name, budget in BUDGET.items():
     f = HOME / name
     if f.exists():

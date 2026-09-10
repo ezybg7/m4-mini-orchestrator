@@ -8,10 +8,9 @@ timestamp: 2026-09-05T00:00:00Z
 
 # Working conventions
 
-Layer 3 reference. Applies to every task in this workspace.
+Who does which work is its own concept: [Model roles](model-roles.md).
 
-## Model roles (Everett, 2026-09-05)
-Fable plans (PRDs, specs, review decisions, merges/ops). Opus 5 codes — every implementation, fix-round and test change is an `Agent` launch with `model: "opus"`. Fable never edits source files.
+Layer 3 reference. Applies to every task in this workspace.
 
 ## Git and PR flow
 

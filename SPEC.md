@@ -206,7 +206,7 @@ which field, and the four rules that keep them from fighting is
 | `okf-*` tools | integrated — the checker gates every commit |
 | Obsidian | **content-ready**; `.obsidian/app.json` committed. Open `~/agents` as the vault. Not yet pointed there — its only vault is `~/.hermes`. |
 | CodeGraph | **scoped, deliberately separate** — indexes code, not this bundle. `~/agents` is not indexed and should not be. |
-| Codex | **entry point done** (`AGENTS.md`); lanes-as-contracts planned in [the plan](memory/projects/plans/codex-icm-integration-plan.md) |
+| Codex | **validated** — sandbox gate 14/14. Reads its own `AGENTS.md` **in the repo**, and cannot read `~/agents` at all (denied by design). Orchestration contracts: [codex-lanes](pipelines/codex-lanes/CONTEXT.md) |
 
 Adding a tool means teaching it the format, or teaching it nothing if it already
 reads markdown. Nothing here may become a required dependency: the bundle stays

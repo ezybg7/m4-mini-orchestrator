@@ -16,6 +16,7 @@ Monday 09:00 via cron → `scripts/pantry-weekly-maintenance.sh`.
 | 2 | [`02_fetch`](02_fetch/CONTEXT.md) | ground truth before judging PRs |
 | 3 | [`03_dependabot_triage`](03_dependabot_triage/CONTEXT.md) | the reading job |
 | 4 | [`04_report`](04_report/CONTEXT.md) | one line to the log |
+| 5 | [`05_instruction_drift`](05_instruction_drift/CONTEXT.md) | report-only; accepting a baseline stays manual |
 
 The runbook that preceded this already had the right instinct — *"everything
 policy-shaped is in the prompt inside the script, not in bash — deciding whether

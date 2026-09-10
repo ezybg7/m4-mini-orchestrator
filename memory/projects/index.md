@@ -2,8 +2,10 @@
 type: index
 title: projects
 description: Index of 7 concept(s) and 1 subdirectory(ies) under projects/.
-tags: [index]
-timestamp: 2026-09-10T00:00:00Z
+tags:
+- index
+timestamp: 2026-09-10 00:00:00+00:00
+permalink: agents/projects/index
 ---
 
 # projects

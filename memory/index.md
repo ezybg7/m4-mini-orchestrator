@@ -2,8 +2,10 @@
 type: index
 title: memory
 description: Index of 0 concept(s) and 5 subdirectory(ies) under memory/.
-tags: [index]
-timestamp: 2026-09-10T00:00:00Z
+tags:
+- index
+timestamp: 2026-09-10 00:00:00+00:00
+permalink: agents/index
 ---
 
 # memory
@@ -28,7 +30,7 @@ Operating rules — the *factory* — live one level up in
 ## Subdirectories
 
 - [daily-log/](daily-log/index.md) — Index of 8 concept(s) and 1 subdirectory(ies) under daily-log/.
-- [decisions/](decisions/index.md) — Index of 5 concept(s) under decisions/.
+- [decisions/](decisions/index.md) — Index of 6 concept(s) under decisions/.
 - [entities/](entities/index.md) — Index of 6 concept(s) under entities/.
 - [projects/](projects/index.md) — Index of 7 concept(s) and 1 subdirectory(ies) under projects/.
 - [sources/](sources/index.md) — Index of 2 concept(s) under sources/.

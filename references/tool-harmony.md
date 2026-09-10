@@ -27,7 +27,7 @@ them. Several are both. None of them may require another to be installed.
 | **`okf-normalize.py`** | producer | frontmatter shape | Idempotent. Runs **last**, after content edits. |
 | **Obsidian** | both | `.obsidian/` UI state | Configured for relative markdown links so hand- and tool-written links stay one style. See [Obsidian](../memory/entities/obsidian.md). |
 | **CodeGraph** | consumer | `.codegraph/` in indexed repos | Indexes **code**, not this vault. See [CodeGraph](../memory/entities/codegraph.md). |
-| **Codex** | both | `~/agents/codex/` | Enters at [AGENTS.md](../AGENTS.md). Integration is planned, not done — see [the plan](../memory/projects/plans/codex-icm-integration-plan.md). |
+| **Codex** | neither, here | `~/agents/codex/` (config + wrapper) | **Cannot read this workspace** — `~/agents/**` is denied by its sandbox profile, deliberately. It reads the repo's own `AGENTS.md`. Claude drives it via [codex-lanes](../pipelines/codex-lanes/CONTEXT.md); `lane.sh` stages any context it needs into the worktree. |
 | **cron / launchd** | producer | schedules only | Schedules pipelines; never defines what they do. |
 | **git** | consumer | history | The backup and the undo. `backup.sh` converges the bundle before committing. |
 

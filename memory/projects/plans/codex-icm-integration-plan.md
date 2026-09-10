@@ -1,8 +1,8 @@
 ---
 type: plan
 title: Codex integration plan
-description: 'How to bring Codex under the workspace protocol: shared entry, lane
-  contracts, and the vault as its context source.'
+description: 'Superseded by what testing found: Codex cannot read this workspace,
+  so the integration is orchestrator-side. What is done and what remains.'
 tags:
 - tooling
 - pantry
@@ -13,79 +13,63 @@ permalink: agents/projects/plans/codex-icm-integration-plan
 
 # Codex integration plan
 
-**Status: planned, not started.** Everett asked to plan this and integrate after
-the OKF/ICM restructure lands. Prerequisite done: [`AGENTS.md`](../../../AGENTS.md)
-gives Codex the same Layer 0 door Claude uses.
+**Rewritten 2026-09-10 after testing the sandbox.** The first version of this
+plan assumed Codex could be given the same Layer 0 entry Claude has, via an
+`AGENTS.md` at the workspace root. That was wrong in two ways, and both were
+found by running commands rather than reading config:
 
-Background: [Codex](../../entities/codex.md) ·
-[Producers and consumers](../../../references/tool-harmony.md)
+1. Codex's profiles deny `/Users/orchestrator/agents/**` — deliberately, because
+   that tree holds `.env.acceptance`. Verified:
+   `codex sandbox -P pantry-review -- cat ~/agents/CLAUDE.md` → *Operation not
+   permitted*. **Codex will never read this workspace, and should not.**
+2. Worse, the `AGENTS.md` I added *broke* Codex: it walks up for the nearest one
+   at session start, found a file it is forbidden to read, and died — taking
+   `probe.sh`, the mandatory sandbox gate, down with it.
+   → [decision](../../decisions/no-agents-md-in-agents-workspace-2026-09-10.md)
 
-## Goal
+So the integration is **orchestrator-side**: Claude drives the lanes and the
+contracts describe Claude's half of the handoff.
 
-Codex reads the same context, through the same layers, as Claude — so a lane's
-behavior is edited by changing a markdown file, not by editing `lane.sh`. Today
-its five lanes carry their instructions inside a shell wrapper, which is exactly
-the shape ICM says to invert.
+## Validated 2026-09-10
 
-## Why it is cheap
+- `codex/probe.sh` **14/14** on codex-cli 0.153.2 — every denial holds, commits
+  blocked inside the worktree, network off, `oauth_token` and `.env.acceptance`
+  unreadable under both profiles.
+- Canonical `~/agents/codex/config.toml` matches the installed `~/.codex/config.toml`.
+- [`pipelines/codex-lanes/`](../../../pipelines/codex-lanes/CONTEXT.md) — the
+  four-stage handoff, lane kind as a parameter.
+- [`references/model-roles.md`](../../../references/model-roles.md) — the
+  division of labor as a Layer 3 rule: Claude owns intent, Codex owns execution
+  and attacking it.
+- `scripts/instruction-drift.py` — closes the gap AGENTS.md names itself
+  ("two instruction files with no drift check is the standard failure mode of a
+  two-model setup"). Baseline recorded; self-tested.
 
-Codex's sandbox has **no network**. It can still read a folder of markdown. A
-knowledge format that required an SDK, an API, or a running service could not
-cross that boundary at all; a directory of files crosses it for free. This is
-the concrete payoff of "format, not platform" — it is what makes a second,
-locked-down runtime a first-class citizen with no adapter.
+## Remaining
 
-## Stages
+1. **Run a real lane end to end.** Everything above is validated without spending
+   a Codex call. A `hunt` or `review` lane is read-only and the cheapest honest
+   test of the whole path — task file → dispatch → adjudicate. Not yet done.
+2. **Wire the drift check into a schedule.** It is referenced by
+   `01_task_file`'s `## Verify` but nothing runs it periodically. Weekly
+   maintenance is the natural home.
+3. **Decide where lane prompts are canonical.** They exist in `lane.sh` (thin:
+   `MODE:` plus a line or two) and in pantry's `AGENTS.md` (the real rules) and
+   spec 56. Current answer, not yet written down as a decision: **AGENTS.md is
+   canonical** because it is the file Codex actually reads; `lane.sh` should hold
+   no policy; spec 56 stays the product spec. Confirm, then prune whatever
+   duplicates.
+4. **`hunt` may not deserve a contract** — it is exploratory and read-only, and
+   may belong in `runs/`. Left as a lane for now.
 
-### 1. Shared entry — DONE
-`AGENTS.md` at the workspace root points at `CLAUDE.md` → `CONTEXT.md`, with no
-Claude-specific content in either. Both runtimes enter through the same door.
+## Non-goals
 
-### 2. Lanes become stage contracts
-Create `pipelines/codex-lanes/` with one folder per lane — `01_review`,
-`02_hunt`, `03_tests`, `04_implement`, `05_fix` — each a `CONTEXT.md` with
-`## Inputs` / `## Process` / `## Outputs` / `## Verify`. Move the lane prompts
-out of `lane.sh` into those contracts; `lane.sh` keeps only the mechanical work
-it exists for (dependency install outside the sandbox, ref resolution, invoking
-the binary). Same inversion already applied to `nightly-reflection.sh`.
+Weakening the sandbox to let Codex read `~/agents`. The config's own comments
+record why that is dangerous: a profile with a misspelled filesystem key loads
+**without error and denies nothing** — one such profile read `~/.claude/oauth_token`
+in full. Anything Codex needs from Layer 3 gets quoted into the task file by
+`01_task_file`, outside the sandbox.
 
-Numbering is by review-risk, not execution order: read-only lanes first, lanes
-that write code last. Note in the pipeline `CONTEXT.md` that these are
-independent entry points, not a sequence — a deliberate deviation from ICM I6.
-
-### 3. Vault as Codex's context source
-Each lane's `## Inputs` names Layer 3 files by path — `references/safety-rules.md`,
-`references/conventions.md`, the relevant `memory/projects/pantry-*.md`. Codex
-reads them from disk. Nothing is passed through the wrapper.
-
-### 4. Outputs land in Layer 4
-Lanes write to `runs/<date>-codex-<lane>/`, not to scratch directories.
-`review-output.schema.json` stays the contract for the review lane's JSON —
-plain text as the interface, exactly ICM I2.
-
-### 5. Close the loop
-A finding Codex produces that is durable becomes a concept in the vault, through
-the same `okf-normalize.py` → `okf-index.py` → `okf-check.py` path everything
-else uses. Codex becomes a **producer** on the bundle, and the register in
-`references/tool-harmony.md` gains a row.
-
-## Gates
-
-- `codex/probe.sh` must pass **before** the first run under the new contracts and
-  after every `codex update`. The config silently ignores misspelled fields, so a
-  contract change that touches permissions is not reviewable by reading it.
-- The `implement` and `fix` lanes write code. They go through the existing
-  adversarial review loop and Everett's merge — the protocol change does not
-  alter who merges.
-
-## Open questions
-
-1. Does Codex read `AGENTS.md` automatically from the working directory, or must
-   `lane.sh` cat it into the prompt? Determines whether stage 1 is genuinely done
-   or needs a wrapper line. **Verify before starting stage 2.**
-2. Lane prompts currently live in `lane.sh` **and** in pantry's `specs/codex-qa-lane.md`
-   (spec 56). Moving them here would make three homes. Decide which is canonical
-   first — probably: spec 56 stays the product spec, the contracts become the
-   runtime source, and `lane.sh` holds neither.
-3. Whether `hunt` (read-only, exploratory) deserves a contract at all, or whether
-   it is genuinely ad-hoc work that belongs in `runs/`.
+Related: [Codex](../../entities/codex.md) ·
+[Model roles](../../../references/model-roles.md) ·
+[codex-lanes](../../../pipelines/codex-lanes/CONTEXT.md)

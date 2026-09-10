@@ -167,3 +167,14 @@ else
 fi
 
 log "=== pantry weekly maintenance end ==="
+
+# --- 5. instruction drift: CLAUDE.md vs AGENTS.md ---------------------------
+# Two instruction files with no drift check is the standard failure mode of a
+# two-model setup -- AGENTS.md says so itself. Report only; accepting a new
+# baseline is a judgment call and stays manual.
+if python3 "$HOME/agents/scripts/instruction-drift.py" >>"$LOG" 2>&1; then
+  echo "instruction-drift: ok" >> "$LOG"
+else
+  echo "instruction-drift: DRIFT -- see above; review before --accept" >> "$LOG"
+fi
+
