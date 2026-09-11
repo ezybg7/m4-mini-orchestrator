@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.user.multica-web</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>-c</string>
+    <string>export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:$PATH"; set -a; . "$HOME/agents/multica/.env"; set +a; export PORT=3000; cd "$HOME/agents/research/multica/src/apps/web" &amp;&amp; exec node_modules/.bin/next start -H 127.0.0.1 -p 3000</string></array>
+  <key>WorkingDirectory</key><string>/Users/orchestrator/agents/research/multica/src/apps/web</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/orchestrator/agents/multica/logs/web.log</string>
+  <key>StandardErrorPath</key><string>/Users/orchestrator/agents/multica/logs/web.err</string>
+</dict></plist>

@@ -18,3 +18,8 @@ _archive/*.tgz
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 .obsidian/cache
+research/multica/src/
+
+# Multica (spec 61): uploads and dumps are data, not knowledge — never in the vault repo
+multica/data/
+backups/multica/

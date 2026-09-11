@@ -1,0 +1,14 @@
+MODEL:sonnet
+EFFORT:high
+You are starting cold in the repository at /Users/orchestrator/code/pantry with no prior context. Read /Users/orchestrator/code/pantry/CLAUDE.md first and follow whatever it tells you to read before non-trivial work. Then answer these three questions, each with a file:line citation. Do not modify any file, do not run any git write command, do not touch any database, do not open a PR.
+
+1. Which database migrations (if any) are written but NOT yet applied to production, and what is the exact psql command sequence to apply them?
+2. What rule governs Row-Level Security for a newly added table, and where is it stated?
+3. What is the current status of spec 59 (the Frozen category) — specced, built, or shipped — and which migration number is reserved for it?
+
+At the end, report in this exact format:
+FILES_READ: <comma-separated list of every file you opened, with the approximate number of lines you read from each>
+ANSWERS: <your three answers with citations>
+CONFIDENCE: <high/medium/low for each answer>
+
+Be precise about FILES_READ — it is the measurement this probe exists for.

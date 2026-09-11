@@ -14,6 +14,15 @@ cp ~/.codex/config.toml                             system-config/codex.config.t
 # NEVER back up ~/.codex/auth.json (credentials).
 cp ~/Library/LaunchAgents/com.user.*.plist            system-config/                   2>/dev/null || true
 
+# 1b. Multica store (pantry spec 61): pg_dump of the local postgresql@17 on 5433, 7-day rotation.
+#     Peer auth over the socket (no password). Data, not knowledge: backups/multica/ is gitignored.
+#     Restore: createdb -h /tmp -p 5433 -O multica multica && gunzip -c <dump> | psql -h /tmp -p 5433 -d multica
+mkdir -p backups/multica
+MULTICA_DUMP="backups/multica/multica-$(date +%F).sql.gz"
+/opt/homebrew/opt/postgresql@17/bin/pg_dump -h /tmp -p 5433 -d multica | gzip > "$MULTICA_DUMP" \
+  || { echo "multica pg_dump FAILED" >&2; rm -f "$MULTICA_DUMP"; }
+find backups/multica -name 'multica-*.sql.gz' -mtime +7 -delete
+
 # 2. Converge the OKF bundle before committing.
 #    basic-memory is a second producer on this vault: it canonicalizes YAML and
 #    asynchronously re-prepends its own permalink block after any external edit,

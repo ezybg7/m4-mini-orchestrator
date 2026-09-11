@@ -1,6 +1,30 @@
+## Workspace protocol
+
+`~/agents` is an ICM staged workspace whose knowledge layer is an OKF bundle
+(`~/agents/SPEC.md`). When working there, read `~/agents/CLAUDE.md` (Layer 0 —
+where you are) then `~/agents/CONTEXT.md` (Layer 1 — where to go). Load only
+what the stage you are in asks for; do not read the whole workspace.
+
 ## Shared memory
-Before any task: read relevant files in ~/agents/memory/ (grep by project name).
-After any task: append a handoff note to ~/agents/memory/daily-log/$(date +%F).md covering what was done, decisions made, and open items.
+
+`~/agents/memory/` is an OKF bundle: one concept per file, YAML frontmatter,
+cross-linked, `index.md` at every level.
+
+- **Before any task**: open `~/agents/memory/index.md` and follow links down —
+  `projects/` for current state, `decisions/` for why, `entities/` for a
+  machine/repo/service, `sources/` for an external spec we have read. Load only
+  the matching concepts. Grep is the fallback, not the entry point.
+- **Stable operating rules** are Layer 3 in `~/agents/references/` —
+  `safety-rules.md` before any production action.
+- **After any task**: append a handoff note to
+  `~/agents/memory/daily-log/$(date +%F).md` covering what was done, decisions
+  made, and open items.
+- **A durable fact gets its own concept file** — not a paragraph appended to the
+  nearest note. Give it frontmatter (`type` is required and must be
+  informative), link it from the enclosing `index.md`, then:
+  `python3 ~/agents/scripts/okf-check.py` must exit 0.
+
+Full protocol: the `memory-protocol` skill.
 
 ## Spec-first, think-first
 - Think deeply before implementing anything. Lay out the goal, constraints,

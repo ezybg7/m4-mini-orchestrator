@@ -1,7 +1,7 @@
 ---
 type: index
 title: daily-log
-description: Index of 8 concept(s) and 1 subdirectory(ies) under daily-log/.
+description: Index of 9 concept(s) and 1 subdirectory(ies) under daily-log/.
 tags: [index]
 timestamp: 2026-09-10T00:00:00Z
 permalink: agents/daily-log/index
@@ -37,3 +37,4 @@ to [`archive/`](archive/index.md). Look for current state in
 | [2026-09-08](2026-09-08.md) | `log` | Nightly reflection; CI triage (spec 60) + the Actions quota (2026-09-08); Workflow move to the mini — PR #208 (Opus agent, ~15:30 UTC); +5 more |
 | [2026-09-09](2026-09-09.md) | `log` | Nightly reflection; Apple HIG skill — full ingest and ruleset build; Verification pass on the HIG skill |
 | [2026-09-10](2026-09-10.md) | `log` | Nightly reflection |
+| [2026-09-11](2026-09-11.md) | `log` | Codex lane first run and CI-triage RCE finding; Multica goal expanded; Multica research briefs |
