@@ -3,3 +3,4 @@
 30 2 * * * ~/agents/scripts/backup.sh >> ~/agents/logs/backup.log 2>&1
 0 3 * * * ~/agents/scripts/nightly-reflection.sh >> ~/agents/logs/reflection.log 2>&1
 0 9 * * 1 /Users/orchestrator/agents/scripts/pantry-weekly-maintenance.sh
+5 3 12 9 * $HOME/agents/scripts/board-run-3am.sh

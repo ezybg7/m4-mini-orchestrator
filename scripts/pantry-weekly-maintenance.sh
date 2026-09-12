@@ -156,15 +156,12 @@ clause "none open".
 EOF
 PROMPT="${PROMPT//__LOGFILE__/$LOG}"
 
-log "--- dependabot triage (claude -p) ---"
-# Unattended, so permissions cannot be prompted for. The blast radius is bounded
-# by the prompt above plus the repo's own guard hook (.claude/hooks/guard-bash.mjs
-# blocks `npm audit fix --force` and docker regardless of what the model decides).
-if claude -p "$PROMPT" --dangerously-skip-permissions; then
-  log "--- dependabot triage done ---"
-else
-  log "DEPENDABOT ⚠️  claude -p exited non-zero — triage incomplete, check by hand"
-fi
+# Dependabot triage moved to Multica on 2026-09-11 (spec 61): autopilot "Weekly
+# Dependabot triage" -> agent dependabot-maintainer, Mondays 09:00 ET, which files each
+# run as a board issue you can read. Running it here too would mean two agents merging
+# the same PRs. $PROMPT above is kept as the written policy of record. This script
+# still owns the machine-level checks: Apple client-secret expiry and instruction drift.
+log "--- dependabot triage: owned by the Multica autopilot, skipped here ---"
 
 log "=== pantry weekly maintenance end ==="
 

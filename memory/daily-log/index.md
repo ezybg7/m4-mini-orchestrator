@@ -29,7 +29,6 @@ to [`archive/`](archive/index.md). Look for current state in
 
 | Concept | Type | Description |
 |---------|------|-------------|
-| [2026-09-03](2026-09-03.md) | `log` | Nightly reflection; Session handoff — M4 mini becomes the primary workplace (interactive, 2026-09-03 evening); pantry — Artillery evaluation (research |
 | [2026-09-04](2026-09-04.md) | `log` | Production-readiness program (Everett: "go through all findings… spec, implement, review, merge everything… every single feature"); Ambry (pantry) — d |
 | [2026-09-05](2026-09-05.md) | `log` | Ambry (pantry) — 01:52 EDT: limit reset; everything relaunched (orchestrator session); pantry — PR #142 (spec 54, Artillery load testing) ADVOCATE rev |
 | [2026-09-06](2026-09-06.md) | `log` | Nightly reflection; Morning: password rotation fallout, simulator; Spice catalog extension — PR #199 (feat/catalog-spices-2026-09-06); +7 more |
@@ -38,3 +37,4 @@ to [`archive/`](archive/index.md). Look for current state in
 | [2026-09-09](2026-09-09.md) | `log` | Nightly reflection; Apple HIG skill — full ingest and ruleset build; Verification pass on the HIG skill |
 | [2026-09-10](2026-09-10.md) | `log` | Nightly reflection |
 | [2026-09-11](2026-09-11.md) | `log` | Codex lane first run and CI-triage RCE finding; Multica goal expanded; Multica research briefs |
+| [2026-09-12](2026-09-12.md) | `log` | 01:10 — Board run queued for 03:05 (orchestrator session cb1599dd — the /goal session) |

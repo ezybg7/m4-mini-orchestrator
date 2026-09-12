@@ -1,0 +1,18 @@
+Nightly reflection for 2026-09-11.
+
+Read /Users/orchestrator/agents/pipelines/nightly-reflection/CONTEXT.md, then run its stages in order, each against its own contract:
+
+  1. /Users/orchestrator/agents/pipelines/nightly-reflection/01_survey/CONTEXT.md
+  2. /Users/orchestrator/agents/pipelines/nightly-reflection/02_skills/CONTEXT.md
+  3. /Users/orchestrator/agents/pipelines/nightly-reflection/03_memory_fold/CONTEXT.md
+  4. /Users/orchestrator/agents/pipelines/nightly-reflection/04_report/CONTEXT.md
+
+Load only what each stage's `## Inputs` names -- not the whole workspace.
+Write each stage's output where its `## Outputs` says, and satisfy its
+`## Verify` before moving on. Use the date 2026-09-11 throughout.
+
+Two gates that are not yours to cross: stage 2 pushes but never merges, and
+stage 3 leaves the vault staged, never committed.
+
+An idle night is a valid outcome. If stage 1 finds nothing, say so and make no
+edits rather than manufacturing one.

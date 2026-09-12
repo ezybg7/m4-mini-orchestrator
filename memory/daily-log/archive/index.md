@@ -21,4 +21,4 @@ now*.
 
 - [2026-07/](2026-07/index.md) — Index of 15 concept(s) under 2026-07/.
 - [2026-08/](2026-08/index.md) — Index of 31 concept(s) under 2026-08/.
-- [2026-09/](2026-09/index.md) — Index of 2 concept(s) under 2026-09/.
+- [2026-09/](2026-09/index.md) — Index of 3 concept(s) under 2026-09/.

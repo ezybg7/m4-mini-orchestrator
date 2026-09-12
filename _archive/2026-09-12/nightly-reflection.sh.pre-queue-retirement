@@ -8,11 +8,7 @@ set -euo pipefail
 d=$(date +%F)
 P=~/agents/pipelines/nightly-reflection
 
-# The queue worker was retired on 2026-09-12 (the Multica board replaced it), so this
-# runs claude -p directly with the same task text the worker used to receive. The
-# queue's preamble is kept at ~/agents/_archive/2026-09-12/queue/.preamble.md; its one
-# rule that mattered (read CLAUDE.md before work) is in the repo's own CLAUDE.md now.
-TASK_TEXT=$(cat <<TASK
+cat > ~/agents/queue/reflect-$d.task <<TASK
 Nightly reflection for $d.
 
 Read $P/CONTEXT.md, then run its stages in order, each against its own contract:
@@ -32,11 +28,5 @@ stage 3 leaves the vault staged, never committed.
 An idle night is a valid outcome. If stage 1 finds nothing, say so and make no
 edits rather than manufacturing one.
 TASK
-)
-OUT=~/agents/logs/claude-reflect-$d-$(date +%Y%m%d-%H%M%S).json
-export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
-if claude -p "$TASK_TEXT" --output-format json > "$OUT" 2>&1; then
-  echo "nightly-reflection: done → $OUT"
-else
-  echo "nightly-reflection: FAILED — details in $OUT"; exit 1
-fi
+
+~/agents/scripts/claude-worker.sh

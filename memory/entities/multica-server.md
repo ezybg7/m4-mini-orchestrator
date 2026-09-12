@@ -2,14 +2,17 @@
 type: entity
 title: Multica server on the mini
 description: Multica's Go API and Next.js web tier, built from source and run natively under
-  launchd on the M4 mini, localhost-only, on a local Homebrew postgresql@17 at port 5433.
-  Phase 1 of pantry spec 61 - no daemon, no agents, no multica user yet.
+  launchd on the M4 mini, localhost-only, on a local Homebrew postgresql@17 at port 5433
+  (spec 61 phase 1), with the dedicated `multica` daemon user live since 2026-09-11 under a
+  system LaunchDaemon - twelve agents, two squads and one autopilot now run Ambry's
+  development, review and research loops on it.
 tags:
 - m4-mini
 - infra
 - multica
 - launchd
 - postgres
+- security
 timestamp: 2026-09-11 00:00:00+00:00
 permalink: agents/entities/multica-server
 ---
@@ -17,9 +20,12 @@ permalink: agents/entities/multica-server
 # Multica server on the mini
 
 Installed 2026-09-11 for pantry **spec 61 phase 1** (`specs/multica-integration.md`,
-PR #215; the decision brief is `~/agents/research/multica/hosting.md`). The
-server and the web app run; nothing executes tasks until Everett creates the
-`multica` Unix user and phase 1's agent is registered. Sibling:
+PR #215; the decision brief is `~/agents/research/multica/hosting.md`). **Phase 2 went live 2026-09-11**: the `multica` daemon user is provisioned and
+running under `/Library/LaunchDaemons/com.user.multica-daemon.plist`, and the
+board now runs the development loop (planner -> implementer -> a three-lens
+review squad), a research squad, and a weekly Dependabot autopilot. How to drive
+it is the runbook in `~/agents/references/multica-board.md`; the operating detail
+Claude Code sessions load is `project-multica-runbook` in the pantry project memory. Sibling:
 [OrbStack on the mini](orbstack.md) (the container path we did not take).
 
 ## What runs where
@@ -107,13 +113,49 @@ in the clone `git checkout main && git branch -D mini/bind-host && rm -rf server
 drop the backup.sh step 1b block and the two Multica lines in `.gitignore`;
 optionally `brew uninstall postgresql@17 go pnpm node@22`. Neon and Ambry are never touched.
 
+## Daemon user (spec 61 phase 2 — prepared 2026-09-11, not yet run)
+
+The agents run as **`multica`** (uid 502, Standard, home `/Users/multica`,
+created by Everett 2026-09-11) — Multica's own recommended boundary, since a
+run is `claude -p --permission-mode bypassPermissions` with every prompt
+auto-allowed. Provisioning is one admin run of
+`~/agents/multica/daemon-user/setup-multica-user.sh` (`sudo bash …`, idempotent;
+the ordered list is `RUNBOOK.md` beside it). Until Everett runs it, nothing
+below exists on disk.
+
+| Piece | Where / how |
+|---|---|
+| Claude Code | `~multica/.local/bin/claude`, Anthropic's native installer (sha256 vs its manifest); auth = `CLAUDE_CODE_OAUTH_TOKEN` from `~multica/.claude/oauth_token` (600), minted by `claude setup-token` — the documented headless path; it passes the daemon's child-env filter |
+| Multica CLI | `~multica/.local/bin/multica`, release tarball `multica-cli-<ver>-darwin-arm64.tar.gz` sha256-checked against `checksums.txt`, **pinned to the server's tag** (`MULTICA_CLI_VERSION`, 0.4.42 today), `disable_auto_update=true`; profile `~multica/.multica/config.json` (600): `server_url http://127.0.0.1:8080`, `app_url http://localhost:3000`, `device_name m4-mini`, `max_concurrent_tasks 2`; PAT via `multica login --token` read from a 600 file on stdin |
+| GitHub | deploy key `~multica/.ssh/pantry_deploy_ed25519` (write, ezybg7/pantry; public copy at `/Users/Shared/multica-daemon/`) is the **only git write path** — `~/.ssh/config` pins it with `IdentitiesOnly`, `known_hosts` from api.github.com/meta; `gh` uses `GH_TOKEN` from `~multica/.config/multica-daemon/github_token` (600), a fine-grained PAT — recommended Contents: read + Pull requests: write (narrower than the spec table; Everett's call) |
+| Clone | `~multica/work/pantry` over the deploy key — the `local_directory` resource for agents that need the repo's `.claude/settings.json` hooks; `github_repo` resources are cloned by the daemon into `~multica/multica_workspaces/` |
+| Service | **LaunchDaemon** `/Library/LaunchDaemons/com.user.multica-daemon.plist` (root-owned, `UserName multica`, KeepAlive, `nice 5`, `MULTICA_DAEMON_MAX_CONCURRENT_TASKS=2`) → `~multica/.local/bin/multica-daemon-launchd.sh` → `multica daemon start --foreground --max-concurrent-tasks 2`. Not a LaunchAgent: a user that never logs in has no `gui/502` domain (`launchctl print gui/502` → "Could not find domain"). Health `127.0.0.1:19514`; daemon log `~multica/.multica/daemon.log` (rotated); wrapper log `~multica/Library/Logs/multica-daemon/launchd.log` |
+
+Operate (admin): `sudo launchctl print system/com.user.multica-daemon | grep -E 'state|pid'` ·
+`sudo launchctl kickstart -k system/com.user.multica-daemon` ·
+`sudo -u multica -H /Users/multica/.local/bin/multica daemon logs -n 100`. Weekly bump:
+re-run the script with `MULTICA_CLI_VERSION=<new tag>` after the server rebuild.
+
+Boundary proofs the script's self-check enforces (as `multica`): `~orchestrator`
+(mode 700) unreadable — `.env.acceptance`, `.claude/oauth_token`,
+`.config/gh/hosts.yml`, `agents/multica/.env` all "Permission denied"; `psql`
+over the socket as `orchestrator` (peer) and as `multica` (reject rule) and
+over TCP as either without a password all fail. `/Users/multica` is set to 700.
+`main` on ezybg7/pantry is **unprotected** (checked 2026-09-11); the runbook
+recommends a ruleset (require PR, block force-push, bypass = repository admin,
+never deploy keys) as Everett's decision.
+
 ## Gotchas
 
 - **Auth hardening is deliberate.** Homebrew's cluster defaults to `trust`; with it
   any local user — the future `multica` daemon user — could connect as the
   `orchestrator` superuser and `pg_read_file` the files spec 61 fences off.
   `pg_hba.conf` is `peer` on the socket and `scram-sha-256` on TCP; the
-  superuser has no password, so it is socket-only.
+  superuser has no password, so it is socket-only. Since 2026-09-11 the first
+  rule is `local all multica reject`: with plain `peer`, the multica **OS**
+  user would pass as the multica **DB** role over the socket (same name) and
+  own the Multica database; the backend only ever connects over TCP.
+  Backup of the previous file: `pg_hba.conf.bak-2026-09-11`.
 - **Homebrew dependency bumps can break the default Node.** Installing node@22
   bumped `simdutf`; `merve` (linked by the default node 26.5.0) broke until
   `brew upgrade merve` alone. `HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1` keeps

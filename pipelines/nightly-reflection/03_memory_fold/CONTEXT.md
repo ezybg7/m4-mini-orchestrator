@@ -39,6 +39,6 @@ from the enclosing `index.md` (`scripts/okf-index.py` regenerates it).
 - Updated concept files; the log moved to `daily-log/archive/<YYYY-MM>/`.
 
 ## Verify
-- `scripts/okf-check.sh` exits 0.
+- `python3 scripts/okf-check.py` exits 0.
 - Nothing lost: every durable fact in the folded log is findable in the vault.
 - Left **staged, not committed** — the 02:30 backup commits.

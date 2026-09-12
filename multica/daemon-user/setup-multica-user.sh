@@ -1,0 +1,635 @@
+#!/bin/bash
+# setup-multica-user.sh — spec 61 phase 2: provision the dedicated `multica`
+# daemon user on the M4 mini so Multica can run Claude Code agents under it.
+#
+#   Everett runs, once, as admin:   sudo bash ~/agents/multica/daemon-user/setup-multica-user.sh
+#   Re-runnable: every step checks its own state first and reports what it did.
+#   Companion: RUNBOOK.md next to this file (the ordered list, and the rollback).
+#
+# What root does (and only this): create nothing in its own name — it runs the
+# user-level phases as `multica`, prompts for the three tokens (hidden input)
+# and stores them under /Users/multica with mode 600, installs the LaunchDaemon
+# plist (root's to own: a user that never logs in has no gui/user launchd
+# domain to hold a LaunchAgent), and drives the self-check.
+#
+# What `multica` does (every user-level step, in a clean environment):
+#   ~/.local/bin/claude          Claude Code via Anthropic's native installer
+#   ~/.local/bin/multica         Multica CLI from the GitHub release tarball,
+#                                sha256-verified against checksums.txt, pinned
+#                                to the server's release (MULTICA_CLI_VERSION)
+#   ~/.ssh/pantry_deploy_ed25519 deploy key for ezybg7/pantry (git transport)
+#   ~/.gitconfig                 identity multica-daemon <noreply>
+#   ~/.multica/config.json       self-host URLs + PAT (written by `multica login`)
+#   ~/work/pantry                clone over the deploy key (local_directory resource)
+#   ~/.local/bin/multica-daemon-launchd.sh   launchd entry point: exports the
+#                                Claude token and GH_TOKEN from their 600 files,
+#                                then exec `multica daemon start --foreground`
+#
+# Secrets never touch argv, logs, or this script's output. Token files:
+#   /Users/multica/.claude/oauth_token                 Claude Code long-lived token
+#   /Users/multica/.config/multica-daemon/github_token GitHub fine-grained PAT
+#   /Users/multica/.config/multica-daemon/multica_pat  Multica PAT — deleted after login
+#
+# Flags:  --rotate-tokens   re-prompt for every token even if one is stored
+#         --rotate-claude   re-prompt for the Claude token only (after an exposure)
+#         --codex           phase 2b: Codex config + device-code login for the daemon user (spec 61)
+#         --skip-daemon     do everything except install/start the LaunchDaemon
+#         --force-restart   reload the LaunchDaemon even while it has active tasks
+#         --as-user PHASE   (internal) run PHASE as the current user; PHASE = install
+# Env:    MULTICA_CLI_VERSION=0.4.42   pin; keep equal to the server's release tag
+#         SETUP_DRY_RUN=1              (--as-user only) never touch tokens or the server
+set -euo pipefail
+
+# ----------------------------------------------------------------------------
+# Constants
+# ----------------------------------------------------------------------------
+MULTICA_USER=multica
+MULTICA_GROUP=staff
+MULTICA_CLI_VERSION="${MULTICA_CLI_VERSION:-0.4.42}"
+MULTICA_SERVER_URL="${MULTICA_SERVER_URL:-http://127.0.0.1:8080}"
+MULTICA_APP_URL="${MULTICA_APP_URL:-http://localhost:3000}"
+MULTICA_HEALTH_PORT=19514            # default-profile daemon health port (127.0.0.1 only)
+MAX_CONCURRENT_TASKS="${MAX_CONCURRENT_TASKS:-6}"   # spec 61 §Hosting: the 16 GB rule.
+# Raised 2 -> 6 on 2026-09-11: the review squad fans out to three reviewers plus a lead,
+# so a cap of 2 silently serialised the one thing the squad exists to do in parallel.
+# Everett's standing rule is that the limit is memory, not a count (~6-8 while it holds).
+PANTRY_SSH_URL=git@github.com:ezybg7/pantry.git
+PANTRY_REPO=ezybg7/pantry
+LABEL=com.user.multica-daemon
+PLIST=/Library/LaunchDaemons/$LABEL.plist
+BREW=/opt/homebrew
+SHARED_DIR=/Users/Shared/multica-daemon   # world-readable: the PUBLIC deploy key only
+ORCH_HOME=/Users/orchestrator
+CLAUDE_INSTALLER_URL=https://claude.ai/install.sh
+MULTICA_RELEASE_BASE=https://github.com/multica-ai/multica/releases/download
+# GitHub's published ed25519 host key (https://api.github.com/meta), used only
+# when the live fetch fails.
+GITHUB_ED25519_FALLBACK='github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
+
+# PATH for everything that runs as multica: its own tools first, node@22
+# (pantry's .nvmrc) before Homebrew's default node, then Homebrew (gh, git,
+# jq, gitleaks, go, psql via its opt path), then the system.
+USER_PATH="/Users/$MULTICA_USER/.local/bin:$BREW/opt/node@22/bin:$BREW/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+PSQL=$BREW/opt/postgresql@17/bin/psql
+
+ROTATE=0; ROTATE_CLAUDE=0; CODEX=0; SKIP_DAEMON=0; FORCE_RESTART=0; AS_USER=""
+# Run from / so `sudo -u multica` never inherits a cwd that user cannot enter (the getcwd noise).
+cd / || exit 1
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --rotate-tokens) ROTATE=1 ;;
+    --rotate-claude) ROTATE_CLAUDE=1 ;;
+    --codex)         CODEX=1 ;;
+    --skip-daemon)   SKIP_DAEMON=1 ;;
+    --force-restart) FORCE_RESTART=1 ;;
+    --as-user)       AS_USER=${2:?--as-user needs a phase}; shift ;;
+    -h|--help)       sed -n '2,40p' "$0"; exit 0 ;;
+    *) echo "unknown flag: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+say()  { printf '\n==> %s\n' "$*"; }
+note() { printf '    %s\n' "$*"; }
+die()  { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# ============================================================================
+# USER PHASE — runs as `multica` (or as any user with HOME overridden, for a
+# dry run). No sudo, no tokens, no server writes.
+# ============================================================================
+user_phase_install() {
+  cd "$HOME"
+  USER_PATH="$HOME/.local/bin:$BREW/opt/node@22/bin:$BREW/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  export PATH="$USER_PATH"
+  local dry=${SETUP_DRY_RUN:-0}
+  say "[user] phase install — running as $(id -un) with HOME=$HOME"
+
+  # --- directories -----------------------------------------------------------
+  local d
+  for d in .local/bin .local/share/multica-daemon .claude .config/multica-daemon .ssh .multica work Library/Logs/multica-daemon; do
+    mkdir -p "$HOME/$d"
+  done
+  chmod 700 "$HOME/.claude" "$HOME/.config" "$HOME/.config/multica-daemon" "$HOME/.ssh" "$HOME/.multica"
+  note "directories ready under $HOME (.claude .config/multica-daemon .ssh .multica are 700)"
+
+  # --- Claude Code (native installer -> ~/.local/bin/claude) -----------------
+  local cver=""
+  if [[ -x $HOME/.local/bin/claude ]]; then
+    cver=$("$HOME/.local/bin/claude" --version 2>/dev/null | awk '{print $1}' || true)
+  fi
+  if [[ -n $cver ]]; then
+    note "Claude Code present: $cver ($HOME/.local/bin/claude) — skipping install"
+  else
+    note "installing Claude Code with the native installer ($CLAUDE_INSTALLER_URL)"
+    curl -fsSL "$CLAUDE_INSTALLER_URL" | bash
+    cver=$("$HOME/.local/bin/claude" --version | awk '{print $1}')
+    note "Claude Code installed: $cver"
+  fi
+  [[ ${cver%%.*} -ge 2 ]] || die "Claude Code $cver is below the 2.0.0 Multica requires"
+
+  # --- Multica CLI (release tarball, checksum-verified, pinned) --------------
+  local want="$MULTICA_CLI_VERSION" havev=""
+  if [[ -x $HOME/.local/bin/multica ]]; then
+    havev=$("$HOME/.local/bin/multica" version 2>/dev/null | awk 'NR==1{print $2}' || true)
+  fi
+  if [[ $havev == "$want" ]]; then
+    note "Multica CLI present: $havev — matches the pin, skipping download"
+  else
+    [[ -z $havev ]] || note "Multica CLI $havev installed, pin is $want — replacing"
+    local asset="multica-cli-${want}-darwin-arm64.tar.gz" tmp
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/multica-cli.XXXXXX")
+    note "downloading $MULTICA_RELEASE_BASE/v$want/$asset"
+    curl -fsSL -o "$tmp/$asset"        "$MULTICA_RELEASE_BASE/v$want/$asset"
+    curl -fsSL -o "$tmp/checksums.txt" "$MULTICA_RELEASE_BASE/v$want/checksums.txt"
+    ( cd "$tmp" && grep -E " ${asset}\$" checksums.txt | shasum -a 256 -c - ) \
+      || die "checksum mismatch for $asset — not installing"
+    tar -xzf "$tmp/$asset" -C "$tmp" multica
+    install -m 755 "$tmp/multica" "$HOME/.local/bin/multica"
+    rm -rf "$tmp"
+    havev=$("$HOME/.local/bin/multica" version | awk 'NR==1{print $2}')
+    [[ $havev == "$want" ]] || die "installed multica reports $havev, expected $want"
+    note "Multica CLI installed: $havev (sha256 verified against checksums.txt)"
+  fi
+
+  # --- deploy key for ezybg7/pantry ------------------------------------------
+  local key="$HOME/.ssh/pantry_deploy_ed25519"
+  if [[ -f $key && -f $key.pub ]]; then
+    note "deploy key present: $key.pub"
+  else
+    ssh-keygen -q -t ed25519 -N '' -C "multica-daemon@m4-mini deploy key for $PANTRY_REPO" -f "$key"
+    note "deploy key generated: $key (no passphrase — the daemon has no agent to unlock one)"
+  fi
+  chmod 600 "$key"; chmod 644 "$key.pub"
+
+  # ssh config: this key, and only this key, for github.com
+  local sshcfg="$HOME/.ssh/config"
+  if [[ -f $sshcfg ]] && grep -q '^# multica-daemon: pantry deploy key' "$sshcfg"; then
+    note "ssh config block present in $sshcfg"
+  else
+    cat >> "$sshcfg" <<EOF
+# multica-daemon: pantry deploy key (written by setup-multica-user.sh)
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile $key
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+  UserKnownHostsFile $HOME/.ssh/known_hosts
+EOF
+    note "ssh config block written to $sshcfg"
+  fi
+  chmod 600 "$sshcfg"
+
+  # known_hosts: GitHub's published keys (api.github.com/meta), never TOFU
+  local kh="$HOME/.ssh/known_hosts" meta
+  if ssh-keygen -F github.com -f "$kh" >/dev/null 2>&1; then
+    note "github.com already pinned in $kh"
+  else
+    meta=$(curl -fsSL --max-time 20 https://api.github.com/meta 2>/dev/null || true)
+    if [[ -n $meta ]] && printf '%s' "$meta" | jq -e '.ssh_keys | length > 0' >/dev/null 2>&1; then
+      printf '%s' "$meta" | jq -r '.ssh_keys[] | "github.com \(.)"' >> "$kh"
+      note "github.com host keys pinned from https://api.github.com/meta"
+    else
+      printf '%s\n' "$GITHUB_ED25519_FALLBACK" >> "$kh"
+      note "api.github.com unreachable — pinned the published ed25519 key from this script"
+    fi
+    chmod 600 "$kh"
+  fi
+
+  # --- git identity ------------------------------------------------------------
+  git config --global user.name  "multica-daemon"
+  git config --global user.email "multica-daemon@users.noreply.github.com"
+  git config --global init.defaultBranch main
+  git config --global pull.rebase false
+  note "git identity: multica-daemon <multica-daemon@users.noreply.github.com>"
+
+  # --- Claude Code user settings: deny-rules as defence in depth ---------------
+  # The user boundary is the control; these only stop the Read tool from
+  # opening the credential files by accident. They are not a sandbox.
+  local cs="$HOME/.claude/settings.json"
+  if [[ -f $cs ]]; then
+    note "Claude settings present: $cs (left as is)"
+  else
+    cat > "$cs" <<EOF
+{
+  "permissions": {
+    "deny": [
+      "Read(//${HOME#/}/.claude/oauth_token)",
+      "Read(//${HOME#/}/.config/multica-daemon/**)",
+      "Read(//${HOME#/}/.multica/config.json)",
+      "Read(//${HOME#/}/.ssh/**)"
+    ]
+  }
+}
+EOF
+    note "Claude settings written: $cs (deny Read on the credential files)"
+  fi
+
+  # --- Multica CLI profile: self-host URLs and daemon knobs (no token needed) --
+  local m="$HOME/.local/bin/multica"
+  "$m" config set server_url "$MULTICA_SERVER_URL"        >/dev/null
+  "$m" config set app_url "$MULTICA_APP_URL"              >/dev/null
+  "$m" config set device_name "m4-mini"                   >/dev/null
+  "$m" config set runtime_name "multica user daemon"      >/dev/null
+  "$m" config set max_concurrent_tasks "$MAX_CONCURRENT_TASKS" >/dev/null
+  "$m" config set disable_auto_update true                >/dev/null   # weekly pinned bump, never a silent one
+  chmod 600 "$HOME/.multica/config.json"
+  note "multica config: server_url=$MULTICA_SERVER_URL app_url=$MULTICA_APP_URL max_concurrent_tasks=$MAX_CONCURRENT_TASKS disable_auto_update=true"
+  "$m" config show | sed 's/^/      /'
+
+  # --- launchd entry point ------------------------------------------------------
+  local wrap="$HOME/.local/bin/multica-daemon-launchd.sh"
+  cat > "$wrap" <<EOF
+#!/bin/bash
+# multica-daemon-launchd.sh — launchd entry point for the Multica daemon
+# (spec 61 phase 2). Regenerated by setup-multica-user.sh; do not hand-edit.
+# Runs as the multica user. Loads the two agent credentials from their 600
+# files into the environment (Claude Code reads CLAUDE_CODE_OAUTH_TOKEN; gh
+# reads GH_TOKEN — its own advice for fine-grained PATs), then execs the
+# daemon in the foreground so launchd supervises the real process.
+set -euo pipefail
+export HOME=$HOME
+export PATH=$USER_PATH
+export LANG=en_US.UTF-8
+umask 022
+mkdir -p "\$HOME/Library/Logs/multica-daemon"
+exec >> "\$HOME/Library/Logs/multica-daemon/launchd.log" 2>&1
+echo "[\$(date -u +%FT%TZ)] launchd start pid \$\$ as \$(id -un)"
+for f in "\$HOME/.claude/oauth_token" "\$HOME/.config/multica-daemon/github_token"; do
+  [ -s "\$f" ] || { echo "missing credential file \$f — run setup-multica-user.sh"; exit 78; }
+done
+CLAUDE_CODE_OAUTH_TOKEN="\$(<"\$HOME/.claude/oauth_token")";            export CLAUDE_CODE_OAUTH_TOKEN
+GH_TOKEN="\$(<"\$HOME/.config/multica-daemon/github_token")";           export GH_TOKEN
+export MULTICA_DAEMON_MAX_CONCURRENT_TASKS="\${MULTICA_DAEMON_MAX_CONCURRENT_TASKS:-$MAX_CONCURRENT_TASKS}"
+cd "\$HOME"
+exec "\$HOME/.local/bin/multica" daemon start --foreground \\
+  --max-concurrent-tasks "\$MULTICA_DAEMON_MAX_CONCURRENT_TASKS"
+EOF
+  chmod 700 "$wrap"
+  bash -n "$wrap"
+  note "launchd wrapper written: $wrap"
+
+  if [[ $dry == 1 ]]; then
+    note "dry run: not writing tokens, not logging in, not cloning"
+  fi
+  say "[user] phase install done"
+  printf '\n--- deploy key (public, add it to %s with WRITE access) ---\n' "$PANTRY_REPO"
+  cat "$key.pub"
+  printf -- '--- end of public key ---\n'
+}
+
+# --- phase 2b: Codex for the daemon user (runs as multica) ---------------------
+# Multica copies ~/.codex/auth.json and ~/.codex/config.toml into a per-task home,
+# strips any sandbox_mode and runs Codex with full access (execenv/codex_home.go) —
+# so the OS user is the boundary, exactly as for Claude. The login is the ChatGPT
+# plan via the device-code flow: no API key, no browser callback into this user.
+user_phase_codex() {
+  cd "$HOME"
+  mkdir -p "$HOME/.codex"; chmod 700 "$HOME/.codex"
+  if [[ ! -s $HOME/.codex/config.toml ]]; then
+    cat > "$HOME/.codex/config.toml" <<'TOML'
+# Codex for the Multica daemon user (spec 61 phase 2b). Multica rewrites sandbox and
+# environment policy per task; what survives is the model, effort and history settings.
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+approval_policy = "never"
+web_search = "disabled"
+
+[history]
+persistence = "none"
+
+[shell_environment_policy]
+inherit = "core"
+TOML
+    chmod 600 "$HOME/.codex/config.toml"; echo "    codex config written: $HOME/.codex/config.toml"
+  else echo "    codex config present — leaving it"; fi
+  if codex login status 2>/dev/null | grep -qi "logged in"; then
+    echo "    codex already logged in for $USER — skipping"
+  else
+    echo "    codex device-code login: approve the code below in ANY browser signed in to the ChatGPT account"
+    codex login --device-auth < /dev/tty
+  fi
+  codex login status 2>&1 | head -2 | sed 's/^/    /'
+}
+
+# --as-user dispatch -----------------------------------------------------------
+if [[ -n $AS_USER ]]; then
+  case $AS_USER in
+    install) user_phase_install ;;
+    codex)   user_phase_codex ;;
+    *) die "unknown --as-user phase: $AS_USER" ;;
+  esac
+  exit 0
+fi
+
+# ============================================================================
+# ROOT SECTION
+# ============================================================================
+[[ $(id -u) -eq 0 ]] || die "run as admin: sudo bash $0"
+( : < /dev/tty ) 2>/dev/null || die "needs an interactive terminal (token prompts)"
+
+MULTICA_UID=$(id -u "$MULTICA_USER" 2>/dev/null) \
+  || die "user '$MULTICA_USER' does not exist. Create it first (System Settings → Users & Groups → Standard user, or: sudo sysadminctl -addUser multica -fullName \"Multica Daemon\" -password -) and re-run."
+MULTICA_HOME=$(dscl . -read "/Users/$MULTICA_USER" NFSHomeDirectory | awk '{print $2}')
+[[ -d $MULTICA_HOME ]] || die "home directory $MULTICA_HOME of $MULTICA_USER does not exist"
+[[ $MULTICA_HOME == /Users/$MULTICA_USER ]] || note "note: home is $MULTICA_HOME (expected /Users/$MULTICA_USER)"
+USER_PATH="$MULTICA_HOME/.local/bin:$BREW/opt/node@22/bin:$BREW/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
+say "spec 61 phase 2 — Multica daemon user setup"
+note "user: $MULTICA_USER (uid $MULTICA_UID, home $MULTICA_HOME)   CLI pin: $MULTICA_CLI_VERSION   server: $MULTICA_SERVER_URL"
+[[ $MULTICA_UID == 502 ]] || note "note: uid is $MULTICA_UID, the spec assumed 502 — continuing"
+if dseditgroup -o checkmember -m "$MULTICA_USER" admin >/dev/null 2>&1; then die "$MULTICA_USER is in the admin group — it must be a Standard user"; fi
+
+# --- root helpers --------------------------------------------------------------
+# Run one command line as the multica user in a clean environment (no root env,
+# no MULTICA_* markers, no tokens unless the command loads them itself).
+as_user() {
+  sudo -u "$MULTICA_USER" -H env -i HOME="$MULTICA_HOME" USER="$MULTICA_USER" LOGNAME="$MULTICA_USER" \
+    SHELL=/bin/bash PATH="$USER_PATH" LANG=en_US.UTF-8 TERM="${TERM:-dumb}" \
+    MULTICA_CLI_VERSION="$MULTICA_CLI_VERSION" MAX_CONCURRENT_TASKS="$MAX_CONCURRENT_TASKS" \
+    MULTICA_SERVER_URL="$MULTICA_SERVER_URL" MULTICA_APP_URL="$MULTICA_APP_URL" \
+    bash -o pipefail -c "cd \"\$HOME\" && { $1; }"
+}
+# Same, with GH_TOKEN loaded from its file (for gh checks).
+as_user_gh() {
+  as_user "export GH_TOKEN=\"\$(<\"\$HOME/.config/multica-daemon/github_token\")\"; $1"
+}
+# Refuse to write through anything multica could have planted: every path root
+# writes into must be a real directory/file owned by multica, never a symlink.
+safe_dir() {
+  local d=$1
+  if [[ -e $d || -L $d ]]; then
+    [[ -d $d && ! -L $d ]] || die "$d exists and is not a plain directory — refusing to write through it"
+    [[ $(stat -f %u "$d") == "$MULTICA_UID" ]] || die "$d is not owned by $MULTICA_USER — refusing"
+  else
+    install -d -o "$MULTICA_USER" -g "$MULTICA_GROUP" -m 700 "$d"
+  fi
+}
+safe_file_target() { [[ ! -L $1 ]] || die "$1 is a symlink — refusing to write through it"; }
+
+# --- preflight -----------------------------------------------------------------
+say "preflight"
+curl -fsS --max-time 5 "$MULTICA_SERVER_URL/health" >/dev/null \
+  || die "Multica server not reachable at $MULTICA_SERVER_URL — is com.user.multica-backend running (launchctl print gui/501/com.user.multica-backend)?"
+note "server: $MULTICA_SERVER_URL/health OK"
+orch_mode=$(stat -f %Lp "$ORCH_HOME")
+if [[ $orch_mode == 700 ]]; then note "$ORCH_HOME is mode 700 — the boundary holds"; else die "$ORCH_HOME is mode $orch_mode, expected 700: chmod 700 $ORCH_HOME (as orchestrator) and re-run"; fi
+chmod 700 "$MULTICA_HOME"; note "$MULTICA_HOME set to mode 700 (staff could list it before)"
+for t in "$BREW/bin/gh" "$BREW/bin/jq" "$BREW/bin/git" "$BREW/opt/node@22/bin/node" "$PSQL"; do
+  [[ -x $t ]] || die "missing tool $t (Homebrew, orchestrator's) — install it as orchestrator first"
+done
+as_user 'for t in gh jq git node ssh curl; do command -v "$t" >/dev/null || { echo "  $t not on PATH"; exit 1; }; done; echo "  gh/jq/git/node/ssh/curl resolve for $(id -un): node $(node --version)"'
+
+# --- run the user install phase from a root-owned copy of this script ----------
+say "phase install (as $MULTICA_USER)"
+STAGE=$(mktemp -d /tmp/multica-setup.XXXXXX); chmod 755 "$STAGE"
+install -m 755 "$SELF" "$STAGE/setup.sh"
+trap 'rm -rf "$STAGE"' EXIT
+as_user "bash '$STAGE/setup.sh' --as-user install"
+
+# publish the PUBLIC key where Everett can reach it without sudo
+mkdir -p "$SHARED_DIR"; chown root:wheel "$SHARED_DIR"; chmod 755 "$SHARED_DIR"
+as_user 'cat "$HOME/.ssh/pantry_deploy_ed25519.pub"' > "$SHARED_DIR/pantry_deploy_ed25519.pub"
+chmod 644 "$SHARED_DIR/pantry_deploy_ed25519.pub"
+note "public key copied to $SHARED_DIR/pantry_deploy_ed25519.pub (readable by everyone; it is public)"
+
+if [[ $CODEX == 1 ]]; then
+  say "phase 2b — Codex for $MULTICA_USER (device-code login)"
+  as_user "bash '$STAGE/setup.sh' --as-user codex"
+fi
+
+# --- tokens ----------------------------------------------------------------------
+say "tokens (hidden input; stored only under $MULTICA_HOME, mode 600, owner $MULTICA_USER)"
+safe_dir "$MULTICA_HOME/.claude"; safe_dir "$MULTICA_HOME/.config"; safe_dir "$MULTICA_HOME/.config/multica-daemon"
+CLAUDE_TOKEN_FILE="$MULTICA_HOME/.claude/oauth_token"
+GH_TOKEN_FILE="$MULTICA_HOME/.config/multica-daemon/github_token"
+MULTICA_PAT_FILE="$MULTICA_HOME/.config/multica-daemon/multica_pat"
+
+prompt_secret() {  # label prompt file expected-prefix
+  local label=$1 prompt=$2 file=$3 prefix=$4 val
+  safe_file_target "$file"
+  if [[ -s $file && $ROTATE != 1 && ! ( $ROTATE_CLAUDE == 1 && $file == "$CLAUDE_TOKEN_FILE" ) ]]; then note "$label: already stored ($file) — use --rotate-tokens (all) or --rotate-claude (Claude only) to replace"; return 0; fi
+  while :; do
+    IFS= read -rs -p "  $prompt (input hidden, then Enter): " val < /dev/tty || die "no input"
+    printf '\n' > /dev/tty
+    val=${val//[[:space:]]/}
+    [[ -n $val ]] || { note "empty — try again"; continue; }
+    [[ $val == "$prefix"* ]] || note "warning: expected it to start with '$prefix' — storing anyway"
+    break
+  done
+  ( umask 077; printf '%s\n' "$val" > "$file" )
+  chown "$MULTICA_USER:$MULTICA_GROUP" "$file"; chmod 600 "$file"
+  val=""
+  note "$label: stored at $file"
+}
+multica_logged_in() { local o; o=$(as_user 'multica auth status 2>&1' 2>&1) || true; grep -q '^User:' <<<"$o"; }
+prompt_secret "Claude Code token" "Paste the token from 'claude setup-token'" "$CLAUDE_TOKEN_FILE" "sk-ant-oat"
+prompt_secret "GitHub fine-grained PAT ($PANTRY_REPO)" "Paste the GitHub fine-grained PAT" "$GH_TOKEN_FILE" "github_pat_"
+if [[ $ROTATE != 1 ]] && multica_logged_in; then
+  note "Multica PAT: the CLI is already logged in (~/.multica/config.json) — skipping"
+else
+  prompt_secret "Multica personal access token" "Paste the Multica API token (Settings → API Token)" "$MULTICA_PAT_FILE" "mul_"
+fi
+
+# --- Multica login (token read from the 600 file on stdin, never argv) ---------
+say "multica login (as $MULTICA_USER)"
+if [[ -s $MULTICA_PAT_FILE ]]; then
+  if out=$(as_user "multica login --token --server-url '$MULTICA_SERVER_URL' < '$MULTICA_PAT_FILE' 2>&1" 2>&1); then
+    printf '%s\n' "$out" | sed -e 's/^Enter your personal access token: *//' -e 's/^/      /'
+  else
+    printf '%s\n' "$out" | sed -e 's/^Enter your personal access token: *//' -e 's/^/      /'
+    die "multica login failed — check the token (Settings → API Token, must start with mul_) and that $MULTICA_SERVER_URL is the backend"
+  fi
+  rm -f "$MULTICA_PAT_FILE"
+  note "logged in; the CLI keeps the PAT in ~/.multica/config.json (600); $MULTICA_PAT_FILE deleted"
+fi
+as_user 'chmod 600 "$HOME/.multica/config.json"; multica auth status 2>&1 | grep -v "^Token:" | sed "s/^/      /"'
+as_user 'n=$(multica workspace list --output json 2>/dev/null | jq "length"); echo "      workspaces visible to this token: ${n:-0}"; [ "${n:-0}" -ge 1 ]' \
+  || note "WARNING: the token sees no workspace yet — log in at $MULTICA_APP_URL first (RUNBOOK step a)"
+
+# --- GitHub PAT check ------------------------------------------------------------
+say "GitHub PAT check (as $MULTICA_USER, GH_TOKEN from the 600 file)"
+as_user_gh 'gh auth status 2>&1 | sed "s/^/      /"' || die "gh auth status failed with the stored PAT"
+as_user_gh "gh api repos/$PANTRY_REPO --jq '\"      PAT sees repo: \" + .full_name' " || die "the PAT cannot read $PANTRY_REPO — regenerate it with Repository access = $PANTRY_REPO"
+as_user_gh "gh api -i user 2>/dev/null | grep -i '^github-authentication-token-expiration' | sed 's/^/      /' || true"
+
+# --- deploy key: wait for Everett to add it, then clone over it -------------------
+say "deploy key → $PANTRY_REPO"
+PUBKEY=$(cat "$SHARED_DIR/pantry_deploy_ed25519.pub")
+ssh_ok() { local o; o=$(as_user 'ssh -o BatchMode=yes -o ConnectTimeout=15 -T git@github.com 2>&1' 2>&1) || true; grep -q 'successfully authenticated' <<<"$o"; }
+until ssh_ok; do
+  printf '\n  The deploy key is not on %s yet. Add it with WRITE access — either\n' "$PANTRY_REPO"
+  printf '    https://github.com/%s/settings/keys  → Add deploy key → title "m4-mini multica daemon", tick "Allow write access"\n' "$PANTRY_REPO"
+  printf '  or, from the orchestrator terminal (gh is logged in as ezybg7):\n'
+  printf '    gh repo deploy-key add %s/pantry_deploy_ed25519.pub --allow-write --title "m4-mini multica daemon" --repo %s\n' "$SHARED_DIR" "$PANTRY_REPO"
+  printf '  Key:\n    %s\n' "$PUBKEY"
+  IFS= read -r -p "  Press Enter to retry the SSH test (or type skip to leave the clone for later): " ans < /dev/tty || ans=skip
+  [[ $ans == skip ]] && break
+done
+if ssh_ok; then
+  note "ssh -T git@github.com: authenticated with the deploy key"
+  as_user "set -e; cd \"\$HOME/work\"; if [ -d pantry/.git ]; then git -C pantry fetch --prune origin >/dev/null 2>&1 && echo '      clone present: ~/work/pantry (fetched)'; else GIT_TERMINAL_PROMPT=0 git clone -q '$PANTRY_SSH_URL' pantry && echo '      cloned $PANTRY_SSH_URL → ~/work/pantry'; fi; git -C pantry remote get-url origin | sed 's/^/      origin: /'"
+else
+  note "skipped: ~/work/pantry not cloned yet — re-run this script after adding the key"
+fi
+
+# --- LaunchDaemon -------------------------------------------------------------------
+if [[ $SKIP_DAEMON == 1 ]]; then
+  say "LaunchDaemon skipped (--skip-daemon)"
+else
+  say "LaunchDaemon $LABEL"
+  # A LaunchDaemon, not a LaunchAgent: `multica` never logs in, so it has no
+  # gui/<uid> (or lasting user/<uid>) launchd domain to bootstrap an agent
+  # into — `launchctl print gui/502` answers "Could not find domain". The
+  # system domain starts at boot without any session; UserName drops to the
+  # multica user. No StandardOutPath here on purpose: launchd would open that
+  # file with its own privileges, and the path lives in a directory the
+  # untrusted user owns — the wrapper redirects its own output instead.
+  PLIST_NEW=$(mktemp /tmp/multica-plist.XXXXXX)
+  cat > "$PLIST_NEW" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>UserName</key><string>$MULTICA_USER</string>
+  <key>GroupName</key><string>$MULTICA_GROUP</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>$MULTICA_HOME/.local/bin/multica-daemon-launchd.sh</string>
+  </array>
+  <key>WorkingDirectory</key><string>$MULTICA_HOME</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key><string>$MULTICA_HOME</string>
+    <key>USER</key><string>$MULTICA_USER</string>
+    <key>LOGNAME</key><string>$MULTICA_USER</string>
+    <key>SHELL</key><string>/bin/zsh</string>
+    <key>PATH</key><string>$USER_PATH</string>
+    <key>LANG</key><string>en_US.UTF-8</string>
+    <key>MULTICA_DAEMON_MAX_CONCURRENT_TASKS</key><string>$MAX_CONCURRENT_TASKS</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ExitTimeOut</key><integer>60</integer>
+  <key>Nice</key><integer>5</integer>
+</dict>
+</plist>
+EOF
+  plutil -lint "$PLIST_NEW" >/dev/null || die "generated plist does not lint"
+  loaded=0; launchctl print "system/$LABEL" >/dev/null 2>&1 && loaded=1
+  if [[ $loaded == 1 && -f $PLIST ]] && cmp -s "$PLIST_NEW" "$PLIST"; then
+    rm -f "$PLIST_NEW"
+    if [[ $FORCE_RESTART == 1 || $ROTATE == 1 || $ROTATE_CLAUDE == 1 ]]; then
+      # A rotated token lives in the daemon's environment only from the next start:
+      # the wrapper exports it at launch, and tasks inherit the daemon's env.
+      launchctl kickstart -k "system/$LABEL" || die "launchctl kickstart -k system/$LABEL failed"
+      note "identical plist, but a token was rotated / --force-restart given — restarted the daemon so it re-reads its token files"
+    else
+      note "already installed and loaded with an identical plist — leaving it running"
+    fi
+  else
+    if [[ $loaded == 1 ]]; then
+      active=$(curl -fs --max-time 3 "http://127.0.0.1:$MULTICA_HEALTH_PORT/health" | jq -r '.active_task_count // 0' 2>/dev/null || echo 0)
+      if [[ ${active:-0} -gt 0 && $FORCE_RESTART != 1 ]]; then
+        die "the daemon has $active active task(s); re-run with --force-restart to reload anyway, or wait"
+      fi
+      launchctl bootout "system/$LABEL" || true
+      note "unloaded the previous job"
+    fi
+    install -o root -g wheel -m 644 "$PLIST_NEW" "$PLIST"; rm -f "$PLIST_NEW"
+    launchctl enable "system/$LABEL" 2>/dev/null || true
+    for attempt in 1 2 3; do
+      if launchctl bootstrap system "$PLIST"; then break; fi
+      [[ $attempt == 3 ]] && die "launchctl bootstrap system $PLIST failed three times — see: sudo launchctl print system/$LABEL"
+      sleep 3
+    done
+    note "installed $PLIST and bootstrapped it into the system domain"
+  fi
+  # wait for the daemon to report running on its health port
+  printf '    waiting for the daemon'
+  for _ in $(seq 1 45); do
+    st=$(curl -fs --max-time 2 "http://127.0.0.1:$MULTICA_HEALTH_PORT/health" | jq -r '.status // empty' 2>/dev/null || true)
+    [[ $st == running ]] && break
+    printf '.'; sleep 2
+  done
+  printf '\n'
+  [[ ${st:-} == running ]] || note "WARNING: daemon not 'running' yet (status: ${st:-none}); the self-check will report it. Logs: sudo -u multica -H $MULTICA_HOME/.local/bin/multica daemon logs -n 100"
+fi
+
+# --- self-check --------------------------------------------------------------------
+say "self-check"
+FAILS=()
+pass() { printf '    PASS  %s\n' "$*"; }
+fail() { printf '    FAIL  %s\n' "$*"; FAILS+=("$*"); }
+check() {  # description, command line run as multica; PASS if exit 0
+  local desc=$1 cmd=$2 out
+  if out=$(as_user "$cmd" 2>&1); then pass "$desc${out:+ — $out}"; else fail "$desc — ${out:-no output}"; fi
+}
+deny() {   # description, command line run as multica; PASS only if it FAILS with a permission/auth error
+  local desc=$1 cmd=$2 pat=$3 out
+  # On an unexpected success, never echo what came back: it is a secret by definition.
+  if out=$(as_user "$cmd" 2>&1); then fail "$desc — SUCCEEDED (must be denied; ${#out} bytes came back, not shown)"
+  elif printf '%s' "$out" | grep -qiE "$pat"; then pass "$desc — $(printf '%s' "$out" | grep -iE "$pat" | head -1 | cut -c1-110)"
+  else fail "$desc — failed for the wrong reason: ${out:0:160}"; fi
+}
+
+# positive: the daemon user has what it needs
+if [[ $SKIP_DAEMON != 1 ]]; then
+  if launchctl print "system/$LABEL" 2>/dev/null | grep -qE 'state = running'; then pass "launchd: system/$LABEL state = running"; else fail "launchd: system/$LABEL is not running ($(launchctl print "system/$LABEL" 2>&1 | grep -E 'state|last exit' | tr -s ' ' | tr '\n' ';'))"; fi
+  check "multica daemon status: running, claude detected, ≥1 workspace" \
+    'j=$(multica daemon status --output json); s=$(jq -r .status <<<"$j"); a=$(jq -r ".agents|join(\",\")" <<<"$j"); w=$(jq -r ".workspaces|length" <<<"$j"); echo "status=$s agents=[$a] workspaces=$w version=$(jq -r .cli_version <<<"$j")"; [ "$s" = running ] && jq -e ".agents|index(\"claude\")" <<<"$j" >/dev/null && [ "$w" -ge 1 ]'
+fi
+check "multica auth status (logged in)" 'multica auth status 2>&1 | grep "^User:"'
+check "multica CLI version = pin $MULTICA_CLI_VERSION" "v=\$(multica version | awk 'NR==1{print \$2}'); echo \"\$v\"; [ \"\$v\" = '$MULTICA_CLI_VERSION' ]"
+if [[ $CODEX == 1 ]]; then
+  check "codex --version"                     'codex --version'
+  check "codex login status (logged in)"      'codex login status 2>&1 | grep -i "logged in"'
+  check "~/.codex/auth.json is 600, owner multica" '[ "$(stat -f %Sp%Su "$HOME/.codex/auth.json")" = "-rw-------multica" ] && echo 600'
+fi
+check "claude --version ≥ 2.0" 'v=$(claude --version | awk "{print \$1}"); echo "$v"; [ "${v%%.*}" -ge 2 ]'
+check "gh auth status with the stored PAT" 'export GH_TOKEN="$(<"$HOME/.config/multica-daemon/github_token")"; gh auth status 2>&1 | grep -E "Logged in" | head -1'
+check "PAT reads $PANTRY_REPO" "export GH_TOKEN=\"\$(<\"\$HOME/.config/multica-daemon/github_token\")\"; gh api repos/$PANTRY_REPO --jq .full_name"
+check "ssh -T git@github.com with the deploy key" 'o=$(ssh -o BatchMode=yes -o ConnectTimeout=15 -T git@github.com 2>&1 || true); grep -o "Hi [^!]*! You.ve successfully authenticated" <<<"$o"'
+check "~/work/pantry cloned over SSH" 'u=$(git -C "$HOME/work/pantry" remote get-url origin); echo "$u"; [ "$u" = "'"$PANTRY_SSH_URL"'" ]'
+for f in "$CLAUDE_TOKEN_FILE" "$GH_TOKEN_FILE" "$MULTICA_HOME/.multica/config.json"; do
+  if [[ -f $f && $(stat -f '%Lp %u' "$f") == "600 $MULTICA_UID" ]]; then pass "$f is 600, owner $MULTICA_USER"; else fail "$f is not 600/$MULTICA_USER ($(stat -f '%Lp %u' "$f" 2>&1))"; fi
+done
+if [[ ! -e $MULTICA_PAT_FILE ]]; then pass "Multica PAT file removed after login"; else fail "$MULTICA_PAT_FILE still exists"; fi
+if [[ $(stat -f %Lp "$MULTICA_HOME") == 700 ]]; then pass "$MULTICA_HOME is mode 700"; else fail "$MULTICA_HOME is mode $(stat -f %Lp "$MULTICA_HOME"), expected 700"; fi
+
+# boundary: the daemon user cannot reach the orchestrator's secrets or its database
+deny "cat $ORCH_HOME/agents/.env.acceptance"   "cat $ORCH_HOME/agents/.env.acceptance"      'permission denied'
+deny "ls $ORCH_HOME"                            "ls $ORCH_HOME"                               'permission denied'
+deny "cat $ORCH_HOME/.claude/oauth_token"       "cat $ORCH_HOME/.claude/oauth_token"          'permission denied'
+deny "cat $ORCH_HOME/.config/gh/hosts.yml"      "cat $ORCH_HOME/.config/gh/hosts.yml"         'permission denied'
+deny "cat $ORCH_HOME/agents/multica/.env (server secrets)" "cat $ORCH_HOME/agents/multica/.env" 'permission denied'
+deny "psql socket as orchestrator (peer auth)"  "$PSQL -h /tmp -p 5433 -U orchestrator -d multica -w -Atc 'select 1'" 'peer authentication failed|rejects connection'
+deny "psql socket as multica (pg_hba reject)"   "$PSQL -h /tmp -p 5433 -U multica -d multica -w -Atc 'select 1'"      'rejects connection|authentication failed'
+deny "psql TCP as multica without a password"   "$PSQL -h 127.0.0.1 -p 5433 -U multica -d multica -w -Atc 'select 1'" 'no password supplied|password authentication failed'
+deny "psql TCP as orchestrator without a password" "$PSQL -h 127.0.0.1 -p 5433 -U orchestrator -d multica -w -Atc 'select 1'" 'no password supplied|password authentication failed'
+
+if [[ ${#FAILS[@]} -gt 0 ]]; then
+  printf '\nSELF-CHECK FAILED (%d):\n' "${#FAILS[@]}"
+  printf '  - %s\n' "${FAILS[@]}"
+  printf '\nStop here. Fix the reason above and re-run this script (every step is idempotent).\n'
+  exit 1
+fi
+
+say "done — all checks passed"
+cat <<EOF
+    Next, in the Multica web UI ($MULTICA_APP_URL):
+      • Runtimes: "m4-mini" (device) with a "claude" runtime online, cli $MULTICA_CLI_VERSION — private to you
+      • Register the repo (SSH URL, so the daemon clones and agents push over the deploy key):
+          sudo -u $MULTICA_USER -H $MULTICA_HOME/.local/bin/multica repo add --url $PANTRY_SSH_URL
+      • Create the first agent on that runtime (Claude Code), then assign it a trivial pantry issue
+    Operate:
+      sudo launchctl print system/$LABEL | grep -E 'state|pid'
+      sudo launchctl kickstart -k system/$LABEL            # restart
+      sudo launchctl bootout system/$LABEL                 # stop (KeepAlive off until bootstrap again)
+      sudo -u $MULTICA_USER -H $MULTICA_HOME/.local/bin/multica daemon logs -n 100
+EOF
