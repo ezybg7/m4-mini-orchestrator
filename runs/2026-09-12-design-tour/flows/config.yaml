@@ -1,0 +1,16 @@
+# Maestro batch config for the design tour. Only the 1x–9x flows are scenarios:
+# `_login.yaml` is a shared include and `00-seed-tour.yaml` is the fixture, which
+# tour.sh runs ONCE before the three appearance passes rather than on each of
+# them. The order is fixed here rather than left to filename sorting because
+# 90-signed-out ends with `clearState` — every flow that needs a session must be
+# in front of it.
+flows:
+  - '[1-9]*.yaml'
+executionOrder:
+  flowsOrder:
+    - 10-pantry
+    - 20-lists
+    - 30-add
+    - 40-recipes
+    - 50-profile
+    - 90-signed-out

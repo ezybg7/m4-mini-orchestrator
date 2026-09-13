@@ -1,0 +1,35 @@
+target: neondb as neondb_owner
+
+== 10:43:36 apply 0066
+applied
+
+== 10:43:40 assert 0066
+
+ASSERT DID NOT PASS — stopping
+target: neondb as neondb_owner  (from 0067)
+
+== skip 0066 (already applied)
+
+== 10:50:11 apply 0067
+applied
+
+== 10:50:13 assert 0067
+ALL 8 ASSERTIONS PASSED
+
+== 10:50:14 apply 0068
+applied
+
+== 10:50:16 assert 0068
+ALL 9 ASSERTIONS PASSED
+
+== 10:50:18 apply 0069
+applied
+
+== 10:50:19 assert 0069
+ALL 3 ASSERTIONS PASSED
+
+== 10:50:20 post-apply shape
+recipe_comments: true · user_follows: true · frozen label: true
+catalog_items unchanged: 884 rows, frozen=0
+
+== ALL FOUR APPLIED

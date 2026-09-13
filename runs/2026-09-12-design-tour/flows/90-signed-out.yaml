@@ -1,0 +1,85 @@
+# Design tour 6/6 — the signed-out screens. LAST on purpose: it ends signed out,
+# so every flow that needs a session must be in front of it. (The next mode's
+# pass signs in again on its own — the repo's _login.yaml steps through the
+# welcome page when it sees one.)
+#
+# It signs out through the APP rather than with `launchApp: clearState: true`.
+# clearState wipes the app container, but the Better Auth session does not live
+# there — the first attempt cleared state, relaunched, and landed on a fully
+# signed-in Pantry tab. "Sign out" is the same route .maestro/acceptance/
+# 01-auth.yaml uses and it is the honest one: it is what a user does.
+#
+# Nothing here creates an account and nothing sends a reset email — the
+# forgot-password screen is captured with the field empty and submit untouched.
+# Shots: welcome, sign-in, forgot-password, sign-up.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+- tapOn: 'Profile, tab.*'
+# 60s, not 30: at the accessibility text size the Profile tab is several screens
+# tall (the Account card alone overflows the viewport), and "Sign out" is near the
+# very bottom — 30s of scrolling did not reach it.
+- scrollUntilVisible:
+    element:
+      text: 'Sign out'
+    direction: DOWN
+    timeout: 60000
+    centerElement: true
+- tapOn: 'Sign out'
+- extendedWaitUntil:
+    visible: 'Get started'
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: welcome
+
+# --- Sign in ----------------------------------------------------------------
+# Every wait below is on something at the TOP of its screen, and every tap is
+# preceded by a scroll. At the accessibility text size the sign-in screen's own
+# submit button, its "Forgot password?" link and its "New here? Create an
+# account" link are all below the fold — the screen scrolls, but nothing that
+# only asserts `visible` can tell that from a screen that failed to load.
+- tapOn: 'I already have an account'
+- extendedWaitUntil:
+    visible: 'Sign in'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: sign-in
+
+# --- Forgot password (nothing typed, nothing submitted) --------------------
+- scrollUntilVisible:
+    element:
+      text: 'Forgot password\?'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: 'Forgot password\?'
+- extendedWaitUntil:
+    visible: 'Reset your password'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: forgot-password
+- scrollUntilVisible:
+    element:
+      id: 'forgot-password-back'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'forgot-password-back'
+- extendedWaitUntil:
+    visible: 'Sign in'
+    timeout: 20000
+
+# --- Sign up (form only — no account is created) ---------------------------
+- scrollUntilVisible:
+    element:
+      text: 'New here\? Create an account'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: 'New here\? Create an account'
+- waitForAnimationToEnd
+- takeScreenshot: sign-up

@@ -23,6 +23,17 @@ MULTICA_DUMP="backups/multica/multica-$(date +%F).sql.gz"
   || { echo "multica pg_dump FAILED" >&2; rm -f "$MULTICA_DUMP"; }
 find backups/multica -name 'multica-*.sql.gz' -mtime +7 -delete
 
+# 1c. Rotate Multica's launchd logs (launchd never rotates them; the backend logged every
+#     daemon heartbeat at DBG until LOG_LEVEL=info landed in multica/.env on 2026-09-12).
+#     launchd opens StandardOut/ErrorPath for appending, so copy-then-truncate is safe for
+#     the running process. Cap 20 MB, keep four weeks of gzipped history.
+for f in multica/logs/backend.err multica/logs/backend.log multica/logs/web.err multica/logs/web.log; do
+  if [ -f "$f" ] && [ "$(stat -f %z "$f")" -gt 20000000 ]; then
+    gzip -c "$f" > "$f.$(date +%F).gz" && : > "$f"
+  fi
+done
+find multica/logs -name '*.gz' -mtime +28 -delete 2>/dev/null || true
+
 # 2. Converge the OKF bundle before committing.
 #    basic-memory is a second producer on this vault: it canonicalizes YAML and
 #    asynchronously re-prepends its own permalink block after any external edit,

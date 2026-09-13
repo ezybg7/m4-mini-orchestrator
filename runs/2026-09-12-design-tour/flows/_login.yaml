@@ -1,0 +1,8 @@
+# Design-tour login shim. The repo's own _login.yaml is the source of truth for
+# the sign-in idioms (welcome → sign-in form → the search-placeholder signed-in
+# signal); it is referenced by ABSOLUTE path so this run never forks it and never
+# needs a tracked-file change. Its internal `runFlow: _launch.yaml` resolves
+# relative to its own directory, so the include chain works from here.
+appId: com.everettyan.ambry
+---
+- runFlow: /Users/orchestrator/code/pantry/.maestro/acceptance/_login.yaml

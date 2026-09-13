@@ -1,0 +1,1058 @@
+{
+  "generated": "2026-09-12T13:19:37-04:00",
+  "device": {
+    "name": "iPhone 17 Pro",
+    "udid": "70893D75-19E3-4CF2-8DBC-84B6BD00C3C7",
+    "runtime": "iOS 26.5"
+  },
+  "modes": {
+    "light": {
+      "appearance": "light",
+      "content_size": "large"
+    },
+    "dark": {
+      "appearance": "dark",
+      "content_size": "large"
+    },
+    "ax5": {
+      "appearance": "light",
+      "content_size": "accessibility-extra-extra-extra-large"
+    }
+  },
+  "repo": "/Users/orchestrator/code/pantry",
+  "counts": {
+    "light": 46,
+    "dark": 46,
+    "ax5": 26
+  },
+  "screens": {
+    "add": {
+      "routes": [
+        "src/app/(tabs)/add.tsx"
+      ],
+      "note": "Search-first Add tab with the two camera paths as grouped rows",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/add.png",
+        "dark": "shots/dark/add.png",
+        "ax5": "shots/ax5/add.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/add.jpg",
+        "dark": "thumbs/dark/add.jpg",
+        "ax5": "thumbs/ax5/add.jpg"
+      }
+    },
+    "add-household": {
+      "routes": [
+        "src/app/add-household.tsx"
+      ],
+      "note": "'Your households' sheet -> Create or join another",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/add-household.png",
+        "dark": "shots/dark/add-household.png",
+        "ax5": "shots/ax5/add-household.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/add-household.jpg",
+        "dark": "thumbs/dark/add-household.jpg",
+        "ax5": "thumbs/ax5/add-household.jpg"
+      }
+    },
+    "add-receipt": {
+      "routes": [
+        "src/app/capture/receipt.tsx",
+        "src/features/capture/ReceiptCapture.tsx"
+      ],
+      "note": "Same fallback, receipt path",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/add-receipt.png",
+        "dark": "shots/dark/add-receipt.png",
+        "ax5": "shots/ax5/add-receipt.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/add-receipt.jpg",
+        "dark": "thumbs/dark/add-receipt.jpg",
+        "ax5": "thumbs/ax5/add-receipt.jpg"
+      }
+    },
+    "add-scan": {
+      "routes": [
+        "src/app/capture/scan.tsx",
+        "src/features/capture/ScanCapture.tsx"
+      ],
+      "note": "Simulator has no camera: this is the permission/no-camera fallback card with the typed-barcode field",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/add-scan.png",
+        "dark": "shots/dark/add-scan.png",
+        "ax5": "shots/ax5/add-scan.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/add-scan.jpg",
+        "dark": "thumbs/dark/add-scan.jpg",
+        "ax5": "thumbs/ax5/add-scan.jpg"
+      }
+    },
+    "add-search": {
+      "routes": [
+        "src/app/(tabs)/add.tsx",
+        "src/features/capture/SearchCapture.tsx"
+      ],
+      "note": "Type-ahead results for 'Mil'",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/add-search.png",
+        "dark": "shots/dark/add-search.png",
+        "ax5": "shots/ax5/add-search.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/add-search.jpg",
+        "dark": "thumbs/dark/add-search.jpg",
+        "ax5": "thumbs/ax5/add-search.jpg"
+      }
+    },
+    "capture-review": {
+      "routes": [
+        "src/app/capture-review.tsx",
+        "src/features/capture/BasketReview.tsx"
+      ],
+      "note": "Reachable without a photo only if the typed-barcode lookup stages a basket row",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/capture-review.png",
+        "dark": "shots/dark/capture-review.png",
+        "ax5": "shots/ax5/capture-review.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/capture-review.jpg",
+        "dark": "thumbs/dark/capture-review.jpg",
+        "ax5": "thumbs/ax5/capture-review.jpg"
+      }
+    },
+    "creator-profile": {
+      "routes": [
+        "src/app/profile/[id]/index.tsx"
+      ],
+      "note": "Reached from Profile -> 'View my public profile'. The byline path does not render on this branch: the link is !isOwner only and the seeded account owns every public recipe here",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/creator-profile.png",
+        "dark": "shots/dark/creator-profile.png",
+        "ax5": "shots/ax5/creator-profile.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/creator-profile.jpg",
+        "dark": "thumbs/dark/creator-profile.jpg",
+        "ax5": "thumbs/ax5/creator-profile.jpg"
+      }
+    },
+    "creator-profile-byline": {
+      "routes": [
+        "src/app/profile/[id]/index.tsx"
+      ],
+      "note": "Same route seen as a stranger (Follow / Report profile). Needs a public recipe owned by somebody else \u2014 not on this branch",
+      "modes": [],
+      "missing_modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "shots": {},
+      "thumbs": {}
+    },
+    "delete-account": {
+      "routes": [
+        "src/app/delete-account.tsx"
+      ],
+      "note": "Walked up to the confirmation only \u2014 nothing typed DELETE, nothing submitted",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/delete-account.png",
+        "dark": "shots/dark/delete-account.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/delete-account.jpg",
+        "dark": "thumbs/dark/delete-account.jpg"
+      }
+    },
+    "delete-account-confirm": {
+      "routes": [
+        "src/app/delete-account.tsx"
+      ],
+      "note": "Scrolled to the disabled confirmation field and submit button",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/delete-account-confirm.png",
+        "dark": "shots/dark/delete-account-confirm.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/delete-account-confirm.jpg",
+        "dark": "thumbs/dark/delete-account-confirm.jpg"
+      }
+    },
+    "expiring": {
+      "routes": [
+        "src/app/expiring.tsx"
+      ],
+      "note": "Pushed from the Pantry tab's Expiring Soon card",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/expiring.png",
+        "dark": "shots/dark/expiring.png",
+        "ax5": "shots/ax5/expiring.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/expiring.jpg",
+        "dark": "thumbs/dark/expiring.jpg",
+        "ax5": "thumbs/ax5/expiring.jpg"
+      }
+    },
+    "first-run": {
+      "routes": [
+        "src/app/first-run.tsx"
+      ],
+      "note": "Deep link only (pantry://first-run) \u2014 the route is reached in the app only from onboarding success. Captured by deeplinks.sh; verified to render 'You're all set'.",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/first-run.png",
+        "dark": "shots/dark/first-run.png",
+        "ax5": "shots/ax5/first-run.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/first-run.jpg",
+        "dark": "thumbs/dark/first-run.jpg",
+        "ax5": "thumbs/ax5/first-run.jpg"
+      }
+    },
+    "forgot-password": {
+      "routes": [
+        "src/app/(auth)/forgot-password.tsx"
+      ],
+      "note": "Sign-in -> Forgot password?. Field left empty, nothing submitted",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/forgot-password.png",
+        "dark": "shots/dark/forgot-password.png",
+        "ax5": "shots/ax5/forgot-password.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/forgot-password.jpg",
+        "dark": "thumbs/dark/forgot-password.jpg",
+        "ax5": "thumbs/ax5/forgot-password.jpg"
+      }
+    },
+    "grocery-restock": {
+      "routes": [
+        "src/app/grocery-restock.tsx",
+        "src/features/grocery/RestockReview.tsx"
+      ],
+      "note": "Pushed from the Lists tab's 'Restock N bought items'; needs one bought row",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/grocery-restock.png",
+        "dark": "shots/dark/grocery-restock.png",
+        "ax5": "shots/ax5/grocery-restock.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/grocery-restock.jpg",
+        "dark": "thumbs/dark/grocery-restock.jpg",
+        "ax5": "thumbs/ax5/grocery-restock.jpg"
+      }
+    },
+    "insights": {
+      "routes": [
+        "src/app/insights.tsx",
+        "src/features/insights"
+      ],
+      "note": "Pushed from the Pantry tab's waste scorecard card. That card renders only once the household has SCORECARD_FLOOR=5 used+expired food_outcomes in the current month (src/features/insights/outcomes.ts:44,124); flows/01-seed-outcomes.yaml creates them.",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/insights.png",
+        "dark": "shots/dark/insights.png",
+        "ax5": "shots/ax5/insights.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/insights.jpg",
+        "dark": "thumbs/dark/insights.jpg",
+        "ax5": "thumbs/ax5/insights.jpg"
+      }
+    },
+    "item": {
+      "routes": [
+        "src/app/item/[id].tsx"
+      ],
+      "note": "A seeded item (Yogurt), opened from the Fridge location screen",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/item.png",
+        "dark": "shots/dark/item.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/item.jpg",
+        "dark": "thumbs/dark/item.jpg"
+      }
+    },
+    "lists": {
+      "routes": [
+        "src/app/(tabs)/lists.tsx",
+        "src/features/grocery"
+      ],
+      "note": "Grocery list: To Buy / In Your Cart",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/lists.png",
+        "dark": "shots/dark/lists.png",
+        "ax5": "shots/ax5/lists.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/lists.jpg",
+        "dark": "thumbs/dark/lists.jpg",
+        "ax5": "thumbs/ax5/lists.jpg"
+      }
+    },
+    "location-fridge": {
+      "routes": [
+        "src/app/location/[id]/index.tsx"
+      ],
+      "note": "Root-stack route pushed over the tabs, so there is no tab bar under it",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/location-fridge.png",
+        "dark": "shots/dark/location-fridge.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/location-fridge.jpg",
+        "dark": "thumbs/dark/location-fridge.jpg"
+      }
+    },
+    "location-zones": {
+      "routes": [
+        "src/app/location/[id]/zones.tsx"
+      ],
+      "note": "Location screen -> More actions -> Zones",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/location-zones.png",
+        "dark": "shots/dark/location-zones.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/location-zones.jpg",
+        "dark": "thumbs/dark/location-zones.jpg"
+      }
+    },
+    "onboarding": {
+      "routes": [
+        "src/app/(auth)/onboarding.tsx"
+      ],
+      "note": "Deep link only (pantry://onboarding) \u2014 the (auth) layout redirects a signed-in user WITH a household to the tabs, so it renders only while signed out. Captured by deeplinks.sh; verified to render 'Set up your kitchen'.",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/onboarding.png",
+        "dark": "shots/dark/onboarding.png",
+        "ax5": "shots/ax5/onboarding.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/onboarding.jpg",
+        "dark": "thumbs/dark/onboarding.jpg",
+        "ax5": "thumbs/ax5/onboarding.jpg"
+      }
+    },
+    "pantry-index": {
+      "routes": [
+        "src/app/(tabs)/index.tsx"
+      ],
+      "note": "Pantry tab overview: search bar, Expiring Soon card, waste scorecard card, location grid",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/pantry-index.png",
+        "dark": "shots/dark/pantry-index.png",
+        "ax5": "shots/ax5/pantry-index.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/pantry-index.jpg",
+        "dark": "thumbs/dark/pantry-index.jpg",
+        "ax5": "thumbs/ax5/pantry-index.jpg"
+      }
+    },
+    "pantry-search": {
+      "routes": [
+        "src/app/(tabs)/index.tsx"
+      ],
+      "note": "Same route, search state: locations grid swapped for hits grouped by location (specs/pantry-search.md)",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/pantry-search.png",
+        "dark": "shots/dark/pantry-search.png",
+        "ax5": "shots/ax5/pantry-search.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/pantry-search.jpg",
+        "dark": "thumbs/dark/pantry-search.jpg",
+        "ax5": "thumbs/ax5/pantry-search.jpg"
+      }
+    },
+    "paywall": {
+      "routes": [
+        "src/app/paywall.tsx"
+      ],
+      "note": "Deep link only in this build (pantry://paywall): the Profile row is gated on billingEnabled = !!EXPO_PUBLIC_REVENUECAT_IOS_KEY && ios, and this build has no key. Captured by deeplinks.sh; verified to render the Ambry Plus screen in its 'coming soon' billing-dark state.",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/paywall.png",
+        "dark": "shots/dark/paywall.png",
+        "ax5": "shots/ax5/paywall.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/paywall.jpg",
+        "dark": "thumbs/dark/paywall.jpg",
+        "ax5": "thumbs/ax5/paywall.jpg"
+      }
+    },
+    "profile": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx"
+      ],
+      "note": "Profile tab, top of the scroll",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/profile.png",
+        "dark": "shots/dark/profile.png",
+        "ax5": "shots/ax5/profile.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile.jpg",
+        "dark": "thumbs/dark/profile.jpg",
+        "ax5": "thumbs/ax5/profile.jpg"
+      }
+    },
+    "profile-about-you": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/profile/SettingsBioLinks.tsx"
+      ],
+      "note": "In-place bio + links editor",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-about-you.png",
+        "dark": "shots/dark/profile-about-you.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-about-you.jpg",
+        "dark": "thumbs/dark/profile-about-you.jpg"
+      }
+    },
+    "profile-display-name": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/auth/SettingsDisplayName.tsx"
+      ],
+      "note": "In-place editor, not a pushed screen",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-display-name.png",
+        "dark": "shots/dark/profile-display-name.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-display-name.jpg",
+        "dark": "thumbs/dark/profile-display-name.jpg"
+      }
+    },
+    "profile-household": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/households/SettingsHousehold.tsx"
+      ],
+      "note": "'Your households' switcher sheet",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/profile-household.png",
+        "dark": "shots/dark/profile-household.png",
+        "ax5": "shots/ax5/profile-household.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-household.jpg",
+        "dark": "thumbs/dark/profile-household.jpg",
+        "ax5": "thumbs/ax5/profile-household.jpg"
+      }
+    },
+    "profile-invite": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/households/SettingsHousehold.tsx"
+      ],
+      "note": "Invite-code actions sheet (share / regenerate) \u2014 nothing was regenerated",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/profile-invite.png",
+        "dark": "shots/dark/profile-invite.png",
+        "ax5": "shots/ax5/profile-invite.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-invite.jpg",
+        "dark": "thumbs/dark/profile-invite.jpg",
+        "ax5": "thumbs/ax5/profile-invite.jpg"
+      }
+    },
+    "profile-invite-links": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/households/SettingsInviteLinks.tsx"
+      ],
+      "note": "'Share invite link' sheet (uses/expiry knobs). Nothing was minted \u2014 Create & Share was never tapped",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/profile-invite-links.png",
+        "dark": "shots/dark/profile-invite-links.png",
+        "ax5": "shots/ax5/profile-invite-links.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-invite-links.jpg",
+        "dark": "thumbs/dark/profile-invite-links.jpg",
+        "ax5": "thumbs/ax5/profile-invite-links.jpg"
+      }
+    },
+    "profile-learned": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/households/SettingsLearned.tsx"
+      ],
+      "note": "Learned shelf lives section, in place",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-learned.png",
+        "dark": "shots/dark/profile-learned.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-learned.jpg",
+        "dark": "thumbs/dark/profile-learned.jpg"
+      }
+    },
+    "profile-members": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/households/SettingsMembers.tsx"
+      ],
+      "note": "Members section, in place",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-members.png",
+        "dark": "shots/dark/profile-members.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-members.jpg",
+        "dark": "thumbs/dark/profile-members.jpg"
+      }
+    },
+    "profile-plan": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/billing/purchases.ts"
+      ],
+      "note": "Plan + AI scans meter. The 'Get Ambry Plus' row needs billingEnabled, which this build does not have",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-plan.png",
+        "dark": "shots/dark/profile-plan.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-plan.jpg",
+        "dark": "thumbs/dark/profile-plan.jpg"
+      }
+    },
+    "profile-reminders": {
+      "routes": [
+        "src/app/(tabs)/profile.tsx",
+        "src/features/notifications/SettingsReminders.tsx"
+      ],
+      "note": "Notifications section, in place",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/profile-reminders.png",
+        "dark": "shots/dark/profile-reminders.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/profile-reminders.jpg",
+        "dark": "thumbs/dark/profile-reminders.jpg"
+      }
+    },
+    "recipe-cook-mode": {
+      "routes": [
+        "src/app/recipe/[id]/cook.tsx"
+      ],
+      "note": "Start cooking",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-cook-mode.png",
+        "dark": "shots/dark/recipe-cook-mode.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-cook-mode.jpg",
+        "dark": "thumbs/dark/recipe-cook-mode.jpg"
+      }
+    },
+    "recipe-detail": {
+      "routes": [
+        "src/app/recipe/[id]/index.tsx"
+      ],
+      "note": "A public recipe (Shakshuka) \u2014 byline, difficulty ring, ingredients, steps",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-detail.png",
+        "dark": "shots/dark/recipe-detail.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-detail.jpg",
+        "dark": "thumbs/dark/recipe-detail.jpg"
+      }
+    },
+    "recipe-edit": {
+      "routes": [
+        "src/app/recipe/[id]/edit.tsx",
+        "src/features/recipes/RecipeForm.tsx"
+      ],
+      "note": "Owner-only; the seeded account owns the recipe",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-edit.png",
+        "dark": "shots/dark/recipe-edit.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-edit.jpg",
+        "dark": "thumbs/dark/recipe-edit.jpg"
+      }
+    },
+    "recipe-folder": {
+      "routes": [
+        "src/app/recipe-folders/[id].tsx"
+      ],
+      "note": "One folder ('Weeknight') with a recipe filed in it",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-folder.png",
+        "dark": "shots/dark/recipe-folder.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-folder.jpg",
+        "dark": "thumbs/dark/recipe-folder.jpg"
+      }
+    },
+    "recipe-folders": {
+      "routes": [
+        "src/app/recipe-folders/index.tsx"
+      ],
+      "note": "My recipes -> Folders",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-folders.png",
+        "dark": "shots/dark/recipe-folders.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-folders.jpg",
+        "dark": "thumbs/dark/recipe-folders.jpg"
+      }
+    },
+    "recipe-import": {
+      "routes": [
+        "src/app/recipe/import.tsx",
+        "src/features/recipes/ImportLinkScreen.tsx"
+      ],
+      "note": "+ Add recipe -> Import from link",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-import.png",
+        "dark": "shots/dark/recipe-import.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-import.jpg",
+        "dark": "thumbs/dark/recipe-import.jpg"
+      }
+    },
+    "recipe-missing-ingredients": {
+      "routes": [
+        "src/app/recipe/[id]/index.tsx"
+      ],
+      "note": "The alert 'Start cooking' raises when an ingredient is not in the pantry (Cook anyway / Add to list / Cancel). Data-dependent: it appears only while something the recipe needs is missing",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-missing-ingredients.png",
+        "dark": "shots/dark/recipe-missing-ingredients.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-missing-ingredients.jpg",
+        "dark": "thumbs/dark/recipe-missing-ingredients.jpg"
+      }
+    },
+    "recipe-new": {
+      "routes": [
+        "src/app/recipe/new.tsx",
+        "src/features/recipes/RecipeForm.tsx"
+      ],
+      "note": "+ Add recipe -> Create from scratch",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipe-new.png",
+        "dark": "shots/dark/recipe-new.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipe-new.jpg",
+        "dark": "thumbs/dark/recipe-new.jpg"
+      }
+    },
+    "recipes-community": {
+      "routes": [
+        "src/app/(tabs)/recipes.tsx",
+        "src/features/recipes/CommunityList.tsx"
+      ],
+      "note": "Recipes tab, Community segment",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "missing_modes": [
+        "ax5"
+      ],
+      "shots": {
+        "light": "shots/light/recipes-community.png",
+        "dark": "shots/dark/recipes-community.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipes-community.jpg",
+        "dark": "thumbs/dark/recipes-community.jpg"
+      }
+    },
+    "recipes-cook": {
+      "routes": [
+        "src/app/(tabs)/recipes.tsx",
+        "src/features/recipes/CookList.tsx"
+      ],
+      "note": "Recipes tab, Cook segment",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/recipes-cook.png",
+        "dark": "shots/dark/recipes-cook.png",
+        "ax5": "shots/ax5/recipes-cook.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipes-cook.jpg",
+        "dark": "thumbs/dark/recipes-cook.jpg",
+        "ax5": "thumbs/ax5/recipes-cook.jpg"
+      }
+    },
+    "recipes-mine": {
+      "routes": [
+        "src/app/(tabs)/recipes.tsx",
+        "src/features/recipes/MyRecipes.tsx"
+      ],
+      "note": "Recipes tab, My recipes segment (Folders row, sort, + Add recipe)",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/recipes-mine.png",
+        "dark": "shots/dark/recipes-mine.png",
+        "ax5": "shots/ax5/recipes-mine.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/recipes-mine.jpg",
+        "dark": "thumbs/dark/recipes-mine.jpg",
+        "ax5": "thumbs/ax5/recipes-mine.jpg"
+      }
+    },
+    "sign-in": {
+      "routes": [
+        "src/app/(auth)/sign-in.tsx"
+      ],
+      "note": "Welcome -> I already have an account",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/sign-in.png",
+        "dark": "shots/dark/sign-in.png",
+        "ax5": "shots/ax5/sign-in.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/sign-in.jpg",
+        "dark": "thumbs/dark/sign-in.jpg",
+        "ax5": "thumbs/ax5/sign-in.jpg"
+      }
+    },
+    "sign-up": {
+      "routes": [
+        "src/app/(auth)/sign-up.tsx"
+      ],
+      "note": "Sign-in -> New here? Create an account. No account was created",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/sign-up.png",
+        "dark": "shots/dark/sign-up.png",
+        "ax5": "shots/ax5/sign-up.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/sign-up.jpg",
+        "dark": "thumbs/dark/sign-up.jpg",
+        "ax5": "thumbs/ax5/sign-up.jpg"
+      }
+    },
+    "welcome": {
+      "routes": [
+        "src/app/(auth)/welcome.tsx"
+      ],
+      "note": "Signed-out; reached with launchApp clearState",
+      "modes": [
+        "light",
+        "dark",
+        "ax5"
+      ],
+      "missing_modes": [],
+      "shots": {
+        "light": "shots/light/welcome.png",
+        "dark": "shots/dark/welcome.png",
+        "ax5": "shots/ax5/welcome.png"
+      },
+      "thumbs": {
+        "light": "thumbs/light/welcome.jpg",
+        "dark": "thumbs/dark/welcome.jpg",
+        "ax5": "thumbs/ax5/welcome.jpg"
+      }
+    }
+  }
+}

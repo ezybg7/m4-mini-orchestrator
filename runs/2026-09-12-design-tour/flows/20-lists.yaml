@@ -1,0 +1,45 @@
+# Design tour 2/6 — the Lists tab and the restock screen pushed from it.
+# Shots: lists, grocery-restock.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+- tapOn: 'Lists, tab.*'
+- extendedWaitUntil:
+    visible: 'Add to your list…'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: lists
+
+# The Restock affordance needs a bought row; 00-seed-tour.yaml checks one off.
+- runFlow:
+    when:
+      notVisible: '.*Restock \d+ bought item.*'
+    commands:
+      - tapOn: '.*, not bought'
+      - waitForAnimationToEnd
+# Scroll to it rather than assert it: the Restock button sits under the In Your
+# Cart section, and at the accessibility text size four To Buy rows are enough to
+# push it below the fold — `visible` is then false even though the row is bought
+# and the button exists (an ax5 pass failed here for exactly that).
+- scrollUntilVisible:
+    element:
+      text: '.*Restock \d+ bought item.*'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn: '.*Restock \d+ bought item.*'
+# The screen's own title, not its CTA: "Add N items to pantry" is the last thing
+# in the list and at the accessibility text size it is below the fold, so waiting
+# on it would fail on a screen that had loaded perfectly.
+- extendedWaitUntil:
+    visible: 'Restock'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: grocery-restock
+# Walk back out without committing the restock — the tour reads, it does not
+# move rows into the pantry (and leaving the bought row in place keeps this
+# screen reachable on the next mode's pass).
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Add to your list…'
+    timeout: 20000

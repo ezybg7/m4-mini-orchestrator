@@ -1,0 +1,95 @@
+# Design tour 3/6 — the Add tab and the two camera paths pushed from it.
+# Shots: add, add-search, add-receipt, add-scan, and capture-review when it is
+# reachable.
+#
+# Order matters: the scan screen is LAST because the only way to reach the
+# capture-review screen without a camera is the typed-barcode fallback, and that
+# leaves an open number pad over the bottom scan bar. Anything that failed there
+# would otherwise cost the receipt shot too.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+
+# --- Add tab ----------------------------------------------------------------
+- tapOn: 'Add, tab.*'
+- extendedWaitUntil:
+    visible: 'Search for a food'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: add
+
+# --- Add → search, with results --------------------------------------------
+- tapOn: 'Search for a food'
+- inputText: 'Mil'
+- extendedWaitUntil:
+    visible: 'Milk, Fridge.*'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: add-search
+# Erase BEFORE the return key: Enter blurs this field (a plain Input, so
+# blurOnSubmit defaults to true — the same trick .maestro/acceptance/
+# 02-add-item.yaml uses), and eraseText with nothing focused has nothing to type
+# into. Blurring matters because the keyboard covers the two camera rows below,
+# and Maestro taps straight through a keyboard overlay.
+- eraseText
+- pressKey: Enter
+- waitForAnimationToEnd
+
+# --- Add → receipt (no camera on a simulator: whatever it falls back to) ----
+- tapOn: 'Snap groceries or receipt'
+- extendedWaitUntil:
+    visible: 'Camera access needed|Choose from photos|Photograph receipt|Photograph groceries'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: add-receipt
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Search for a food'
+    timeout: 20000
+
+# --- Add → scan -------------------------------------------------------------
+- tapOn: 'Scan barcode'
+- extendedWaitUntil:
+    visible: 'Camera access needed|Enter number instead'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: add-scan
+
+# --- capture review, if the typed-barcode fallback can stage a row ----------
+# Best effort on purpose, and last in the flow. The lookup is a live Open Food
+# Facts call through the Worker, so "not found" or a rate limit is a possible
+# honest answer; and the field raises a NUMBER PAD, which has no return key and
+# sits over the scan bar that shows the staged count. Every step is guarded.
+- runFlow:
+    when:
+      visible: 'Enter number instead'
+    commands:
+      - tapOn: 'Enter number instead'
+- runFlow:
+    when:
+      visible: 'Barcode number'
+    commands:
+      - tapOn: 'Barcode number'
+      - inputText: '3017620422003'
+      - tapOn: 'Look up'
+      - waitForAnimationToEnd
+      # Best-effort blur so the scan bar (and its staged count) is not behind the
+      # pad when the guard below reads the hierarchy.
+      - pressKey: Enter
+      - waitForAnimationToEnd
+# The gate is the STAGED COUNT, not the Review button: that button is always on
+# screen and merely `disabled` while the basket is empty (the bar reads "Scan
+# products — they stage here" beside it), so keying off "Review" would tap a dead
+# control and then wait forever for a screen that never pushed.
+- runFlow:
+    when:
+      visible: '\d+ staged'
+    commands:
+      - tapOn: 'Review'
+      - extendedWaitUntil:
+          visible: 'Review items'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: capture-review
+      - tapOn: 'Back'
+      - waitForAnimationToEnd

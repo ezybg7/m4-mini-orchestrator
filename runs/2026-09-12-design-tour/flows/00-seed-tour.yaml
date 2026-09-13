@@ -1,0 +1,181 @@
+# Tour fixture. The branch carries real production-shaped data already (21 items
+# in Test Home, 7 grocery rows, 5 recipes, 2 of them public), but three screens on
+# the tour need a row that does not exist yet:
+#   * grocery-restock  — needs at least one BOUGHT grocery row ("Restock N bought items")
+#   * location zones   — has content instead of only the empty state
+#   * a recipe folder   — the Folders row and one folder's contents
+# Each step is guarded, so re-running the tour after a rebuild is a no-op rather
+# than a duplicate. Writes only ever land on the disposable design-tour branch.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+
+# --- enough outcomes for the waste scorecard to say anything -----------------
+# `scorecard()` returns null — and ScorecardCard renders null, so the Pantry tab
+# has no card and /insights is unreachable through the UI — until the household
+# has SCORECARD_FLOOR (5) used+expired outcomes in the current month
+# (src/features/insights/outcomes.ts:44,124). The branch arrived with 2 `used`
+# and 1 `discarded`; the seeding suite's 13-waste-scorecard, which normally makes
+# five more, failed here. Four swipe-right -> "Used" gestures on the Expiring
+# screen are the app's own way to record them.
+- tapOn: 'Pantry, tab.*'
+- extendedWaitUntil:
+    visible: '.*Expiring [Ss]oon.*'
+    timeout: 25000
+- runFlow:
+    when:
+      notVisible: '.*percent used up.*'
+    commands:
+      - tapOn: '.*Expiring [Ss]oon.*'
+      - extendedWaitUntil:
+          visible: 'Add all expiring items to your grocery list'
+          timeout: 20000
+      - repeat:
+          times: 4
+          while:
+            visible: '.*, (Fridge|Pantry|Freezer).*'
+          commands:
+            - swipe:
+                from:
+                  text: '.*, (Fridge|Pantry|Freezer).*'
+                direction: RIGHT
+            - extendedWaitUntil:
+                visible: 'Used'
+                timeout: 10000
+            - tapOn: 'Used'
+            - waitForAnimationToEnd
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'Search your whole pantry'
+          timeout: 20000
+
+# --- one zone on the Fridge -------------------------------------------------
+- tapOn: 'Pantry, tab.*'
+- extendedWaitUntil:
+    visible: '.*Fridge.*|Nothing in your pantry yet'
+    timeout: 25000
+- tapOn: '.*Fridge.*'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 15000
+- tapOn: 'More actions for Fridge'
+- tapOn: 'Zones'
+- extendedWaitUntil:
+    visible: 'Zones are the shelves inside this location.*'
+    timeout: 15000
+- runFlow:
+    when:
+      visible: 'No zones yet — add one below.'
+    commands:
+      - tapOn: 'New zone \(e\.g\. Top shelf\)'
+      - inputText: 'Top shelf'
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: 'Zone name, Top shelf'
+          timeout: 20000
+      - tapOn: 'New zone \(e\.g\. Top shelf\)'
+      - inputText: 'Door'
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: 'Zone name, Door'
+          timeout: 20000
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Search this location'
+    timeout: 15000
+- tapOn: 'Back'
+
+# --- one recipe folder with one recipe in it --------------------------------
+- tapOn: 'Recipes, tab.*'
+- tapOn: 'My recipes'
+- extendedWaitUntil:
+    visible: 'Folders, \d+ folders?'
+    timeout: 20000
+- tapOn: 'Folders, \d+ folders?'
+- extendedWaitUntil:
+    visible: 'New folder'
+    timeout: 15000
+- runFlow:
+    when:
+      notVisible: 'Weeknight, \d+ recipes?'
+    commands:
+      - tapOn: 'New folder'
+      - tapOn: 'Folder name'
+      - inputText: 'Weeknight'
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: 'Weeknight, 0 recipes'
+          timeout: 20000
+- tapOn: 'Back'
+- tapOn: 'Recipes, tab.*'
+- tapOn: 'My recipes'
+- extendedWaitUntil:
+    visible: '.*Shakshuka.*'
+    timeout: 20000
+- tapOn:
+    text: '.*Shakshuka.*'
+    index: 0
+# "Add to Favorites" is a NAV-BAR button and is on screen the moment the detail
+# loads. "Start cooking" is the LAST thing in the ScrollView (it renders after
+# the steps and the rating), so on a recipe with five ingredients it is below the
+# fold and `visible` is false — which is what failed here on the first attempt.
+- extendedWaitUntil:
+    visible: 'Add to Favorites|Remove from Favorites'
+    timeout: 25000
+- runFlow:
+    when:
+      visible: 'Add to a folder'
+    commands:
+      - tapOn: 'Add to a folder'
+      - extendedWaitUntil:
+          visible: 'Add to folder'
+          timeout: 15000
+      - tapOn: 'Weeknight'
+      - tapOn:
+          point: '50%,20%'
+      - extendedWaitUntil:
+          visible: 'In \d+ folder'
+          timeout: 15000
+- tapOn: 'Back'
+
+# --- a grocery list with rows, one of them bought (LAST on purpose) ---------
+# Last, because the grocery field keeps focus after each Enter
+# (AddGroceryInput sets blurOnSubmit={false} and re-focuses on commit), so this
+# block ENDS with the keyboard up — and an open keyboard sits over the tab bar,
+# which Maestro taps straight through. That is what failed the first attempt:
+# `tapOn: 'Pantry, tab.*'` right after the adds hit a key, not the tab.
+# The seeding suite EMPTIES the list on its way through (flows 09 and 11 both
+# include .maestro/acceptance/_empty-grocery-list.yaml, and both end on "Your
+# list is empty"), so the tour has to put the rows back itself. A list row's
+# spoken label ends in ", not bought"; checking one off is what makes the
+# "Restock N bought items" affordance — and so the restock screen — reachable.
+- tapOn: 'Lists, tab.*'
+- extendedWaitUntil:
+    visible: 'Add to your list…'
+    timeout: 25000
+- runFlow:
+    when:
+      notVisible: 'To Buy'
+    commands:
+      - tapOn: 'Add to your list…'
+      - inputText: 'Oat milk'
+      - pressKey: Enter
+      - inputText: 'Coffee'
+      - pressKey: Enter
+      - inputText: 'Tomatoes'
+      - pressKey: Enter
+      - inputText: 'Sourdough'
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: 'To Buy'
+          timeout: 20000
+- runFlow:
+    when:
+      notVisible: '.*Restock \d+ bought item.*'
+    commands:
+      # Tapping a To Buy row checks it off into In Your Cart, which is what makes
+      # the Restock affordance appear.
+      - tapOn: '.*, not bought'
+      - extendedWaitUntil:
+          visible: '.*Restock \d+ bought item.*'
+          timeout: 20000

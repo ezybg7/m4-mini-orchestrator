@@ -1,0 +1,55 @@
+database: rehearse_seq_1789219173
+
+== 0066 recipe_comments (-1)
+applied
+
+== 0066 asserts
+INSERT 0 1
+ALL 10 ASSERTIONS PASSED
+ROLLBACK
+
+== 0067 user_follows (-1)
+applied
+
+== 0067 asserts
+CREATE FUNCTION
+ALL 8 ASSERTIONS PASSED
+ROLLBACK
+
+== 0068 user_follows_hardening (-1)
+applied
+
+== 0068 asserts
+CREATE FUNCTION
+ALL 9 ASSERTIONS PASSED
+ROLLBACK
+
+== 0069 frozen_category (no -1), twice
+applied-1
+psql:/var/folders/bk/hzt1sccd19v5195hj6sswl040000gn/T/tmp.J5dX6x1uIi/m_0069_frozen_category.sql:4: NOTICE:  enum label "frozen" already exists, skipping
+applied-2
+
+== 0069 asserts
+psql:/var/folders/bk/hzt1sccd19v5195hj6sswl040000gn/T/tmp.J5dX6x1uIi/a_0069_frozen_category.sql:81: NOTICE:  A3 ok: public.food_category has exactly 13 labels
+ALL 3 ASSERTIONS PASSED
+ROLLBACK
+
+== grants replay (#219 file, then #220 file — union)
+errors-219: 0
+errors-220: 0
+
+== asserts again after the replays (0067 suite skipped: 0068 supersedes it — the cap moved 200 → 2000, so its R5 fails by design once 0068 is live)
+0066_recipe_comments: FAILED [P0001]: Q9 FAIL: an author switch has the wrong grant surface
+0068_user_follows_hardening: ALL 9 ASSERTIONS PASSED
+0069_frozen_category: ALL 3 ASSERTIONS PASSED
+
+== frozen re-file fixture (self-seeding; includes db/apply/ by relative path)
+UPDATE 1
+UPDATE 0
+UPDATE 0
+UPDATE 0
+UPDATE 0
+ALL 8 ASSERTIONS PASSED
+
+== drop
+DROP DATABASE

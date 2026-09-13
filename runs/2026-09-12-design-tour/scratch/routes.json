@@ -1,0 +1,306 @@
+{
+  "pantry-index": {
+    "routes": [
+      "src/app/(tabs)/index.tsx"
+    ],
+    "note": "Pantry tab overview: search bar, Expiring Soon card, waste scorecard card, location grid"
+  },
+  "pantry-search": {
+    "routes": [
+      "src/app/(tabs)/index.tsx"
+    ],
+    "note": "Same route, search state: locations grid swapped for hits grouped by location (specs/pantry-search.md)"
+  },
+  "expiring": {
+    "routes": [
+      "src/app/expiring.tsx"
+    ],
+    "note": "Pushed from the Pantry tab's Expiring Soon card"
+  },
+  "insights": {
+    "routes": [
+      "src/app/insights.tsx",
+      "src/features/insights"
+    ],
+    "note": "Pushed from the Pantry tab's waste scorecard card. That card renders only once the household has SCORECARD_FLOOR=5 used+expired food_outcomes in the current month (src/features/insights/outcomes.ts:44,124); flows/01-seed-outcomes.yaml creates them."
+  },
+  "location-fridge": {
+    "routes": [
+      "src/app/location/[id]/index.tsx"
+    ],
+    "note": "Root-stack route pushed over the tabs, so there is no tab bar under it"
+  },
+  "location-zones": {
+    "routes": [
+      "src/app/location/[id]/zones.tsx"
+    ],
+    "note": "Location screen -> More actions -> Zones"
+  },
+  "item": {
+    "routes": [
+      "src/app/item/[id].tsx"
+    ],
+    "note": "A seeded item (Yogurt), opened from the Fridge location screen"
+  },
+  "lists": {
+    "routes": [
+      "src/app/(tabs)/lists.tsx",
+      "src/features/grocery"
+    ],
+    "note": "Grocery list: To Buy / In Your Cart"
+  },
+  "grocery-restock": {
+    "routes": [
+      "src/app/grocery-restock.tsx",
+      "src/features/grocery/RestockReview.tsx"
+    ],
+    "note": "Pushed from the Lists tab's 'Restock N bought items'; needs one bought row"
+  },
+  "add": {
+    "routes": [
+      "src/app/(tabs)/add.tsx"
+    ],
+    "note": "Search-first Add tab with the two camera paths as grouped rows"
+  },
+  "add-search": {
+    "routes": [
+      "src/app/(tabs)/add.tsx",
+      "src/features/capture/SearchCapture.tsx"
+    ],
+    "note": "Type-ahead results for 'Mil'"
+  },
+  "add-scan": {
+    "routes": [
+      "src/app/capture/scan.tsx",
+      "src/features/capture/ScanCapture.tsx"
+    ],
+    "note": "Simulator has no camera: this is the permission/no-camera fallback card with the typed-barcode field"
+  },
+  "add-receipt": {
+    "routes": [
+      "src/app/capture/receipt.tsx",
+      "src/features/capture/ReceiptCapture.tsx"
+    ],
+    "note": "Same fallback, receipt path"
+  },
+  "capture-review": {
+    "routes": [
+      "src/app/capture-review.tsx",
+      "src/features/capture/BasketReview.tsx"
+    ],
+    "note": "Reachable without a photo only if the typed-barcode lookup stages a basket row"
+  },
+  "recipes-cook": {
+    "routes": [
+      "src/app/(tabs)/recipes.tsx",
+      "src/features/recipes/CookList.tsx"
+    ],
+    "note": "Recipes tab, Cook segment"
+  },
+  "recipes-mine": {
+    "routes": [
+      "src/app/(tabs)/recipes.tsx",
+      "src/features/recipes/MyRecipes.tsx"
+    ],
+    "note": "Recipes tab, My recipes segment (Folders row, sort, + Add recipe)"
+  },
+  "recipes-community": {
+    "routes": [
+      "src/app/(tabs)/recipes.tsx",
+      "src/features/recipes/CommunityList.tsx"
+    ],
+    "note": "Recipes tab, Community segment"
+  },
+  "recipe-detail": {
+    "routes": [
+      "src/app/recipe/[id]/index.tsx"
+    ],
+    "note": "A public recipe (Shakshuka) \u2014 byline, difficulty ring, ingredients, steps"
+  },
+  "recipe-cook-mode": {
+    "routes": [
+      "src/app/recipe/[id]/cook.tsx"
+    ],
+    "note": "Start cooking"
+  },
+  "recipe-edit": {
+    "routes": [
+      "src/app/recipe/[id]/edit.tsx",
+      "src/features/recipes/RecipeForm.tsx"
+    ],
+    "note": "Owner-only; the seeded account owns the recipe"
+  },
+  "recipe-new": {
+    "routes": [
+      "src/app/recipe/new.tsx",
+      "src/features/recipes/RecipeForm.tsx"
+    ],
+    "note": "+ Add recipe -> Create from scratch"
+  },
+  "recipe-import": {
+    "routes": [
+      "src/app/recipe/import.tsx",
+      "src/features/recipes/ImportLinkScreen.tsx"
+    ],
+    "note": "+ Add recipe -> Import from link"
+  },
+  "recipe-folders": {
+    "routes": [
+      "src/app/recipe-folders/index.tsx"
+    ],
+    "note": "My recipes -> Folders"
+  },
+  "recipe-folder": {
+    "routes": [
+      "src/app/recipe-folders/[id].tsx"
+    ],
+    "note": "One folder ('Weeknight') with a recipe filed in it"
+  },
+  "creator-profile": {
+    "routes": [
+      "src/app/profile/[id]/index.tsx"
+    ],
+    "note": "Reached from Profile -> 'View my public profile'. The byline path does not render on this branch: the link is !isOwner only and the seeded account owns every public recipe here"
+  },
+  "profile": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx"
+    ],
+    "note": "Profile tab, top of the scroll"
+  },
+  "profile-display-name": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/auth/SettingsDisplayName.tsx"
+    ],
+    "note": "In-place editor, not a pushed screen"
+  },
+  "profile-about-you": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/profile/SettingsBioLinks.tsx"
+    ],
+    "note": "In-place bio + links editor"
+  },
+  "profile-household": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/households/SettingsHousehold.tsx"
+    ],
+    "note": "'Your households' switcher sheet"
+  },
+  "profile-invite": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/households/SettingsHousehold.tsx"
+    ],
+    "note": "Invite-code actions sheet (share / regenerate) \u2014 nothing was regenerated"
+  },
+  "profile-members": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/households/SettingsMembers.tsx"
+    ],
+    "note": "Members section, in place"
+  },
+  "profile-learned": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/households/SettingsLearned.tsx"
+    ],
+    "note": "Learned shelf lives section, in place"
+  },
+  "profile-reminders": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/notifications/SettingsReminders.tsx"
+    ],
+    "note": "Notifications section, in place"
+  },
+  "profile-plan": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/billing/purchases.ts"
+    ],
+    "note": "Plan + AI scans meter. The 'Get Ambry Plus' row needs billingEnabled, which this build does not have"
+  },
+  "paywall": {
+    "routes": [
+      "src/app/paywall.tsx"
+    ],
+    "note": "Deep link only in this build (pantry://paywall): the Profile row is gated on billingEnabled = !!EXPO_PUBLIC_REVENUECAT_IOS_KEY && ios, and this build has no key. Captured by deeplinks.sh; verified to render the Ambry Plus screen in its 'coming soon' billing-dark state."
+  },
+  "delete-account": {
+    "routes": [
+      "src/app/delete-account.tsx"
+    ],
+    "note": "Walked up to the confirmation only \u2014 nothing typed DELETE, nothing submitted"
+  },
+  "delete-account-confirm": {
+    "routes": [
+      "src/app/delete-account.tsx"
+    ],
+    "note": "Scrolled to the disabled confirmation field and submit button"
+  },
+  "add-household": {
+    "routes": [
+      "src/app/add-household.tsx"
+    ],
+    "note": "'Your households' sheet -> Create or join another"
+  },
+  "welcome": {
+    "routes": [
+      "src/app/(auth)/welcome.tsx"
+    ],
+    "note": "Signed-out; reached with launchApp clearState"
+  },
+  "sign-in": {
+    "routes": [
+      "src/app/(auth)/sign-in.tsx"
+    ],
+    "note": "Welcome -> I already have an account"
+  },
+  "sign-up": {
+    "routes": [
+      "src/app/(auth)/sign-up.tsx"
+    ],
+    "note": "Sign-in -> New here? Create an account. No account was created"
+  },
+  "forgot-password": {
+    "routes": [
+      "src/app/(auth)/forgot-password.tsx"
+    ],
+    "note": "Sign-in -> Forgot password?. Field left empty, nothing submitted"
+  },
+  "profile-invite-links": {
+    "routes": [
+      "src/app/(tabs)/profile.tsx",
+      "src/features/households/SettingsInviteLinks.tsx"
+    ],
+    "note": "'Share invite link' sheet (uses/expiry knobs). Nothing was minted \u2014 Create & Share was never tapped"
+  },
+  "creator-profile-byline": {
+    "routes": [
+      "src/app/profile/[id]/index.tsx"
+    ],
+    "note": "Same route seen as a stranger (Follow / Report profile). Needs a public recipe owned by somebody else \u2014 not on this branch"
+  },
+  "recipe-missing-ingredients": {
+    "routes": [
+      "src/app/recipe/[id]/index.tsx"
+    ],
+    "note": "The alert 'Start cooking' raises when an ingredient is not in the pantry (Cook anyway / Add to list / Cancel). Data-dependent: it appears only while something the recipe needs is missing"
+  },
+  "first-run": {
+    "routes": [
+      "src/app/first-run.tsx"
+    ],
+    "note": "Deep link only (pantry://first-run) \u2014 the route is reached in the app only from onboarding success. Captured by deeplinks.sh; verified to render 'You're all set'."
+  },
+  "onboarding": {
+    "routes": [
+      "src/app/(auth)/onboarding.tsx"
+    ],
+    "note": "Deep link only (pantry://onboarding) \u2014 the (auth) layout redirects a signed-in user WITH a household to the tabs, so it renders only while signed out. Captured by deeplinks.sh; verified to render 'Set up your kitchen'."
+  }
+}

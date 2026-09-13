@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Event stream for the board run: emits one line per actionable change, nothing otherwise.
-export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$HOME/.local/bin:/opt/homebrew/bin:$PATH"
 KICK="$HOME/agents/logs/board-run-2026-09-12.log"; ROUTER="$HOME/agents/logs/multica-router.log"
 STATE="$HOME/agents/logs/.board-watch-state"; mkdir -p "$STATE"
 touch "$KICK"; kick_n=$(wc -l < "$KICK"); router_n=$(wc -l < "$ROUTER" 2>/dev/null || echo 0)

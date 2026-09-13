@@ -13,7 +13,7 @@ tags:
 - launchd
 - postgres
 - security
-timestamp: 2026-09-11 00:00:00+00:00
+timestamp: 2026-09-12 00:00:00+00:00
 permalink: agents/entities/multica-server
 ---
 
@@ -144,6 +144,33 @@ over TCP as either without a password all fail. `/Users/multica` is set to 700.
 `main` on ezybg7/pantry is **unprotected** (checked 2026-09-11); the runbook
 recommends a ruleset (require PR, block force-push, bypass = repository admin,
 never deploy keys) as Everett's decision.
+
+## Remote access over Tailscale (2026-09-12)
+
+Everett's phone reaches the board at **`http://m4-mini.tail5cb205.ts.net`** (short form
+`http://m4-mini`) with the Tailscale app connected — tailnet only, no Funnel. He applied it
+himself on 2026-09-12 after a scratch-session investigation (daily log 12:40):
+
+- `tailscale serve --bg --http=80 http://127.0.0.1:3000` — Serve proxies in-process to the
+  loopback web tier; the web and API listeners are unchanged (`127.0.0.1`). Inspect with
+  `tailscale serve status`; remove with `tailscale serve reset`. Persists across reboots.
+- `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://m4-mini.tail5cb205.ts.net,https://m4-mini.tail5cb205.ts.net`
+  lives in **`com.user.multica-backend.plist` → `EnvironmentVariables`**, not in the `.env`
+  (which does not define the key, so the plist value survives sourcing). The value *replaces*
+  `FRONTEND_ORIGIN` as the CORS + WebSocket-origin allowlist, so localhost must stay listed;
+  it is read at startup. A plist change needs `launchctl bootout` + `bootstrap`; `kickstart -k`
+  (what the weekly rebuild does) keeps it.
+- Next 16 `next start` proxies the `/ws` upgrade to the backend (verified: 101 through :3000
+  with the tailnet Host header), so no reverse proxy and no `NEXT_PUBLIC_WS_URL` rebuild,
+  contrary to upstream's LAN docs. `FRONTEND_ORIGIN` / `MULTICA_APP_URL` stay
+  `http://localhost:3000`, so the session cookie stays non-`Secure` and works on both origins.
+- Login on the phone: email → code in `backend.log` (same grep as above); session cookie 30 days.
+  Multica ships `appleWebApp` metadata, so Safari's Add to Home Screen gives a standalone app.
+- HTTPS: tailnet certificates are **not enabled** (`tailscale status --json` → `CertDomains`
+  empty). Enabling them in the Tailscale admin console (DNS → HTTPS certificates) and then
+  `tailscale serve --bg http://127.0.0.1:3000` gives `https://m4-mini.tail5cb205.ts.net`; the
+  allowlist above already includes that origin. Plain HTTP inside the tunnel is already
+  WireGuard-encrypted; HTTPS only removes Safari's "Not Secure" label.
 
 ## Gotchas
 

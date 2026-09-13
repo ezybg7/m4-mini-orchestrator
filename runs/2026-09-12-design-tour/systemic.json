@@ -1,0 +1,98 @@
+[
+{
+"id": "sys-tab-palette",
+"scope": "every tab, one fix",
+"title": "One tab-bar tint, derived from dynamic system colors",
+"why": "The tab bar is app-drawn with a frozen hex per tab: Pantry lights up green, Add orange, Recipes purple. The HIG asks for one tint per bar and colors that adapt to the material behind them (rule 4 in the stack research); a per-tab tint also fights the Liquid Glass bar the moment native tabs are adopted.",
+"proposal": "One accent for the active tab across all five, expressed as PlatformColor/DynamicColorIOS so it adapts to light, dark and Increase Contrast; keep the glyphs as the identity. This is also the prerequisite the research names for any NativeTabs work.",
+"evidence": "pantry-index (green), add (orange), recipes-* (purple) shots; docs/research/hig-2026-for-ambry.md rules 4 and 9."
+},
+{
+"id": "sys-collapsing-titles",
+"scope": "Pantry · Lists · Add · Recipes · Profile",
+"title": "Large titles that collapse on scroll, and recover their space",
+"why": "No screen collapses its large title; on Lists and Profile the title sits outside the scroll view so the top 90 pt are never recovered (rule 2, flagged harder for those two). At the largest text size this is what pushes controls below the fold.",
+"proposal": "Move the five tab titles into the scroll view with the standard collapse-to-bar behaviour (the native header for the plain push screens the research lists: New recipe, Edit recipe, Scan barcode, Add household, Insights); keep app-drawn chrome where the research's table says the native header cannot carry the contract yet.",
+"evidence": "lists, profile, pantry-index shots; hig-2026-for-ambry.md rule 2 and change 1."
+},
+{
+"id": "sys-row-family",
+"scope": "Pantry search · Expiring · location · Lists",
+"title": "One row family: what a row shows, what swiping does, where the status lives",
+"why": "Four list-row idioms remain (the 09-04 critique's S3): Pantry search shows two chips of different kinds, Expiring shows none plus a trash, the location screen shows days-left plus a chip, Lists shows a checkbox. Same food, four vocabularies.",
+"proposal": "One ItemRow contract: leading emoji, name, one secondary line (location or added date), one trailing status chip; freshness as a colored leading edge or the secondary line, never a second pill; swipe actions identical everywhere (trailing: delete with undo; leading: mark used / add to list) with an onscreen path in the row's overflow.",
+"evidence": "pantry-search, expiring, location-fridge, lists shots; critique S3."
+},
+{
+"id": "sys-sheets",
+"scope": "every BottomSheet and custom dialog",
+"title": "Real sheets and system action sheets instead of app-drawn ones",
+"why": "BottomSheet has a decorative grabber, no drag, no detents (rule 6); the missing-ingredient dialog, the invite-code overflow and the household picker are action sheets drawn by hand, which forgo Dynamic Type, Reduce Transparency and VoiceOver behaviour the system gives for free.",
+"proposal": "Adopt the system sheet (swipe to dismiss, accessible grabber, medium/large detents) for the household picker, invite links and tag picker; use the system action sheet for 'Missing ingredient', 'Regenerate invite code' and any other ≤4-button choice; pair Done with Cancel where a sheet edits.",
+"evidence": "profile-household, profile-invite, profile-invite-links, recipe-missing-ingredients shots; rule 6; recipe research's BottomSheet and TagPickerSheet items."
+},
+{
+"id": "sys-primary-actions",
+"scope": "Lists · recipe detail · forms",
+"title": "Main-task actions that stay reachable: sticky footers and bar actions",
+"why": "The Lists restock button, the recipe's Start cooking and every form's Save scroll away with the content; Start cooking sits after nutrition and rating. The HIG asks that the main-task action be prioritised in a bar or persistent footer.",
+"proposal": "A persistent footer above the tab bar for Restock and Start cooking (and for Add-to-pantry in capture review when the list is long); Save as the bar's trailing action on every form; Start cooking also placed between Ingredients and Steps as the recipe research recommends.",
+"evidence": "lists, recipe-missing-ingredients (Start cooking at the very bottom), recipe-edit shots; recipe research change 1."
+},
+{
+"id": "sys-ax5",
+"scope": "23 screens at the largest text size",
+"title": "Largest-text pass: nothing important below the fold, nothing clipped",
+"why": "At accessibility-extra-extra-extra-large the tour could not reach 23 controls: sign-in's submit, the Fridge search, Lists→Restock, My recipes→Folders, Profile→Household and Sign out, the location cards; the Pantry card clips its own label and the Google button's label runs off the edge. The HIG's AX5 rule: stacked layout, fewer columns, primary elements still near the top.",
+"proposal": "Auth forms scroll with keyboard insets; location cards go single-column and wrap their labels at AX sizes; horizontal rows stack (the three the research names: RecipeForm.tsx:452, IngredientsEditor.tsx:133, insights.tsx:173); explainer banners collapse to one line; the collapsing-title fix above recovers the rest.",
+"evidence": "shots/ax5 gaps and the agent's finding list; hig-2026-for-ambry.md rule 8. Recapture 13:01 adds two visible defects on Lists: the IN YOUR CART count overlaps its overflow glyph, and item names break mid-word."
+},
+{
+"id": "sys-thumbnails",
+"scope": "recipes-cook · recipes-mine · recipes-community · folders · creator profile",
+"title": "No placeholder thumbnails",
+"why": "Every recipe without a photo shows the same grey fork-and-knife tile, so the recipe lists look unfinished and the tile spends 64 pt of width saying nothing.",
+"proposal": "Show a photo only when there is one; otherwise a compact title-first row (time, byline, rating) with an optional category glyph at the leading edge. The Community card keeps its photo slot only for recipes that have a photo.",
+"evidence": "recipes-cook, recipes-mine, recipes-community, creator-profile, recipe-folder shots."
+},
+{
+"id": "sys-inputs",
+"scope": "Community search · Lists add field",
+"title": "One input family: the search pill everywhere a search is",
+"why": "Community draws its own bordered text field (CommunityList.tsx:88 bypasses the shared SearchField), Lists uses a text field for its add-to-list input, and the other tabs use the search pill; placeholders end in three dots instead of an ellipsis.",
+"proposal": "SearchField on Community; keep Lists' field as an add field but style it as the app's one text-field look; ellipsis character in placeholders.",
+"evidence": "recipes-community, lists shots; hig-2026-for-ambry.md rule 5 and change 5."
+},
+{
+"id": "sys-copy",
+"scope": "forgot-password · Profile · invite links · import",
+"title": "Copy diet: no \"we\", no colloquialisms, one-line footers",
+"why": "\"we'll send a link\" (HIG §7: never \"we\"), \"kill it sooner\" (colloquial), and three or four explanatory paragraphs on Profile alone; the HIG's line: if a control needs a lot of text to explain, simplify the interface.",
+"proposal": "Rewrite the two lines; cut every settings footer to one sentence with a 'Learn more' disclosure where the mechanism matters (learned shelf lives, auto-delete); the import caveat becomes one line plus a 'Which sites work?' disclosure.",
+"evidence": "forgot-password, profile, profile-invite-links, recipe-import shots."
+},
+{
+"id": "sys-destructive",
+"scope": "Expiring · zones · every list with a trash",
+"title": "Destructive actions revealed, not always on",
+"why": "Expiring and Zones show a red trash on every row; a prominent destructive control on each row invites accidental taps and the HIG asks that destructive actions be confirmable, reversible, or revealed by an intentional gesture with an onscreen alternative.",
+"proposal": "Swipe-to-delete with undo as the primary path, an Edit mode or row overflow as the onscreen alternative; the trash leaves the resting row.",
+"evidence": "expiring, location-zones shots."
+},
+{
+"id": "sys-secondary-primaries",
+"scope": "recipe editor · delete account · My recipes",
+"title": "One prominent button per view; secondary actions look secondary",
+"why": "'Choose tags…', 'Manage subscriptions' and '+ Add recipe' wear the black primary style beside a real primary; the HIG allows one or two prominent buttons per view and says to distinguish the preferred action by style, never by a second primary.",
+"proposal": "A bordered/tinted secondary style for those three (and any 'Or add your own' companions); '+ Add recipe' becomes the bar's '+' as Folders already does.",
+"evidence": "recipe-edit, delete-account, recipes-mine shots; critique S2."
+},
+{
+"id": "sys-decorative-icons",
+"scope": "ScreenHeader · OverflowMenu · AddRecipeSheet · Profile",
+"title": "Decorative glyphs inside labelled controls carry no accessibility label",
+"why": "specs/design-system.md:28 forbids it and the research found three violations (ScreenHeader.tsx:41, OverflowMenu.tsx:71, AddRecipeSheet.tsx:67); the Profile pencil next to 'About you' is the visible instance.",
+"proposal": "Mark decorative glyphs accessibilityElementsHidden / importantForAccessibility=no; the control's label is the text.",
+"evidence": "hig-2026-for-ambry.md rule 11; profile shot."
+}
+]

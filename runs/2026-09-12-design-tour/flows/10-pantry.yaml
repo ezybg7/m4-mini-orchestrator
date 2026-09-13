@@ -1,0 +1,141 @@
+# Design tour 1/6 — the Pantry tab and everything pushed from it.
+# Shots: pantry-index, pantry-search, expiring, insights, location-fridge,
+#        location-zones, item.
+# ${SHOTS} is the mode's shot directory, passed with -e by tour.sh.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+
+# --- Pantry tab (index) -----------------------------------------------------
+- tapOn: 'Pantry, tab.*'
+- extendedWaitUntil:
+    visible: '.*Fridge.*|Nothing in your pantry yet'
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: pantry-index
+
+# --- Pantry search, with results -------------------------------------------
+- tapOn: 'Search your whole pantry'
+# Two characters that hit two different locations, so the shot shows the
+# grouped-by-location result list rather than a single row.
+- inputText: 'to'
+# The wait matches a LOCATION SECTION HEADER, not a food name. "Tofu" and
+# "Tomatoes" are also catalog suggestions under the Lists tab's add field, so a
+# food name alone cannot tell the two screens apart — and a dark-mode pass proved
+# the point by satisfying `.*Tofu.*` on the Lists tab and saving that as
+# `pantry-search`. A wrong screenshot under the right name is worse than a
+# failure, so the assertion has to be one only this screen can pass.
+- extendedWaitUntil:
+    visible: '.*Fridge.*|Nothing in your pantry matches.'
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: pantry-search
+- eraseText
+- pressKey: Enter
+# The Expiring card rather than "Add location": it is the top of the overview and
+# the next thing this flow taps, so it cannot be below a fold at any text size.
+- extendedWaitUntil:
+    visible: '.*Expiring [Ss]oon.*'
+    timeout: 20000
+
+# --- Expiring (from the Pantry card) ---------------------------------------
+- tapOn: '.*Expiring [Ss]oon.*'
+- extendedWaitUntil:
+    visible: 'Add all expiring items to your grocery list'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: expiring
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Search your whole pantry'
+    timeout: 20000
+
+# --- Insights (the waste scorecard card) -----------------------------------
+# The card only renders once the household has food_outcomes this month, which
+# the seeding suite's 13-waste-scorecard guarantees. Guarded so a tour on a
+# branch with no outcomes still finishes the rest of the screens.
+# The card sits below the location grid, and at the accessibility text size that
+# puts it below the fold — so scroll to it before asking whether it is there.
+# `optional`, because a household under the scorecard's floor has no card to find
+# and that is not a failure.
+- scrollUntilVisible:
+    element:
+      text: '.*percent used up.*'
+    direction: DOWN
+    timeout: 12000
+    centerElement: true
+    optional: true
+- runFlow:
+    when:
+      visible: '.*percent used up.*'
+    commands:
+      - tapOn: '.*percent used up.*'
+      - extendedWaitUntil:
+          visible:
+            id: 'insights-figure'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: insights
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'Search your whole pantry'
+          timeout: 20000
+
+# --- A location screen (Fridge) --------------------------------------------
+# Scroll to the card: at the accessibility text size the Expiring Soon card alone
+# takes most of the viewport and the location grid starts below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Fridge.*'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- tapOn: '.*Fridge.*'
+# The nav-bar overflow button, not the search field: at the accessibility text
+# size the dismissible "Struck-through items are ones you've run out of…" banner
+# fills the entire viewport and pushes the search field below the fold. The
+# overflow button is in the bar and cannot be scrolled away.
+- extendedWaitUntil:
+    visible: 'More actions for Fridge'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: location-fridge
+
+# --- Its zones screen ------------------------------------------------------
+- tapOn: 'More actions for Fridge'
+- tapOn: 'Zones'
+- extendedWaitUntil:
+    visible: 'Zones are the shelves inside this location.*'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: location-zones
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'More actions for Fridge'
+    timeout: 20000
+
+# --- An item screen (a seeded item, opened from the location) --------------
+# scrollUntilVisible, not a bare tap: the Fridge holds 11 foods under a
+# dismissible banner and a filter bar, so most rows are below the fold — and at
+# the accessibility text size almost all of them are. (A bare `tapOn: Yogurt`
+# failed here for exactly that reason.)
+- scrollUntilVisible:
+    element:
+      text: '.*Carrots.*'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- tapOn: '.*Carrots.*'
+- extendedWaitUntil:
+    visible: 'Storage'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: item
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'More actions for Fridge'
+    timeout: 20000
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Search your whole pantry'
+    timeout: 20000

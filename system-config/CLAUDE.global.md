@@ -5,6 +5,9 @@
 where you are) then `~/agents/CONTEXT.md` (Layer 1 — where to go). Load only
 what the stage you are in asks for; do not read the whole workspace.
 
+Sessions on the mini that touch the Multica board, an AMBR-n, a board agent or squad, or a
+PR from the loop load the `orchestrator` skill first — it is the operating procedure.
+
 ## Shared memory
 
 `~/agents/memory/` is an OKF bundle: one concept per file, YAML frontmatter,

@@ -1,0 +1,19 @@
+# Warm sign-in, run at the DEFAULT text size before a mode's flows.
+#
+# WHY: at `accessibility-extra-extra-extra-large` the sign-in screen's submit
+# button is below the fold. src/app/(auth)/sign-in.tsx IS scrollable (a ScrollView
+# inside the KeyboardAvoidingView, :111), so a person can reach it — but the
+# repo's `.maestro/acceptance/_login.yaml` taps `id: sign-in-submit` without
+# scrolling, on the standing assumption that "the submit button stays above the
+# keyboard". That holds at the default text size and not at the largest one, so
+# the ax5 pass could not sign in at all and lost every flow.
+#
+# Signing in first, at the default size, sidesteps it without forking the repo's
+# sign-in idioms: the session persists (it is not in the app container — it
+# survives even `launchApp: clearState: true`), so the mode's own `_login` finds
+# itself already signed in and skips the form.
+#
+# The finding itself is worth keeping: see README.md §Findings.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml

@@ -28,7 +28,7 @@ Operating rules — the *factory* — live one level up in
 
 ## Subdirectories
 
-- [daily-log/](daily-log/index.md) — Index of 9 concept(s) and 1 subdirectory(ies) under daily-log/.
+- [daily-log/](daily-log/index.md) — Index of 10 concept(s) and 1 subdirectory(ies) under daily-log/.
 - [decisions/](decisions/index.md) — Index of 6 concept(s) under decisions/.
 - [entities/](entities/index.md) — Index of 8 concept(s) under entities/.
 - [projects/](projects/index.md) — Index of 7 concept(s) and 1 subdirectory(ies) under projects/.

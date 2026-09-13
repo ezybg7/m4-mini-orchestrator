@@ -3,7 +3,7 @@
 # Promotes the first batch by COLUMN (the router assigns); the queue and its reasoning are in
 # ~/agents/multica/board-run-2026-09-12.md. Idempotent: every step checks before acting.
 set -uo pipefail
-export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$HOME/.local/bin:/opt/homebrew/bin:$PATH"
 LOG="$HOME/agents/logs/board-run-2026-09-12.log"; say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 say "=== kickoff ==="
 status(){ multica issue get "$1" --output json 2>/dev/null | python3 -c "import json,sys;i=json.load(sys.stdin);i=i.get('issue',i);print(i['status'])"; }
@@ -34,6 +34,8 @@ s=$(status AMBR-2); case "$s" in blocked)
 # 4. Marketing research: assign the squad (its issue is in backlog; assignment in backlog does not run — promote too).
 if [ "$(status AMBR-23)" = "backlog" ]; then
   multica issue status AMBR-23 in_progress --no-start >/dev/null 2>&1   # a non-pipeline column: the router leaves squad-owned issues alone
-  multica issue assign AMBR-23 --to research >/dev/null 2>&1 && say "AMBR-23 → research squad"
+  # The squad was already the assignee, and re-assigning the same actor is a no-op: clear it first.
+  multica issue assign AMBR-23 --unassign >/dev/null 2>&1; sleep 2
+  multica issue assign AMBR-23 --to research >/dev/null 2>&1 && say "AMBR-23 → research squad (re-assigned, so the leader actually starts)"
 fi
 say "=== kickoff done; AMBR-21 waits until AMBR-5's spec PR is up (orchestrator promotes it) ==="

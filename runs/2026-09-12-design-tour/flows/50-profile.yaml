@@ -1,0 +1,252 @@
+# Design tour 5/6 — the Profile tab and every row on it that opens a screen, a
+# sheet or an in-place editor.
+# Shots: profile, creator-profile, profile-household, add-household,
+#        profile-invite, profile-invite-links, profile-learned, profile-members,
+#        profile-reminders, profile-plan, delete-account, delete-account-confirm,
+#        profile-about-you, profile-display-name.
+#
+# ORDER: the two IN-PLACE editors are last, each after a fresh sign-in. They swap
+# a row for a form rather than pushing a screen, and on the first attempt a
+# Cancel that did not take left the display-name editor open UNDERNEATH the bio
+# editor — one screenshot with two open forms, and every row below them shifted
+# far enough down that the Household sheet never opened. A relaunch is a cheaper
+# guarantee than a chain of dismissals that each have to work.
+#
+# The Ambry Plus row is GUARDED, not assumed: `billingEnabled` is
+# `!!EXPO_PUBLIC_REVENUECAT_IOS_KEY && ios`, and this build has no key, so the row
+# does not render and /paywall is route-push only (see README.md §Missing).
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+- tapOn: 'Profile, tab.*'
+- extendedWaitUntil:
+    visible: 'Your name.*'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: profile
+
+# --- The creator profile (this account's own public page) ------------------
+# Same route as a stranger's creator profile, `src/app/profile/[id]/index.tsx`.
+# Reached from here rather than from a recipe byline because the byline link
+# renders only for a recipe you do NOT own, and this account owns every public
+# recipe on the branch.
+- tapOn:
+    id: 'settings-public-profile'
+- extendedWaitUntil:
+    visible: '.*recipes? · .* followers.*'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: creator-profile
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Your name.*'
+    timeout: 20000
+
+# --- Household (the "Your households" switcher sheet) ----------------------
+# Scroll first: at the accessibility text size the Account card alone is taller
+# than the screen, so the Household row is below the fold and a bare tap finds
+# nothing (an ax5 pass failed here).
+- scrollUntilVisible:
+    element:
+      text: 'Household, .*'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: 'Household, .*'
+- extendedWaitUntil:
+    visible: 'Your households'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: profile-household
+# "Create or join another" pushes the add-household screen — the one route on
+# this tab that is a screen rather than a sheet. It also closes the sheet on its
+# way out, which is why the dismissal below is guarded rather than unconditional.
+- runFlow:
+    when:
+      visible: 'Create or join another'
+    commands:
+      - tapOn: 'Create or join another'
+      - extendedWaitUntil:
+          visible: 'Add household'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: add-household
+      - tapOn: 'Back'
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: 'Your households'
+    commands:
+      # BottomSheet's backdrop is deliberately NOT an accessibility element
+      # (a labelled one collapses the whole sheet into one "Close" button), so
+      # it can only be dismissed by point.
+      - tapOn:
+          point: '50%,10%'
+      - waitForAnimationToEnd
+
+# --- Invite code actions (regenerate) --------------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'More invite code actions'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: 'More invite code actions'
+- extendedWaitUntil:
+    visible: 'Regenerate invite code'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: profile-invite
+# Leave without regenerating — the tour reads.
+- runFlow:
+    when:
+      visible: 'Cancel'
+    commands:
+      - tapOn: 'Cancel'
+- waitForAnimationToEnd
+
+# --- Invite links (a separate credential from the code — spec 43) ----------
+# The sheet is captured, but nothing taps "Create & Share": that mints a real
+# invite link and opens the iOS share sheet.
+- scrollUntilVisible:
+    element:
+      text: 'Share invite link'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+    optional: true
+- runFlow:
+    when:
+      visible: 'Share invite link'
+    commands:
+      - tapOn: 'Share invite link'
+      - extendedWaitUntil:
+          visible: 'Create & Share'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: profile-invite-links
+      - tapOn:
+          point: '50%,8%'
+      - waitForAnimationToEnd
+
+# --- Learned shelf lives (a section, in place) ------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'Learned shelf lives'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: profile-learned
+
+# --- Members (a section, in place) -----------------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'Members.*'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: profile-members
+
+# --- Reminders (Notifications section, in place) ----------------------------
+- scrollUntilVisible:
+    element:
+      text: 'Daily reminder'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: profile-reminders
+
+# --- Plan / Ambry Plus ------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'AI scans'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: profile-plan
+- runFlow:
+    when:
+      visible: '(Get|Manage) Ambry Plus'
+    commands:
+      - tapOn: '(Get|Manage) Ambry Plus'
+      - extendedWaitUntil:
+          visible: 'Ambry Plus'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: paywall
+      - tapOn: 'Back'
+      - waitForAnimationToEnd
+
+# --- Delete account: walk up to the confirmation and STOP ------------------
+# Nothing below types DELETE and nothing taps the submit button. The screen is
+# captured as it opens, and again scrolled to the disabled confirmation.
+- scrollUntilVisible:
+    element:
+      text: 'Delete account'
+    direction: DOWN
+    timeout: 60000
+- tapOn: 'Delete account'
+- extendedWaitUntil:
+    visible: 'This is permanent. There is no undo and no grace period.'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: delete-account
+- scrollUntilVisible:
+    element:
+      id: 'delete-account-confirm'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: delete-account-confirm
+- assertVisible:
+    id: 'delete-account-submit'
+    enabled: false
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Profile, tab.*'
+    timeout: 20000
+
+# --- In-place editor 1: About you (bio + links) ----------------------------
+- runFlow: _login.yaml
+- tapOn: 'Profile, tab.*'
+- extendedWaitUntil:
+    visible: 'About you.*'
+    timeout: 25000
+- scrollUntilVisible:
+    element:
+      text: 'About you.*'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: 'About you.*'
+- extendedWaitUntil:
+    visible: 'Your bio.*'
+    timeout: 20000
+# The editor autofocuses the bio field, and the keyboard then covers the Links
+# rows and the Save/Cancel below them. Tapping the "Bio" LABEL blurs it — the
+# same idiom .maestro/acceptance/07-profile.yaml uses before it taps Save.
+- tapOn: 'Bio'
+- waitForAnimationToEnd
+- takeScreenshot: profile-about-you
+
+# --- In-place editor 2: Display name ---------------------------------------
+- runFlow: _login.yaml
+- tapOn: 'Profile, tab.*'
+- extendedWaitUntil:
+    visible: 'Your name.*'
+    timeout: 25000
+- tapOn:
+    id: 'settings-display-name'
+- extendedWaitUntil:
+    visible: 'Save'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: profile-display-name

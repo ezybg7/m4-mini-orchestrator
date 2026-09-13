@@ -1,0 +1,68 @@
+# Second half of the fixture: give the waste scorecard something to say.
+#
+# 00-seed-tour's swipe-right → "Used" gestures mark items `out` — and that is ALL
+# they do (src/app/expiring.tsx:168 patches `status: 'out'` and nothing else).
+# The `food_outcomes` ledger is written by the DELETE paths, and then only once
+# the undo window has CLOSED: migration 0040 grants no delete on that table, so a
+# row written on success could not be taken back by Undo
+# (src/features/insights/useOutcomes.ts §"WHEN TO CALL IT").
+#
+# So this flow deletes the `out` rows through the location screen's row trash
+# (`Delete <name>`, which ItemRow renders only for an `out` item) and waits each
+# undo toast out. `scorecard()` needs SCORECARD_FLOOR = 5 used+expired rows in
+# the current month before the Pantry tab draws the card that opens /insights.
+#
+# Guarded on the card being absent, so a re-run deletes nothing.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+- tapOn: 'Pantry, tab.*'
+- extendedWaitUntil:
+    visible: '.*Fridge.*|Nothing in your pantry yet'
+    timeout: 25000
+- runFlow:
+    when:
+      notVisible: '.*percent used up.*'
+    commands:
+      - tapOn: '.*Fridge.*'
+      - extendedWaitUntil:
+          visible: 'Search this location'
+          timeout: 20000
+      - repeat:
+          times: 6
+          while:
+            visible: 'Delete .*'
+          commands:
+            - tapOn: 'Delete .*'
+            - waitForAnimationToEnd
+            - extendedWaitUntil:
+                notVisible: 'Undo'
+                timeout: 20000
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'Search your whole pantry'
+          timeout: 20000
+- runFlow:
+    when:
+      notVisible: '.*percent used up.*'
+    commands:
+      # The location card's label is "<name>, <n> foods"; the tab's is
+      # "Pantry, tab, 1 of 5", so the ", N foods" tail is what separates them.
+      - tapOn: 'Pantry, \d+ foods?.*'
+      - extendedWaitUntil:
+          visible: 'Search this location'
+          timeout: 20000
+      - repeat:
+          times: 6
+          while:
+            visible: 'Delete .*'
+          commands:
+            - tapOn: 'Delete .*'
+            - waitForAnimationToEnd
+            - extendedWaitUntil:
+                notVisible: 'Undo'
+                timeout: 20000
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'Search your whole pantry'
+          timeout: 20000

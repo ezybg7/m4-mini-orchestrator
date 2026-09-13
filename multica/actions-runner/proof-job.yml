@@ -1,0 +1,242 @@
+# proof-job.yml — spec 60 §Acceptance boxes 2 ("a job holds nothing") and 3 ("nothing
+# survives teardown"), as a workflow.
+#
+#   Who runs it: the orchestrator pushes it to a SCRATCH BRANCH as
+#                .github/workflows/jit-proof.yml when Everett proves the install
+#                (RUNBOOK step (d)), and deletes the branch afterwards.
+#   NEVER MERGE IT TO MAIN. It deliberately writes markers into world-writable
+#   directories, installs a crontab and detaches a process — the whole point is
+#   that the supervisor's teardown removes all of it. On main it would be a
+#   recurring mess, and the jest tripwire (tests/workflow-permissions.test.ts)
+#   has no allowlist entry for it.
+#
+# It requests read-only permissions, uses no actions (no checkout: the proof is about
+# what the principal can reach, not about the tree), and never prints the value of any
+# token — only variable NAMES and byte counts. A denied read is a PASS.
+name: jit-runner-proof
+
+on:
+  push:
+    branches: ['scratch/jit-proof**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    # Unchanged from every other workflow on this repo: the JIT runner registers the
+    # same four labels, so runs-on does not move (spec 60 §The runner).
+    runs-on: [self-hosted, macOS, ARM64, m4-mini]
+    timeout-minutes: 15
+    steps:
+      - name: 1. identity, home and environment
+        shell: bash
+        run: |
+          fails=0
+          echo "::group::who am I"
+          echo "id -un              : $(id -un)"
+          echo "id -u               : $(id -u)"
+          echo "id -Gn              : $(id -Gn)"
+          echo "HOME                : $HOME"
+          echo "TMPDIR              : ${TMPDIR:-unset}"
+          echo "RUNNER_TEMP         : ${RUNNER_TEMP:-unset}"
+          echo "GITHUB_WORKSPACE    : ${GITHUB_WORKSPACE:-unset}"
+          echo "pwd                 : $(pwd)"
+          echo "NFSHomeDirectory    : $(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>&1 | awk '{print $2}' || true)"
+          echo "IsHidden            : $(dscl . -read "/Users/$(id -un)" IsHidden 2>&1 | awk '{print $2}' || true)"
+          echo "RUNNER_WORKSPACE    : ${RUNNER_WORKSPACE:-unset}"
+          echo "processes of my uid :"; ps -o pid=,ppid=,command= -U "$(id -u)" | cut -c1-140 || true
+          echo "::endgroup::"
+
+          case "$(id -un)" in
+            job-*) echo "PASS  the job runs as $(id -un), a throwaway account" ;;
+            *)     echo "FAIL  the job runs as $(id -un) — it must be a job-<n> account"; fails=$((fails+1)) ;;
+          esac
+          case "$HOME" in
+            /private/var/actions-runner-jobs/*/home) echo "PASS  HOME is inside the per-job root ($HOME)" ;;
+            *) echo "FAIL  HOME is $HOME — it must be inside /private/var/actions-runner-jobs/<n>/"; fails=$((fails+1)) ;;
+          esac
+          case "${TMPDIR:-}" in
+            /private/var/actions-runner-jobs/*) echo "PASS  TMPDIR is inside the per-job root (${TMPDIR})" ;;
+            *) echo "FAIL  TMPDIR is '${TMPDIR:-unset}' — it must be inside the per-job root"; fails=$((fails+1)) ;;
+          esac
+          if [ -n "$(id -Gn | tr ' ' '\n' | grep -x admin || true)" ]; then
+            echo "FAIL  this account is in the admin group"; fails=$((fails+1))
+          else
+            echo "PASS  this account is not in the admin group"
+          fi
+          if sudo -n true 2>/dev/null; then echo "FAIL  this account has passwordless sudo"; fails=$((fails+1));
+          else echo "PASS  no sudo for this account"; fi
+
+          # §Acceptance box 2: `env | grep -ci token`. Values are never printed — only the
+          # count and the NAMES, all of which must be per-job tokens GitHub issued for this run.
+          echo "::group::token-shaped variables (names only)"
+          echo "count (env | grep -ci token): $(env | grep -ci token || true)"
+          env | cut -d= -f1 | grep -i token | sort || true
+          echo "::endgroup::"
+          unexpected=$(env | cut -d= -f1 | grep -i token | grep -vE '^(GITHUB_TOKEN|ACTIONS_RUNTIME_TOKEN|ACTIONS_ID_TOKEN_REQUEST_TOKEN|INPUT_GITHUB_TOKEN)$' || true)
+          if [ -z "$unexpected" ]; then echo "PASS  every token variable is one GitHub issued for this job"
+          else echo "FAIL  token variables that did not come from this job: $unexpected"; fails=$((fails+1)); fi
+
+          echo "JOBUID=$(id -u)"   >> "$GITHUB_ENV"
+          echo "JOBACCT=$(id -un)" >> "$GITHUB_ENV"
+          [ "$fails" -eq 0 ] || { echo "step 1: $fails failure(s)"; exit 1; }
+
+      - name: 2. the previous job left nothing behind (box 3, the next-job half)
+        shell: bash
+        run: |
+          fails=0
+          echo "::group::git and npm configuration visible to this job"
+          git config --list --show-origin 2>&1 | sed 's/^/  /' || true
+          npm config list 2>&1 | sed 's/^/  /' || echo "  (npm not on PATH or no config)"
+          echo "::endgroup::"
+          # Only the system gitconfig and this job's own home may contribute. Anything from
+          # another home (or an earlier job's root) would be state crossing the boundary.
+          bad=$(git config --list --show-origin 2>/dev/null \
+                | sed -n 's/^file:\([^\t ]*\).*/\1/p' | sort -u \
+                | grep -v "^$HOME/" \
+                | grep -vE '^(/etc/gitconfig|/usr/local/etc/gitconfig|/opt/homebrew/etc/gitconfig)$' || true)
+          if [ -n "$bad" ]; then
+            echo "FAIL  git config is read from outside the system files and this job's home:"
+            printf '        %s\n' $bad
+            fails=$((fails+1))
+          else
+            echo "PASS  git config comes only from the system file(s) (no earlier job's .gitconfig)"
+          fi
+          for f in "$HOME/.gitconfig" "$HOME/.npmrc" "$HOME/.ssh" "$HOME/.npm" "$HOME/Library/Keychains"; do
+            if [ -e "$f" ]; then echo "FAIL  $f exists at job start — the home is not fresh"; fails=$((fails+1));
+            else echo "PASS  $f does not exist at job start"; fi
+          done
+          echo "::group::markers left in world-writable paths by any earlier job"
+          ls -l /Users/Shared/ 2>&1 | grep -i 'jit-proof' || echo "  none in /Users/Shared"
+          ls -l /private/tmp/   2>&1 | grep -i 'jit-proof' || echo "  none in /private/tmp"
+          echo "::endgroup::"
+          if [ -n "$(ls /Users/Shared /private/tmp 2>/dev/null | grep -i 'jit-proof' || true)" ]; then
+            echo "NOTE  a jit-proof marker from an earlier run is present. If the earlier run's"
+            echo "      teardown was proven clean, this is a run you started since — otherwise it is a FINDING."
+          else
+            echo "PASS  no jit-proof marker from any earlier job is on this host"
+          fi
+          [ "$fails" -eq 0 ] || { echo "step 2: $fails failure(s)"; exit 1; }
+
+      - name: 3. the host is unreadable and unwritable (box 2)
+        shell: bash
+        run: |
+          fails=0
+          deny() {   # deny <description> <command...> — PASS only when denied
+            desc=$1; shift
+            if out=$("$@" 2>&1); then
+              echo "FAIL  $desc — SUCCEEDED (${#out} bytes came back; not shown)"; fails=$((fails+1))
+            elif grep -qi 'permission denied' <<<"$out"; then
+              echo "PASS  $desc — Permission denied"
+            elif grep -qiE 'no such file|not exist' <<<"$out"; then
+              echo "PASS  $desc — not present for this principal ($(printf '%s' "$out" | tr '\n' ' ' | cut -c1-60))"
+            else
+              echo "FAIL  $desc — failed for the wrong reason: $(printf '%s' "$out" | tr '\n' ' ' | cut -c1-90)"; fails=$((fails+1))
+            fi
+          }
+          # the operator's secrets
+          deny "cat ~orchestrator/.claude/oauth_token"      cat /Users/orchestrator/.claude/oauth_token
+          deny "cat ~orchestrator/.config/gh/hosts.yml"     cat /Users/orchestrator/.config/gh/hosts.yml
+          deny "cat ~orchestrator/agents/.env.acceptance"   cat /Users/orchestrator/agents/.env.acceptance
+          deny "ls ~orchestrator"                           ls /Users/orchestrator
+          deny "cat ~orchestrator/actions-runner/.credentials (the old persistent runner)" cat /Users/orchestrator/actions-runner/.credentials
+          # the daemon user's set (spec 61)
+          deny "ls ~multica/.ssh"                           ls /Users/multica/.ssh
+          deny "ls ~multica/.multica"                       ls /Users/multica/.multica
+          deny "cat ~multica/.claude/oauth_token"           cat /Users/multica/.claude/oauth_token
+          # the supervisor's own credential and counter
+          deny "cat /etc/actions-runner-jit/jit_pat"        cat /etc/actions-runner-jit/jit_pat
+          deny "cat /etc/actions-runner-jit/uid_counter"    cat /etc/actions-runner-jit/uid_counter
+          deny "ls /etc/actions-runner-jit"                 ls /etc/actions-runner-jit
+          deny "ls /var/log/actions-runner-jit"             ls /var/log/actions-runner-jit
+          # writes that must not land
+          deny "write into /opt/homebrew/bin"               touch /opt/homebrew/bin/jit-proof-probe
+          deny "write into /opt/actions-runner"             touch /opt/actions-runner/jit-proof-probe
+          deny "write into /opt/actions-runner-jit"         touch /opt/actions-runner-jit/jit-proof-probe
+          deny "write into another job's parent dir"        touch /private/var/actions-runner-jobs/jit-proof-probe
+          deny "write into /Library/LaunchDaemons"          touch /Library/LaunchDaemons/jit-proof-probe.plist
+          # localhost services still demand a credential this job does not hold (spec 61)
+          echo "::group::localhost reachability (reachable by design; each needs a credential)"
+          (nc -z -G2 127.0.0.1 5433 && echo "  postgres 5433 reachable") || echo "  postgres 5433 not reachable"
+          (nc -z -G2 127.0.0.1 8080 && echo "  multica api 8080 reachable") || echo "  multica api 8080 not reachable"
+          echo "::endgroup::"
+          [ "$fails" -eq 0 ] || { echo "step 3: $fails failure(s)"; exit 1; }
+
+      - name: 4. leave as much behind as possible (box 3, the teardown half)
+        shell: bash
+        run: |
+          set -u
+          RUN=${GITHUB_RUN_ID}
+          M="jit-proof-${RUN}-${JOBUID}"
+          echo "marker base name: $M"
+          # markers in every place this principal can write
+          mark() { if printf 'run %s uid %s at %s\n' "$RUN" "$JOBUID" "$(date -u +%FT%TZ)" > "$1" 2>/dev/null; then echo "  wrote $1"; else echo "  WARN could not write $1"; fi; }
+          mark "$HOME/$M"
+          mark "${TMPDIR%/}/$M"
+          mark "/private/tmp/$M"
+          mark "/private/var/tmp/$M"
+          mark "/Users/Shared/$M" && chmod 644 "/Users/Shared/$M" 2>/dev/null && echo "  chmod 644 /Users/Shared/$M (world-readable on purpose)"
+          # per-user state a later job would inherit if the principal were reused
+          git config --global user.name  "jit-proof-$RUN" && echo "  wrote \$HOME/.gitconfig" || echo "  WARN git config --global failed"
+          git config --global user.email "jit-proof@example.invalid" || true
+          printf 'cache=%s\nfoo=jit-proof-%s\n' "$HOME/.npm" "$RUN" > "$HOME/.npmrc" && echo "  wrote \$HOME/.npmrc" || echo "  WARN could not write .npmrc"
+          # a crontab for this account
+          if printf '*/1 * * * * /usr/bin/true # %s\n' "$M" | crontab -; then
+            echo "  installed a crontab:"; crontab -l | sed 's/^/      /' || true
+          else
+            echo "  WARN crontab install failed — the crontab half of the teardown proof is untested"
+          fi
+          # a detached process that outlives the step. macOS has no setsid(1); nohup + & is the
+          # equivalent, and launchctl submit additionally registers it with this account's
+          # launchd domain — which is exactly what `launchctl bootout user/<uid>` must kill.
+          BEACON=/Users/Shared/${M}-beacon.log
+          for v in $(env | cut -d= -f1 | grep -E '^(RUNNER_|ACTIONS_)' || true); do unset "$v" || true; done
+          unset GITHUB_TOKEN || true
+          nohup /bin/bash -c 'for i in $(seq 1 60); do { date -u +%FT%TZ; id -un; env | cut -d= -f1 | sort | tr "\n" " "; echo; ps -o pid=,command= -U "$(id -u)" | cut -c1-100; echo "--"; } >> "'"$BEACON"'" 2>&1; sleep 30; done' >/dev/null 2>&1 &
+          disown || true
+          echo "  detached a beacon (pid $!) writing variable NAMES and ps every 30s to $BEACON"
+          echo "    (names only, never values: a spilled token in a world-readable path would be a real leak,"
+          echo "     and the proof is that the file and the process are gone, not what they contained)"
+          if launchctl submit -l "$M" -- /bin/bash -c "while :; do date -u >> '$BEACON'.launchd; sleep 30; done" 2>/dev/null; then
+            echo "  launchctl submit -l $M succeeded — registered in this account's launchd domain"
+          else
+            echo "  WARN launchctl submit failed — the bootout half of the teardown proof is untested"
+          fi
+          sleep 3
+          echo "::group::what exists right now"
+          ls -l "$HOME/$M" "${TMPDIR%/}/$M" "/private/tmp/$M" "/private/var/tmp/$M" "/Users/Shared/$M" 2>&1 | sed 's/^/  /' || true
+          ps -o pid=,uid=,command= -U "$JOBUID" | cut -c1-120 | sed 's/^/  /' || true
+          echo "::endgroup::"
+
+      - name: 5. what to check after this job ends
+        if: always()
+        shell: bash
+        run: |
+          RUN=${GITHUB_RUN_ID}
+          M="jit-proof-${RUN}-${JOBUID}"
+          {
+            printf '## JIT runner proof — run %s\n\n' "$RUN"
+            printf '| what | value |\n|---|---|\n'
+            printf '| account | `%s` |\n' "${JOBACCT}"
+            printf '| uid | `%s` |\n' "${JOBUID}"
+            printf '| home | `%s` |\n' "$HOME"
+            printf '| TMPDIR | `%s` |\n' "${TMPDIR:-unset}"
+            printf '| marker base | `%s` |\n' "$M"
+            printf '\nEvery PASS/FAIL line is in the step logs above. Now, on the mini:\n\n'
+            printf '```bash\n'
+            printf 'dscl . -read /Users/%s                       # must fail: no such record\n' "${JOBACCT}"
+            printf 'ls -d /private/var/actions-runner-jobs/%s     # must fail: no such directory\n' "${JOBUID}"
+            printf 'pgrep -U %s                                  # must print nothing\n' "${JOBUID}"
+            printf 'find /private/tmp /private/var/tmp /Users/Shared -user %s -print   # must print nothing\n' "${JOBUID}"
+            printf 'sudo find /private/var/folders -user %s -print                     # must print nothing\n' "${JOBUID}"
+            printf 'sudo crontab -u %s -l                        # must fail: no such user\n' "${JOBACCT}"
+            printf 'ls /Users/Shared | grep %s                    # must print nothing\n' "$M"
+            printf 'sudo launchctl print user/%s                  # must fail: no such domain\n' "${JOBUID}"
+            printf 'sudo cat /etc/actions-runner-jit/uid_counter  # must be greater than %s\n' "${JOBUID}"
+            printf '```\n'
+            printf '\nThen re-run `bash ~/agents/multica/actions-runner/self-check.sh` — every RUNS NOW line must PASS again.\n'
+            printf '\n**Do not merge this workflow to main.** Delete the scratch branch when the proof is recorded.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "summary written"

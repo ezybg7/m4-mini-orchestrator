@@ -1,0 +1,192 @@
+# Design tour 4/6 — the Recipes tab's three segments and everything pushed from
+# them. Shots: recipes-cook, recipes-mine, recipes-community, recipe-detail,
+# recipe-cook-mode, recipe-edit, recipe-new, recipe-import, recipe-folders,
+# recipe-folder, recipe-missing-ingredients.
+#
+# "Shakshuka" is a public recipe that exists in the seeded household on this
+# branch (owned by the seeded Test User), so one recipe serves the public-detail,
+# cook-mode, edit and byline→creator-profile shots.
+appId: com.everettyan.ambry
+---
+- runFlow: _login.yaml
+- tapOn: 'Recipes, tab.*'
+- extendedWaitUntil:
+    visible: 'Cook'
+    timeout: 25000
+
+# --- Cook segment -----------------------------------------------------------
+- tapOn: 'Cook'
+- waitForAnimationToEnd
+- takeScreenshot: recipes-cook
+
+# --- My recipes segment -----------------------------------------------------
+- tapOn: 'My recipes'
+# No wait on a specific control here. At the accessibility text size BOTH the
+# Folders row and the segment's own "+ Add recipe" button are below the fold, so
+# every candidate signal fails on a screen that has rendered fine — the shot is
+# taken as the segment opens, and each control is scrolled to when it is needed.
+- waitForAnimationToEnd
+- takeScreenshot: recipes-mine
+
+# --- Folders, and one folder ------------------------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'Folders, \d+ folders?'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn: 'Folders, \d+ folders?'
+- extendedWaitUntil:
+    visible: 'New folder'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: recipe-folders
+- runFlow:
+    when:
+      visible: 'Weeknight, \d+ recipes?'
+    commands:
+      - tapOn: 'Weeknight, \d+ recipes?'
+      - extendedWaitUntil:
+          visible: 'Manage folder'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - takeScreenshot: recipe-folder
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'New folder'
+          timeout: 20000
+- tapOn: 'Back'
+- scrollUntilVisible:
+    element:
+      text: '\+ Add recipe'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+
+# --- New recipe, and import -------------------------------------------------
+- tapOn: '\+ Add recipe'
+- extendedWaitUntil:
+    visible: '.*Create from scratch.*'
+    timeout: 20000
+- tapOn: '.*Create from scratch.*'
+- extendedWaitUntil:
+    visible: 'Name this recipe'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: recipe-new
+- tapOn: 'Back'
+- scrollUntilVisible:
+    element:
+      text: '\+ Add recipe'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- tapOn: '\+ Add recipe'
+- extendedWaitUntil:
+    visible: '.*Import from link.*'
+    timeout: 20000
+- tapOn: '.*Import from link.*'
+- extendedWaitUntil:
+    visible: 'Import a recipe'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: recipe-import
+- tapOn: 'Back'
+- waitForAnimationToEnd
+
+# --- Community segment ------------------------------------------------------
+- tapOn: 'Community'
+- extendedWaitUntil:
+    visible: 'Search public recipes'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: recipes-community
+
+# --- A public recipe's detail ----------------------------------------------
+- extendedWaitUntil:
+    visible: '.*Shakshuka.*'
+    timeout: 25000
+- tapOn:
+    text: '.*Shakshuka.*'
+    index: 0
+# The nav-bar Favorites button, not "Start cooking": that CTA is the last child
+# of the ScrollView, so on any recipe long enough to scroll it is below the fold
+# and `visible` is false.
+- extendedWaitUntil:
+    visible: 'Add to Favorites|Remove from Favorites'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: recipe-detail
+
+# --- Cook mode --------------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      text: 'Start cooking'
+    direction: DOWN
+    timeout: 25000
+    centerElement: true
+- tapOn: 'Start cooking'
+# "Start cooking" checks the recipe's ingredients against the pantry first, and
+# offers to put the missing ones on the grocery list. Whether that prompt appears
+# is DATA, not chrome — it depends on what is stocked right now, and the tour's
+# own fixture (which marks expiring items used) is what makes Shakshuka's spinach
+# missing. Captured, then "Cook anyway": the tour must not write to the list.
+- runFlow:
+    when:
+      visible: 'Cook anyway'
+    commands:
+      - waitForAnimationToEnd
+      - takeScreenshot: recipe-missing-ingredients
+      - tapOn: 'Cook anyway'
+# Not `visible: 'Done cooking'`: that button sits at the end of the step list and
+# may be below the fold too. The honest signal that cook mode replaced the detail
+# is that the detail's own Favorites button is gone.
+- extendedWaitUntil:
+    notVisible: 'Add to Favorites|Remove from Favorites'
+    timeout: 25000
+- waitForAnimationToEnd
+- takeScreenshot: recipe-cook-mode
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Add to Favorites|Remove from Favorites'
+    timeout: 20000
+
+# --- Recipe edit (the seeded account owns this recipe) ---------------------
+- runFlow:
+    when:
+      visible: 'Edit recipe'
+    commands:
+      - tapOn: 'Edit recipe'
+      # The edit screen's own header title is also "Edit recipe", so waiting on
+      # that text would pass before navigation. The detail's Favorites button
+      # going away is the signal.
+      - extendedWaitUntil:
+          notVisible: 'Add to Favorites|Remove from Favorites'
+          timeout: 25000
+      - waitForAnimationToEnd
+      - takeScreenshot: recipe-edit
+      - tapOn: 'Back'
+      - extendedWaitUntil:
+          visible: 'Add to Favorites|Remove from Favorites'
+          timeout: 20000
+
+# --- The byline path to a creator profile ----------------------------------
+# GUARDED, and on this branch it will not fire: the byline link is rendered
+# `!isOwner` only (src/app/recipe/[id]/index.tsx:358), and every public recipe on
+# this branch belongs to the signed-in seeded account. The same screen is
+# captured as `creator-profile` from Profile -> "View my public profile" in
+# 50-profile.yaml; a stranger's-eye view of it (Follow, Report profile) needs a
+# second account and is listed for the orchestrator in README.md.
+- runFlow:
+    when:
+      visible: 'View profile — .*'
+    commands:
+      - tapOn: 'View profile — .*'
+      - waitForAnimationToEnd
+      - takeScreenshot: creator-profile-byline
+      - tapOn: 'Back'
+      - waitForAnimationToEnd
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: 'Search public recipes'
+    timeout: 20000

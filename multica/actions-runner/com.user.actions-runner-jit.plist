@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.user.actions-runner-jit — spec 60 §The runner: the root supervisor that gives every
+  CI job its own throwaway macOS account and destroys it afterwards.
+
+  Installed to /Library/LaunchDaemons/ by setup-actions-runner.sh (root:wheel, 644).
+  Everett never edits this in place: edit the copy in ~/agents/multica/actions-runner/
+  and re-run the setup, which cross-checks the paths below against its own constants.
+
+  A LaunchDaemon, not a LaunchAgent, and with no UserName key: only root can create and
+  delete accounts, `launchctl bootout user/<uid>`, `pkill -9 -U <uid>` and sweep by owner.
+  Logs go to a root-owned directory (/var/log/actions-runner-jit, 750 root:wheel) — never
+  a user home, which an untrusted job account could otherwise reach.
+  ExitTimeOut 120 gives the SIGTERM trap time to finish a teardown before launchd SIGKILLs
+  the process group; ThrottleInterval 30 keeps a failing mint from becoming a hot loop.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.user.actions-runner-jit</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/opt/actions-runner-jit/actions-runner-jit.sh</string>
+  </array>
+  <key>WorkingDirectory</key><string>/</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>LANG</key><string>en_US.UTF-8</string>
+  </dict>
+  <key>StandardOutPath</key><string>/var/log/actions-runner-jit/supervisor.log</string>
+  <key>StandardErrorPath</key><string>/var/log/actions-runner-jit/supervisor.err.log</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ExitTimeOut</key><integer>120</integer>
+  <key>ProcessType</key><string>Standard</string>
+</dict>
+</plist>

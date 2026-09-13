@@ -19,6 +19,14 @@ the written spec: `specs/multica-integration.md` in pantry).
 it by moving cards. Never set `in_progress`: it is not a stage, and an issue
 there belongs to no column.
 
+## The procedure
+
+The operating procedure for a session that works this board — start, classify, drive each card
+to its gate, merge authority, production applies, fixing the setup, the skill-growth loop, ending
+a session — is the `orchestrator` skill (`~/agents/skills/orchestrator/SKILL.md`, every Claude Code
+session on the mini sees it through `~/.claude/skills`). This file stays the rules; the skill is
+how they are applied.
+
 ## The rule underneath
 
 **Assignment starts a run.** Not a status change, not a comment, not a GitHub

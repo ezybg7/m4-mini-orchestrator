@@ -6,7 +6,7 @@
 # No-ops once the issue has actually run, so it is safe to leave in crontab; remove the
 # crontab line when the loop is routine.
 set -euo pipefail
-export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$HOME/.local/bin:/opt/homebrew/bin:$PATH"
 ISSUE="${1:-AMBR-5}"
 LOG="$HOME/agents/logs/multica-restart-planner.log"
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }

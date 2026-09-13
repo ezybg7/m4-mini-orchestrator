@@ -25,12 +25,14 @@ SOURCES = [
     (f"{REPO}/pantry-testing-strategy", "pantry-testing-strategy"),
     (f"{REPO}/pantry-auth-setup", "pantry-auth-setup"),
     (f"{REPO}/pantry-before-launch", "pantry-before-launch"),
+    (f"{REPO}/pantry-mechanical-round", "pantry-mechanical-round"),   # 2026-09-12: renumber / resolve-with-main / rebase rounds
     (f"{USER}/typescript-style", "typescript-style"),
     (f"{USER}/apple-hig", "apple-hig", lambda rel: rel.startswith("references/")),
     (f"{USER}/code-graph-usage", "code-graph-usage"),
     (f"{USER}/neon-rehearsal", "neon-rehearsal"),
     (f"{USER}/research-method", "research-method"),
     (f"{USER}/debug-gate-failure", "debug-gate-failure"),
+    (f"{USER}/reddit-research", "reddit-research"),   # 2026-09-12: Reddit via the OAuth Data API (reddit-search on the daemon PATH)
     # Neon's own platform skill (installed by `npx neon@latest skills`, untracked at
     # .agents/skills/). Its three references are vector/full-text/hybrid search, which
     # this product does not use — pooled-vs-direct, branching and migrations are the value.
