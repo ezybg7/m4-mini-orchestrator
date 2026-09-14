@@ -1,7 +1,7 @@
 ---
 type: index
 title: entities
-description: Index of 8 concept(s) under entities/.
+description: Index of 9 concept(s) under entities/.
 tags: [index]
 timestamp: 2026-09-10T00:00:00Z
 permalink: agents/entities/index
@@ -32,6 +32,8 @@ the mini. |
 in one call; indexes code, not this vault. |
 | [Codex](codex.md) | `entity` | Second agent runtime with five pantry lanes; sandboxed with no network.
 Configured but not yet wired into the workspace protocol. |
+| [Multica run economics](multica-run-economics.md) | `reference` | What a board run spends tokens on and why - cost is API turns times context
+size, Claude Code's 1M window means board runs never compact, the review l |
 | [Multica server on the mini](multica-server.md) | `entity` | Multica's Go API and Next.js web tier, built from source and run natively under
 launchd on the M4 mini, localhost-only, on a local Homebrew postgresql |
 | [Neon Postgres project](neon-project.md) | `entity` | Production endpoints, the branch workflow, and the pooler-vs-direct distinction
