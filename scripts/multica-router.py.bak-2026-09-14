@@ -92,33 +92,6 @@ NEVER_TOUCH = {"backlog", "blocked", "done", "cancelled"}
 # In Review assigned here means "approved, waiting on Everett" — not work for the reviewers.
 PARKED_WITH = {"in_review": "everettyan"}
 
-# `issue list` answers one page at a time. 100 is the server's own per-request ceiling, so
-# this is the fewest round trips a board of any size can be read in.
-PAGE_SIZE = 100
-# A CLI that reported has_more forever would spin the read until the tick was killed. Twenty
-# pages is 2000 issues — far past any real board — and a bounded answer beats a hung router.
-MAX_PAGES = 20
-
-# --- the slice loop -------------------------------------------------------------------
-# A big card is built one slice per run, because a milestone does not fit in one run's
-# context. The cap is a guard against a runaway marker, not a product limit: a card that
-# wants more than this many slices wants to be split into sub-issues instead.
-SLICE_MAX = 6
-# Who may drive a slice loop, by agent id -> name. Derived from the routes rather than
-# restated, so the two sides of the outage swap cannot drift apart from the ids here.
-SLICE_IMPLEMENTERS = {CODEX_AGENTS[ROUTES["code"]]: ROUTES["code"],
-                      STAND_IN_IMPLEMENTER: OUTAGE_ROUTES["code"]}
-# 2100-01-01Z, as the stamp for a memory entry that must never come due. See already_retried.
-SLICE_FOREVER = 4102444800.0
-# The handoff marker the implementer leaves as the `open:` line of its HANDOFF comment.
-# Line-anchored, so a marker inside a ``` fence reads straight through — the fence
-# delimiters sit on their own lines and never touch this one.
-SLICE_MARKER_RE = r"^\s*(?:open:\s*)?next-slice:\s*(\d+)\s*/\s*(\d+)\s*$"
-# The same line with anything at all after the colon. Only ever used to tell "the
-# implementer wrote a marker and got it wrong" apart from "there is no marker here",
-# which are different events: the first is worth a line in the log, the second is not.
-SLICE_MARKER_LOOSE_RE = r"^\s*(?:open:\s*)?next-slice:[ \t]*(.*?)[ \t]*$"
-
 
 def mc(*args):
     r = subprocess.run([MULTICA, *args], env=ENV, capture_output=True, text=True)
@@ -134,21 +107,13 @@ def log(msg):
 
 
 
-def already_retried(key, remember=False, forever=False):
+def already_retried(key, remember=False):
     """Rate-limit retries per issue, on disk, because the timeline is not a reliable memory.
 
     Reading "did this fail?" from the last few timeline entries looked sufficient and was
     not: re-assigning an issue appends events but does not remove the old task_failed, so
     the same issue qualified for a retry on three consecutive ticks and queued duplicate
     tasks behind the one already running. One retry per issue per hour, written down.
-
-    `forever` writes a stamp far enough in the future that neither the hour's rate limit nor
-    the day's prune can ever expire the entry — both are `now - stamp` comparisons, and both
-    read a future stamp as "just now". Retries want the hour: "try again later" is the right
-    answer to a run that died. Slices do not. `{KEY}:slice:{k}` records that slice k has been
-    STARTED, and starting it again an hour later would put a second implementer on the same
-    branch — the one failure the slice loop exists to prevent. Same file, same format, one
-    stamp that never comes due.
     """
     import time
     try:
@@ -159,7 +124,7 @@ def already_retried(key, remember=False, forever=False):
     state = {k: v for k, v in state.items() if now - v < 86400}
     recent = (now - state.get(key, 0)) < 3600
     if remember and not recent:
-        state[key] = SLICE_FOREVER if forever else now
+        state[key] = now
         try:
             with open(RETRIED, "w") as f:
                 json.dump(state, f)
@@ -447,212 +412,19 @@ def codex_outage_tick(issues):
     return None
 
 
-def parse_slice_marker(text):
-    """Read an implementer's `next-slice: k/n` handoff marker out of a comment body.
-
-    Three answers, because "there is no marker" and "the marker is wrong" are different
-    events and only one of them is worth saying out loud:
-
-        None             no next-slice line at all — ordinary chatter, say nothing
-        (k, n, None)     a usable marker
-        (None, None, r)  a next-slice line that cannot be honoured, and why
-
-    The strict pattern is tried first, so a comment carrying both a broken marker and a good
-    one still builds: a malformed line is a reason to stay quiet about a card, never a
-    reason to strand it.
-    """
-    import re
-    if not text:
-        return None
-    m = re.search(SLICE_MARKER_RE, text, re.IGNORECASE | re.MULTILINE)
-    if m:
-        k, n = int(m.group(1)), int(m.group(2))
-        if k < 2:
-            # Slice 1 is the run that is posting this marker. Rerunning for it would rebuild
-            # the slice being handed off, on top of itself.
-            return None, None, f"k must be at least 2, got {k}/{n} (slice 1 is the run that posted it)"
-        if k > n:
-            return None, None, f"k is past n ({k}/{n})"
-        if n > SLICE_MAX:
-            return None, None, f"n is {n}, more than the {SLICE_MAX} slices a card may claim"
-        return k, n, None
-    loose = re.search(SLICE_MARKER_LOOSE_RE, text, re.IGNORECASE | re.MULTILINE)
-    if loose:
-        return None, None, f"malformed marker {loose.group(1)!r}"
-    return None
-
-
-def comment_time(c):
-    """A comment's created_at as an aware datetime, or None when it cannot be read."""
-    from datetime import datetime
-    raw = c.get("created_at")
-    if not isinstance(raw, str):
-        return None
-    try:
-        # 3.9's fromisoformat reads the CLI's own `2026-09-12T23:20:25-04:00` but not a `Z`.
-        t = datetime.fromisoformat(raw[:-1] + "+00:00" if raw.endswith("Z") else raw)
-    except ValueError:
-        return None
-    return t if t.tzinfo else t.astimezone()
-
-
-def newest_root_comment(key):
-    """The newest top-level comment on an issue, or None when there is none or it is unreadable.
-
-    Roots only, and asked for as `--roots-only`, because a slice marker is a handoff the
-    implementer makes to this router — the same words quoted in a reply under someone else's
-    thread are discussion ABOUT a handoff, not one. `--roots-only` is also the read the CLI
-    never folds, so a resolved thread cannot hide the newest root behind a summary.
-    """
-    out = mc("issue", "comment", "list", key, "--roots-only", "--output", "json")
-    if out is None:
-        log(f"could not read the comments of {key} — no slice decision this tick")
-        return None
-    try:
-        cs = json.loads(out)
-        cs = cs if isinstance(cs, list) else cs.get("comments", [])
-    except json.JSONDecodeError:
-        log(f"the comments of {key} came back unparseable — no slice decision this tick")
-        return None
-    # parent_id is checked again rather than left to the flag: this is what decides whether a
-    # fresh run starts, and it costs one comparison not to depend on the CLI honouring it.
-    roots = [c for c in cs if isinstance(c, dict) and c.get("parent_id") is None]
-    if not roots:
-        return None
-    stamped = [(comment_time(c), n, c) for n, c in enumerate(roots)]
-    if all(t is not None for t, _, _ in stamped):
-        return max(stamped, key=lambda s: (s[0], s[1]))[2]
-    # One unreadable timestamp and the sort means nothing; the CLI answers oldest-first.
-    return roots[-1]
-
-
-def slice_tick(issues, outage=None):
-    """Start the next slice of every Code card whose implementer has handed one off.
-
-    A big card is built in slices, one fresh run each, because one run's context does not
-    hold a milestone. The implementer ends a slice by pushing it and posting a HANDOFF
-    comment whose open line is `next-slice: k/n`, and deliberately does NOT move the card or
-    re-assign it: status and assignee are how the board tells a human what is happening, and
-    a card still being built has changed neither. That leaves nothing to start slice k —
-    Multica triggers on assignment, the assignee is already right, and re-assigning the same
-    agent is a no-op. `issue rerun` is the trigger that fits: same assignment, fresh context,
-    same per-issue workdir, so slice k opens on the tree slice k-1 pushed.
-
-    Four gates, cheapest first, and every one of them is a reason NOT to start a run: the
-    card is a Code card with an implementer on it; that implementer has nothing in flight;
-    the newest root comment is its own and carries a marker; and this exact slice has never
-    been started before. The last is the one that matters — `rerun` is not idempotent, and
-    two runs on one workdir is the failure this whole loop exists to avoid.
-
-    It assigns nothing. Routing is the loop in main()'s business, and a card mid-slice is
-    already sitting in the column and with the agent that loop would choose anyway.
-    """
-    for i in issues:
-        if i.get("status") != "code" or i.get("assignee_type") != "agent":
-            continue
-        agent_id = i.get("assignee_id")
-        agent_name = SLICE_IMPLEMENTERS.get(agent_id)
-        if not agent_name:
-            continue
-        # During an outage the Codex account has no credits, so a rerun there dies in seconds
-        # and spends the slice's one chance to fire on nothing. That card is the routing
-        # loop's to hand across to the stand-in first; it can slice on a later tick.
-        if outage and agent_id != STAND_IN_IMPLEMENTER:
-            continue
-        key = i.get("identifier")
-        # Fails closed — an unreadable answer counts as in flight, and run_in_flight says so.
-        # A slice started under a live run is two implementers pushing to one branch.
-        if run_in_flight(key, agent_id):
-            continue
-        newest = newest_root_comment(key)
-        if newest is None:
-            continue
-        # The marker has to be the implementer's own word. A human's (or another agent's)
-        # `next-slice: 3/4` in the newest root is a request, not a handoff, and the run it
-        # would start has no pushed slice underneath it to build on.
-        if newest.get("author_type") != "agent" or newest.get("author_id") != agent_id:
-            continue
-        parsed = parse_slice_marker(newest.get("content") or "")
-        if parsed is None:
-            continue                    # ordinary comment; the card is simply not mid-slice
-        k, n, reason = parsed
-        if reason:
-            # Keyed on the offending comment, not the card: the same bad marker must not
-            # re-log every 60 s, but a NEW bad marker later is a new thing worth seeing.
-            # It gates the LOG only — a corrected marker in a later comment still fires.
-            bad = f"{key}:slice-bad:{newest.get('id') or reason}"
-            if not already_retried(bad):
-                log(f"slice marker on {key} ignored: {reason}")
-                if not DRY:
-                    already_retried(bad, remember=True, forever=True)
-            continue
-        fired = f"{key}:slice:{k}"
-        if DRY:
-            if not already_retried(fired):
-                log(f"WOULD rerun {key} for slice {k}/{n}")
-            continue
-        # Remembered BEFORE the rerun, and forever. The two ways to be wrong are not equal: a
-        # rerun that is lost costs a stalled card a human can nudge, and a rerun that fires
-        # twice costs two agents pushing to one branch. The FAILED line makes the first
-        # visible. Its own key, so a slice never spends the card's ordinary retry budget.
-        if already_retried(fired, remember=True, forever=True):
-            continue
-        if mc("issue", "rerun", key) is None:
-            log(f"FAILED  slice {k}/{n} of {key} — rerun for {agent_name} did not take")
-        else:
-            log(f"slice {k}/{n} of {key} — fresh run for {agent_name}")
-
-
-def list_issues():
-    """Every issue on the board, page by page — not just the first one.
-
-    `issue list` answers ONE page: {has_more, issues, limit, offset, total}. Reading only that
-    page made every issue past it invisible to every decision this router makes, and silently:
-    on 2026-09-14 the board passed 50 issues and AMBR-56 sat in `todo` on page 2, unroutable,
-    while the log said nothing worse than "more issues than one page". A note is not a router.
-    The CLI's own contract is to advance --offset by the number of issues in the response that
-    reported has_more, which is what this does.
-
-    `agent list` and `squad list` return bare arrays; accept that shape rather than assume one.
-
-    A page that fails stops the walk but does not fail the tick: routing the issues already
-    read is strictly better than routing none, and the truncation note says the read was short
-    so a partial board is never mistaken for the whole one. None is a different answer — page
-    one itself was unreadable, which is a broken CLI rather than a short board, and the caller
-    gives up on the tick.
-    """
-    issues, offset = [], 0
-    for _ in range(MAX_PAGES):
-        out = mc("issue", "list", "--output", "json",
-                 "--limit", str(PAGE_SIZE), "--offset", str(offset))
-        try:
-            parsed = json.loads(out) if out is not None else None
-        except json.JSONDecodeError:
-            parsed = None
-        if parsed is None:
-            if not issues:
-                return None
-            log(f"note: board read truncated — more issues than one page, and the page at "
-                f"offset {offset} could not be read; routing the {len(issues)} issues read so far")
-            return issues
-        if not isinstance(parsed, dict):
-            return issues + list(parsed)      # a bare array: no envelope, nothing to page
-        got = parsed.get("issues") or []
-        issues += got
-        # `not got` guards the other direction: a CLI that keeps reporting has_more while
-        # answering nothing would otherwise spin here until the page cap.
-        if not parsed.get("has_more") or not got:
-            return issues
-        offset += len(got)
-    log(f"note: board read truncated at {MAX_PAGES} pages ({len(issues)} issues) — "
-        f"the CLI is still reporting more")
-    return issues
-
-
 def main():
-    issues = list_issues()
-    if issues is None:
+    out = mc("issue", "list", "--output", "json")
+    if not out:
         log("could not read the board"); return 1
+    try:
+        parsed = json.loads(out)
+    except json.JSONDecodeError:
+        log("board returned unparseable JSON"); return 1
+    # `issue list` paginates: {has_more, issues, limit, offset, total}. `agent list` and
+    # `squad list` return bare arrays. Accept either shape rather than assuming one.
+    issues = parsed["issues"] if isinstance(parsed, dict) else parsed
+    if isinstance(parsed, dict) and parsed.get("has_more"):
+        log(f"note: board reports more issues than one page ({parsed.get('total')} total)")
 
     # Outage mode first: it decides where Code goes on this very tick, and whether the model
     # fallback runs at all. Both models are on the exhausted account, so probing Astra every
@@ -683,12 +455,6 @@ def main():
 
     if not DRY and not outage:
         model_fallback_tick(issues)
-
-    # The slice loop rides on the same issue list. It runs ahead of the routing loop and is
-    # independent of it: it only ever touches cards whose column and assignee are ALREADY
-    # what the routing loop wants, so the two never act on the same card for the same reason.
-    # It needs the outage state only to know that a rerun on the Codex account would die.
-    slice_tick(issues, outage)
 
     names = {}
     for kind in ("agent", "squad"):

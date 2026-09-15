@@ -19,6 +19,11 @@ spec.loader.exec_module(R)
 tmp = tempfile.mkdtemp()
 R.OUTAGE = os.path.join(tmp, "outage.json")
 R.LOG = os.path.join(tmp, "router.log")
+# The retry memory and the model-fallback stamp are state on disk like the outage file is,
+# and the slice loop writes to the first one — redirect both, or a test run would read and
+# write the live router's memory in ~/agents/logs.
+R.RETRIED = os.path.join(tmp, "retried.json")
+R.FALLBACK = os.path.join(tmp, "fallback.json")
 out = []
 R.log = lambda m: out.append(m)
 R.mc = lambda *a: (_ for _ in ()).throw(AssertionError("un-taught CLI call: %r" % (a,)))
@@ -76,8 +81,9 @@ say("a past until closes the outage", R.codex_outage_tick([]) is None)
 say("...and deletes the file", not os.path.exists(R.OUTAGE))
 say("...and logs the required wording",
     any("codex outage over — routing code back to codex-implementer" in l for l in out))
-say("...and reminds about the squad by hand",
-    any("restore codex-reviewer" in l and "by hand" in l for l in out))
+say("...and says the squad stays all-Claude",
+    any("the review squad stays all-Claude" in l
+        and "claude-spec-reviewer for good" in l for l in out))
 
 # --------------------------------------------------------------------- unreadable / absent
 open(R.OUTAGE, "w").write("{not json")
@@ -114,10 +120,10 @@ say("a naive timestamp is stamped with the local offset",
 # ------------------------------------------------------------------------------ clear_outage
 out.clear()
 R.clear_outage("--codex-back")
-say("clear_outage removes the file and logs the wording + the reminder",
+say("clear_outage removes the file and logs the wording + the squad note",
     not os.path.exists(R.OUTAGE)
     and "codex outage over — routing code back to codex-implementer" in out[-1]
-    and "restore codex-reviewer" in out[-1] and "--codex-back" in out[-1])
+    and "claude-spec-reviewer for good" in out[-1] and "--codex-back" in out[-1])
 
 # --------------------------------------------------------------- run_in_flight (the guard's eye)
 RUNNING = [{"agent_id": STAND_IN, "status": "running", "completed_at": None}]
@@ -160,25 +166,44 @@ R.mc = lambda *a: "[]"
 say("an idle stand-in does not hold the hand-back", not R.hand_back_held([CARD]))
 
 # --------------------------------------------------- the expiry path holds, then hands back
-def teach(runs, issues):
-    """A CLI that answers only what this harness has taught it; records assigns, refuses the rest."""
+def teach(runs, issues, comments=None):
+    """A CLI that answers only what this harness has taught it; records assigns, refuses the rest.
+
+    `comments` maps issue key -> the comment list `issue comment list` should answer with, and
+    `--roots-only` is honoured here exactly as the real CLI honours it, so a test can prove the
+    router asked for roots. A runs entry of "unreadable" makes `issue runs` answer None, which
+    is how the CLI reports a failure — the fail-closed paths need that shape.
+    """
     calls, assigns = [], []
 
     def mc(*a):
         calls.append(a)
         if a[:2] == ("issue", "list"):
-            return json.dumps({"issues": issues, "has_more": False, "total": len(issues)})
+            # Pages the way the real CLI does, so the router's paging walk is exercised
+            # rather than stubbed out: --limit/--offset in, one page plus has_more out.
+            limit = int(a[a.index("--limit") + 1]) if "--limit" in a else len(issues)
+            offset = int(a[a.index("--offset") + 1]) if "--offset" in a else 0
+            page = issues[offset:offset + limit]
+            return json.dumps({"issues": page, "limit": limit, "offset": offset,
+                               "total": len(issues),
+                               "has_more": offset + len(page) < len(issues)})
         if a[:2] == ("agent", "list"):
             return json.dumps([{"id": STAND_IN, "name": "claude-implementer"},
                                {"id": CODEX, "name": "codex-implementer"}])
         if a[:2] == ("squad", "list"):
             return json.dumps([])
         if a[:2] == ("issue", "runs"):
-            return json.dumps(runs.get(a[2], []))
+            r = runs.get(a[2], [])
+            return None if r == "unreadable" else json.dumps(r)
         if a[:2] == ("issue", "timeline"):
             return ""
         if a[:3] == ("issue", "comment", "list"):
-            return "[]"
+            cs = (comments or {}).get(a[3], [])
+            if "--roots-only" in a:
+                cs = [c for c in cs if c.get("parent_id") is None]
+            return json.dumps(cs)
+        if a[:2] == ("issue", "rerun"):
+            return json.dumps({"id": "run-1", "status": "queued"})
         if a[:2] == ("issue", "assign"):
             assigns.append(a)
             return "ok"
@@ -274,6 +299,272 @@ sys.argv.extend(["--codex-outage-until", "X"])
 say("flag_value reads --flag value", R.flag_value("--codex-outage-until") == "X")
 sys.argv[-2:] = ["--codex-outage-until=Y"]
 say("flag_value reads --flag=value", R.flag_value("--codex-outage-until") == "Y")
+
+# ======================================================================== list_issues (paging)
+# The board outgrew one page on 2026-09-14 — 60 issues, 50 to a page — and AMBR-56 sat in `todo`
+# on page 2 where nothing could route it. Reading every page is what makes the rest of this file
+# true: a gate that is never asked about an issue is not a gate.
+def pager(pages):
+    """A CLI answering `issue list` from {offset: page}; "boom" is unreadable, "junk" unparseable."""
+    calls = []
+
+    def mc(*a):
+        calls.append(a)
+        if a[:2] != ("issue", "list"):
+            raise AssertionError("un-taught CLI call: %r" % (a,))
+        p = pages.get(int(a[a.index("--offset") + 1]))
+        if p == "boom":
+            return None
+        if p == "junk":
+            return "{not json"
+        return json.dumps(p)
+    return mc, calls
+
+
+saved_page = R.PAGE_SIZE
+A = [{"identifier": "A%d" % n} for n in range(4)]
+R.PAGE_SIZE = 2
+P0 = {"issues": A[:2], "has_more": True, "limit": 2, "offset": 0, "total": 4}
+P2 = {"issues": A[2:], "has_more": False, "limit": 2, "offset": 2, "total": 4}
+
+R.mc, calls = pager({0: P0, 2: P2})
+out.clear()
+say("two pages merge into one board", R.list_issues() == A)
+say("...one call per page, paged with --limit and --offset",
+    len(calls) == 2 and calls[0][calls[0].index("--limit") + 1] == "2"
+    and calls[1][calls[1].index("--offset") + 1] == "2")
+say("...and a normal multi-page board logs nothing at all", not out)
+
+R.mc, calls = pager({0: P0, 2: "boom"})
+out.clear()
+say("a page that fails falls back to what was read, and says the read was short",
+    R.list_issues() == A[:2]
+    and any("truncated" in l and "2 issues read so far" in l for l in out))
+R.mc, calls = pager({0: P0, 2: "junk"})
+out.clear()
+say("a page that will not parse does the same",
+    R.list_issues() == A[:2] and any("truncated" in l for l in out))
+R.mc, calls = pager({0: "boom"})
+out.clear()
+say("an unreadable first page is no board at all, and no note", R.list_issues() is None and not out)
+R.mc, calls = pager({0: "junk"})
+say("...and so is an unparseable first page", R.list_issues() is None)
+
+R.mc = lambda *a: json.dumps({"issues": [{"identifier": "Z"}], "has_more": True, "total": 999})
+out.clear()
+say("a CLI that always says has_more is stopped by the page cap",
+    len(R.list_issues()) == R.MAX_PAGES and any("truncated" in l for l in out))
+R.mc = lambda *a: json.dumps({"issues": [], "has_more": True, "total": 5})
+out.clear()
+say("a page with no issues ends the walk instead of spinning", R.list_issues() == [] and not out)
+R.mc = lambda *a: json.dumps([{"identifier": "B1"}])
+say("a bare array answer needs no paging", R.list_issues() == [{"identifier": "B1"}])
+
+# The bug itself, as an assertion: an issue that exists only on page 2 must still route.
+R.PAGE_SIZE = 1
+if os.path.exists(R.OUTAGE):
+    os.remove(R.OUTAGE)
+R.CODEX_BACK = R.CODEX_FORCE = R.DRY = False
+R.CODEX_OUTAGE_UNTIL = None
+R._FAILED_COMMENTS = {}
+two = [{"identifier": "AMBR-55", "status": "done", "assignee_id": None, "assignee_type": None},
+       {"identifier": "AMBR-56", "status": "todo", "assignee_id": None, "assignee_type": None}]
+R.mc, calls, assigns = teach({}, two)
+out.clear()
+rc = R.main()
+say("main() routes an issue that exists only on page 2 (the AMBR-56 bug)",
+    rc == 0 and ("issue", "assign", "AMBR-56", "--to", "claude-planner") in assigns)
+R.PAGE_SIZE = saved_page
+
+
+# ============================================================================== the slice loop
+# A big card is built one slice per run: the implementer pushes a slice, posts a HANDOFF comment
+# whose open line is `next-slice: k/n`, and stops WITHOUT touching status or assignee. Nothing on
+# the board changes, so only the router can start slice k — and `issue rerun` is what starts it.
+LEAD = "0e2f96cd-6a41-4534-b1ac-8abef34cd617"          # everettyan: a member, not an agent
+OTHER_AGENT = "acfbf147-8723-49e4-bc53-14a5033bbd0d"   # another agent commenting on the same card
+CODE_CARD = {"identifier": "AMBR-77", "status": "code",
+             "assignee_id": CODEX, "assignee_type": "agent"}
+HANDOFF = "Slice 1 is pushed to the branch.\n\nHANDOFF\n```\nopen: next-slice: 2/3\n```\n"
+
+
+def cmt(author, content, cid, when, parent=None, atype="agent"):
+    """One comment in the shape `issue comment list --output json` really answers with."""
+    return {"id": cid, "author_id": author, "author_type": atype, "parent_id": parent,
+            "content": content, "created_at": when, "issue_id": "x", "type": "comment"}
+
+
+def reset_memory():
+    """A fresh retry memory, so one case's remembered slice cannot decide the next one."""
+    if os.path.exists(R.RETRIED):
+        os.remove(R.RETRIED)
+
+
+R.DRY = R.CODEX_BACK = R.CODEX_FORCE = False
+
+# ---------------------------------------------------------------------------- the marker itself
+say("a plain marker parses", R.parse_slice_marker("next-slice: 2/3") == (2, 3, None))
+say("the open: prefix inside a ``` HANDOFF block parses", R.parse_slice_marker(HANDOFF) == (2, 3, None))
+say("case and spacing are not load-bearing",
+    R.parse_slice_marker("  OPEN:  Next-Slice:  4 / 6  ") == (4, 6, None))
+say("a marker on its own line among others parses",
+    R.parse_slice_marker("built it\nopen: next-slice: 3/5\nPR is up") == (3, 5, None))
+say("an ordinary comment carries no marker",
+    R.parse_slice_marker("pushed the PR, over to review") is None)
+say("next-slice mid-sentence is not a marker line",
+    R.parse_slice_marker("I will post next-slice: when the tests pass") is None)
+k1 = R.parse_slice_marker("next-slice: 1/3")
+say("k == 1 is refused — slice 1 is the run that posted it",
+    k1[:2] == (None, None) and "at least 2" in k1[2])
+kn = R.parse_slice_marker("next-slice: 4/3")
+say("k past n is refused", kn[:2] == (None, None) and "past n" in kn[2])
+big = R.parse_slice_marker("next-slice: 2/7")
+say(f"n past the cap of {R.SLICE_MAX} is refused",
+    big[:2] == (None, None) and f"more than the {R.SLICE_MAX}" in big[2])
+bad = R.parse_slice_marker("next-slice: two of three")
+say("garbage on a next-slice line is malformed, not absent",
+    bad[:2] == (None, None) and "malformed marker" in bad[2] and "two of three" in bad[2])
+
+# --------------------------------------------------------------------------- newest_root_comment
+ROOTS = [cmt(CODEX, "first", "c1", "2026-09-13T01:00:00-04:00"),
+         cmt(LEAD, "second", "c2", "2026-09-13T03:00:00-04:00", atype="member")]
+R.mc = lambda *a: json.dumps(ROOTS)
+say("the newest root is the latest created_at", R.newest_root_comment("AMBR-77")["id"] == "c2")
+R.mc = lambda *a: json.dumps(list(reversed(ROOTS)))
+say("...whatever order the CLI answered in", R.newest_root_comment("AMBR-77")["id"] == "c2")
+R.mc = lambda *a: json.dumps(
+    ROOTS + [cmt(CODEX, "open: next-slice: 2/3", "c3", "2026-09-13T09:00:00-04:00", parent="c2")])
+say("a reply is never the newest ROOT, however new it is",
+    R.newest_root_comment("AMBR-77")["id"] == "c2")
+out.clear()
+R.mc = lambda *a: None
+say("an unreadable comment answer is no decision, and says so",
+    R.newest_root_comment("AMBR-77") is None and "no slice decision" in out[-1])
+out.clear()
+R.mc = lambda *a: "not json"
+say("an unparseable comment answer is no decision, and says so",
+    R.newest_root_comment("AMBR-77") is None and "no slice decision" in out[-1])
+
+# ------------------------------------------------------------------------------------ slice_tick
+def run_slices(issues, runs, comments, dry=False, outage=None, ticks=1):
+    """Drive slice_tick over a taught CLI; returns the reruns asked for, the log, and any assigns."""
+    R.DRY = dry
+    R.mc, calls, assigns = teach(runs, issues, comments)
+    out.clear()
+    for _ in range(ticks):
+        R.slice_tick(issues, outage)
+    R.DRY = False
+    return [c for c in calls if c[:2] == ("issue", "rerun")], list(out), assigns
+
+
+CS = {"AMBR-77": [cmt(CODEX, HANDOFF, "h1", "2026-09-13T01:00:00-04:00")]}
+
+reset_memory()
+reruns, lines, assigns = run_slices([CODE_CARD], {"AMBR-77": []}, CS)
+say("a valid marker starts the next slice", reruns == [("issue", "rerun", "AMBR-77")])
+say("...logged with the slice and the agent",
+    "slice 2/3 of AMBR-77 — fresh run for codex-implementer" in lines)
+say("...and the slice loop assigns nothing", not assigns)
+say("...remembered under {KEY}:slice:{k}", "AMBR-77:slice:2" in json.load(open(R.RETRIED)))
+say("...with a stamp neither the hour nor the day's prune can expire",
+    json.load(open(R.RETRIED))["AMBR-77:slice:2"] == R.SLICE_FOREVER
+    and R.already_retried("AMBR-77:slice:2"))
+say("...and without spending the card's ordinary retry budget", not R.already_retried("AMBR-77"))
+
+reset_memory()
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []}, CS, ticks=2)
+say("the same slice never fires twice, even with nothing in flight", len(reruns) == 1)
+
+reset_memory()
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": [{"agent_id": CODEX, "status": "running"}]}, CS)
+say("a run in flight blocks the slice", not reruns)
+
+reset_memory()
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": "unreadable"}, CS)
+say("an unreadable runs answer fails closed — no slice, and it says so",
+    not reruns and any("treating it as work in flight" in l for l in lines))
+
+reset_memory()
+by_lead = {"AMBR-77": [cmt(CODEX, HANDOFF, "h1", "2026-09-13T01:00:00-04:00"),
+                       cmt(LEAD, "open: next-slice: 2/3", "L1", "2026-09-13T05:00:00-04:00",
+                           atype="member")]}
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []}, by_lead)
+say("a marker in the lead's newest comment is a request, not a handoff", not reruns and not lines)
+
+reset_memory()
+by_other = {"AMBR-77": [cmt(CODEX, HANDOFF, "h1", "2026-09-13T01:00:00-04:00"),
+                        cmt(OTHER_AGENT, "open: next-slice: 2/3", "A1", "2026-09-13T05:00:00-04:00")]}
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []}, by_other)
+say("...nor is one from a different agent", not reruns and not lines)
+
+reset_memory()
+in_reply = {"AMBR-77": [cmt(CODEX, "slice 1 pushed", "r0", "2026-09-13T01:00:00-04:00"),
+                        cmt(CODEX, "open: next-slice: 2/3", "r1", "2026-09-13T06:00:00-04:00",
+                            parent="r0")]}
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []}, in_reply)
+say("a marker in a reply is discussion, not a handoff", not reruns and not lines)
+
+reset_memory()
+reruns, _, _ = run_slices([{**CODE_CARD, "status": "in_review"}], {"AMBR-77": []}, CS)
+say("only the code column slices", not reruns)
+reset_memory()
+reruns, _, _ = run_slices([{**CODE_CARD, "status": "todo"}], {"AMBR-77": []}, CS)
+say("...todo does not", not reruns)
+reset_memory()
+reruns, _, _ = run_slices([{**CODE_CARD, "assignee_id": LEAD, "assignee_type": "member"}],
+                          {"AMBR-77": []}, CS)
+say("a card parked with a human never slices", not reruns)
+
+reset_memory()
+reruns, _, _ = run_slices([CODE_CARD], {"AMBR-77": []}, CS, outage={"until": "later"})
+say("during an outage a codex-implementer card is left alone — its reruns die instantly",
+    not reruns)
+reset_memory()
+STAND_CARD = {**CODE_CARD, "assignee_id": STAND_IN}
+CS_STAND = {"AMBR-77": [cmt(STAND_IN, HANDOFF, "h1", "2026-09-13T01:00:00-04:00")]}
+reruns, lines, _ = run_slices([STAND_CARD], {"AMBR-77": []}, CS_STAND, outage={"until": "later"})
+say("...but the stand-in's own card still slices",
+    reruns == [("issue", "rerun", "AMBR-77")]
+    and "slice 2/3 of AMBR-77 — fresh run for claude-implementer" in lines)
+
+for text, want in (("next-slice: 1/3", "at least 2"),
+                   ("next-slice: 4/3", "past n"),
+                   ("next-slice: 2/7", f"more than the {R.SLICE_MAX}"),
+                   ("next-slice: two of three", "malformed marker")):
+    reset_memory()
+    reruns, lines, _ = run_slices(
+        [CODE_CARD], {"AMBR-77": []},
+        {"AMBR-77": [cmt(CODEX, text, "b1", "2026-09-13T01:00:00-04:00")]}, ticks=2)
+    ignored = [l for l in lines if l.startswith("slice marker on AMBR-77 ignored")]
+    say(f"{text!r} is ignored, logged once over two ticks, never rerun",
+        not reruns and len(ignored) == 1 and want in ignored[0])
+
+reset_memory()
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []},
+                              {"AMBR-77": [cmt(CODEX, "PR is up, over to review", "n1",
+                                               "2026-09-13T01:00:00-04:00")]})
+say("a newest comment with no marker is silence, not a log line", not reruns and not lines)
+
+reset_memory()
+reruns, lines, _ = run_slices([CODE_CARD], {"AMBR-77": []}, CS, dry=True)
+say("DRY says WOULD and reruns nothing",
+    not reruns and "WOULD rerun AMBR-77 for slice 2/3" in lines)
+say("...and writes no memory", not os.path.exists(R.RETRIED))
+
+# ------------------------------------------------------------------- main() runs it every tick
+if os.path.exists(R.OUTAGE):
+    os.remove(R.OUTAGE)
+reset_memory()
+R.CODEX_BACK = R.CODEX_FORCE = R.DRY = False
+R.CODEX_OUTAGE_UNTIL = None
+R._FAILED_COMMENTS = {}
+R.mc, calls, assigns = teach({"AMBR-77": []}, [CODE_CARD], CS)
+out.clear()
+rc = R.main()
+say("main() runs the slice loop on an ordinary tick",
+    rc == 0 and ("issue", "rerun", "AMBR-77") in calls)
+say("...and that tick assigns nothing — the card is already where routing wants it", not assigns)
+
 
 print(f"\n{checks} assertions — " + ("SOME FAILED" if failed else "ALL PASSED"))
 sys.exit(1 if failed else 0)

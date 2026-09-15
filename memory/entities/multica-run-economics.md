@@ -74,3 +74,42 @@ caps drain, and the docs do not state how the caps weight cache reads.
 
 Related: [Multica server on the mini](multica-server.md) · [Codex](codex.md) ·
 [CodeGraph](codegraph.md).
+## Applied 2026-09-14 (Everett's decisions t1–t5)
+
+- **Ceiling on, as a trial:** `CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000` in the custom_env of
+  `claude-implementer`, `claude-reviewer`, `claude-spec-reviewer`. Judge it on the next two build
+  cards: `multica issue usage <KEY>` reads/run against the baseline (implementer 27.7M, reviewers
+  5.5-6.2M) and the lead's round line, which now records `mode <full|targeted>`.
+- **Rounds ≥ 2 targeted, green gates not re-run** (both reviewer files, `codex-reviewer.md` kept in
+  sync while archived, `review-lead.md` dispatches `targeted` by default after a fix round).
+- **Implementer test-loop budget** (full suite ≤ 2×/run, targeted suites, `debug-gate-failure`
+  after the second red) in both implementer files.
+- **Weekly burn report:** `~/agents/scripts/multica-usage-report.py` → standing card AMBR-60
+  (backlog, unassigned), LaunchAgent `com.user.multica-usage-report` Mondays 09:15; each report
+  shows the previous 7 days beside the current ones.
+- **Kept Opus 5** for the stand-in implementer (item 12). **Proposed (t6):** slice big cards by
+  blast radius into fresh implementer runs (router `issue rerun` on a `next-slice:` HANDOFF line).
+- Record: spec 61 §History 2026-09-14 05:40 (`82f278fc`), daily log 2026-09-14.
+
+## Resume, not fresh: why fix rounds cost as much as builds (found 2026-09-14)
+
+Multica hands every later run on the same card + agent the prior Claude session id
+(`PriorSessionID` → `claude --resume`): a `direct` run after re-assignment and a `comment`
+run after the lead's hand-back both continue the build's conversation, so a fix round starts
+with the build's whole context and grows it. Only `multica issue rerun` starts clean — it pins
+`force_fresh_session=true` (`internal/service/task.go:5676`), which is what the slice loop
+relies on (confirmed live 2026-09-14 04:47: the slice-2 run opened by re-reading the card).
+With the 200K ceiling a resumed session compacts on its first turn over the threshold. A fresh
+session per fix round would need the router to trigger fix rounds through the rerun API rather
+than the assign trigger — a candidate lever; measure the resumed-plus-ceiling cost first.
+
+## Live test 2026-09-14 (AMBR-57, the 0070 build) — the levers measured
+
+Released 04:39, approved 06:36: 14 runs, 53.6M cache reads, 570K output ≈ $52, two review
+rounds — against $96–153 and three rounds for the 2026-09-13 design-pass milestones. Build as
+three fresh slice runs 0.6M + 6.7M + 13.3M reads (baseline single builds 102–105M); round-1
+reviewers 4.7M / 5.3M (baseline 12.3M / 11.5M); the fix round 9.2M on a resumed session under
+the ceiling (baseline 22–55M) with 19 jest calls (baseline 81). Round 1 elapsed 16 min (baseline
+58). The gate-skip half of lever 2 did not fire: the daemon PAT cannot read PR checks — grant
+read-only Checks / Commit statuses / Actions. The targeted-round path was not exercised (round 2
+was a legitimate full pass: shared payload keys removed) — first exercise on a later card.

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.user.multica-usage-report</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>-c</string>
+    <string>exec /usr/bin/python3 "$HOME/agents/scripts/multica-usage-report.py" --issue AMBR-60 --days 7</string></array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>15</integer></dict>
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>/Users/orchestrator/agents/logs/multica-usage-report.out</string>
+  <key>StandardErrorPath</key><string>/Users/orchestrator/agents/logs/multica-usage-report.err</string>
+</dict>
+</plist>
