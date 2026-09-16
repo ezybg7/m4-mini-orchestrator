@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Print the rehearsal project's connection string with the database swapped.
 
 Inline python inside a shell double-quoted string kept eating the `$` end-anchor and

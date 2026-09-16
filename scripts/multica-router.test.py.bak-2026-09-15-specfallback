@@ -26,7 +26,7 @@ R.RETRIED = os.path.join(tmp, "retried.json")
 R.FALLBACK = os.path.join(tmp, "fallback.json")
 out = []
 R.log = lambda m: out.append(m)
-R.mc = lambda *a, **k: (_ for _ in ()).throw(AssertionError("un-taught CLI call: %r" % (a,)))
+R.mc = lambda *a: (_ for _ in ()).throw(AssertionError("un-taught CLI call: %r" % (a,)))
 
 failed = False
 checks = 0
@@ -43,7 +43,6 @@ def say(t, ok):
 now = datetime.now().astimezone()
 STAND_IN = R.STAND_IN_IMPLEMENTER
 CODEX = "8b234c22-58d2-4e3e-9d89-73760b11347c"
-REVIEW_SQUAD = "074e7a7d-8e19-4a1e-9f52-0b6d3f2c8a11"   # the `review` squad, a card's owner in_review
 
 # ---------------------------------------------------------------------- parse_retry_at
 msg = ("You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to "
@@ -167,31 +166,17 @@ R.mc = lambda *a: "[]"
 say("an idle stand-in does not hold the hand-back", not R.hand_back_held([CARD]))
 
 # --------------------------------------------------- the expiry path holds, then hands back
-def teach(runs, issues, comments=None, metadata=None):
+def teach(runs, issues, comments=None):
     """A CLI that answers only what this harness has taught it; records assigns, refuses the rest.
 
     `comments` maps issue key -> the comment list `issue comment list` should answer with, and
     `--roots-only` is honoured here exactly as the real CLI honours it, so a test can prove the
-    router asked for roots. `--active` on `issue runs` is honoured the same way — the fallback
-    reads the full history and the in-flight guard reads the live subset of it, off one taught
-    list, which is the relationship the real CLI has. A runs entry of "unreadable" makes
-    `issue runs` answer None, which is how the CLI reports a failure — the fail-closed paths
-    need that shape.
-
-    Posts are recorded separately from assigns: `issue comment add` carries its body on STDIN,
-    not in argv, so the fourth return value is (args, body) pairs and a test can assert both.
-
-    `metadata` maps issue key -> the KV dict `issue metadata get` should answer from, and
-    answers the way the real CLI does: a BARE JSON value for a key that is set (`2`, not
-    `{"review_round": 2}`), and None for one that is not, because the real CLI exits 1 with
-    `key "review_round" not found on issue` and `mc` turns a non-zero exit into None. "unreadable"
-    makes the whole read answer None, which is the other way that shape arrives. Untaught is the
-    ordinary case and means "no keys on this card" — every card on the real board answers its
-    metadata straight off the `issue list` row, so this path is the fallback, not the norm.
+    router asked for roots. A runs entry of "unreadable" makes `issue runs` answer None, which
+    is how the CLI reports a failure — the fail-closed paths need that shape.
     """
-    calls, assigns, posts = [], [], []
+    calls, assigns = [], []
 
-    def mc(*a, stdin=None):
+    def mc(*a):
         calls.append(a)
         if a[:2] == ("issue", "list"):
             # Pages the way the real CLI does, so the router's paging walk is exercised
@@ -204,19 +189,12 @@ def teach(runs, issues, comments=None, metadata=None):
                                "has_more": offset + len(page) < len(issues)})
         if a[:2] == ("agent", "list"):
             return json.dumps([{"id": STAND_IN, "name": "claude-implementer"},
-                               {"id": CODEX, "name": "codex-implementer"},
-                               {"id": R.PLANNER, "name": "claude-planner"},
-                               {"id": R.SPEC_REVIEWER, "name": "codex-spec-reviewer"},
-                               {"id": R.STAND_IN_SPEC_REVIEWER, "name": "claude-spec-reviewer"}])
+                               {"id": CODEX, "name": "codex-implementer"}])
         if a[:2] == ("squad", "list"):
-            return json.dumps([{"id": REVIEW_SQUAD, "name": "review"}])
+            return json.dumps([])
         if a[:2] == ("issue", "runs"):
             r = runs.get(a[2], [])
-            if r == "unreadable":
-                return None
-            if "--active" in a:
-                r = [x for x in r if x.get("status") in R.IN_FLIGHT]
-            return json.dumps(r)
+            return None if r == "unreadable" else json.dumps(r)
         if a[:2] == ("issue", "timeline"):
             return ""
         if a[:3] == ("issue", "comment", "list"):
@@ -224,29 +202,18 @@ def teach(runs, issues, comments=None, metadata=None):
             if "--roots-only" in a:
                 cs = [c for c in cs if c.get("parent_id") is None]
             return json.dumps(cs)
-        if a[:3] == ("issue", "metadata", "get"):
-            m = (metadata or {}).get(a[3], {})
-            if m == "unreadable":
-                return None
-            want = a[a.index("--key") + 1] if "--key" in a else None
-            if want not in m:
-                return None              # the CLI exits 1: key "…" not found on issue
-            return json.dumps(m[want])
         if a[:2] == ("issue", "rerun"):
             return json.dumps({"id": "run-1", "status": "queued"})
-        if a[:3] == ("issue", "comment", "add"):
-            posts.append((a, stdin))
-            return json.dumps({"id": "01a09000-0000-7000-8000-000000000001"})
         if a[:2] == ("issue", "assign"):
             assigns.append(a)
             return "ok"
         raise AssertionError("un-taught CLI call: %r" % (a,))
-    return mc, calls, assigns, posts
+    return mc, calls, assigns
 
 
 past = {"until": (now - timedelta(minutes=1)).isoformat(), "reason": "t", "set_by": "t"}
 json.dump(past, open(R.OUTAGE, "w"))
-R.mc, _, _, _ = teach({"AMBR-38": RUNNING}, [CARD])
+R.mc, _, _ = teach({"AMBR-38": RUNNING}, [CARD])
 out.clear()
 held = R.codex_outage_tick([CARD])
 say("expiry with a live stand-in run keeps the outage open", held is not None)
@@ -254,7 +221,7 @@ say("...keeps the state file", os.path.exists(R.OUTAGE))
 say("...logs the hold, not the hand-back",
     any("holding the hand-back" in l for l in out)
     and not any("routing code back" in l for l in out))
-R.mc, _, _, _ = teach({"AMBR-38": []}, [CARD])
+R.mc, _, _ = teach({"AMBR-38": []}, [CARD])
 out.clear()
 say("expiry with an idle stand-in closes the outage", R.codex_outage_tick([CARD]) is None)
 say("...deletes the state file", not os.path.exists(R.OUTAGE))
@@ -264,7 +231,7 @@ say("...and logs the hand-back", any("routing code back to codex-implementer" in
 def run_main(codex_back, force, runs, issues, state=None):
     json.dump(state or past, open(R.OUTAGE, "w"))
     R.CODEX_BACK, R.CODEX_FORCE, R.CODEX_OUTAGE_UNTIL, R.DRY = codex_back, force, None, False
-    R.mc, calls, assigns, _ = teach(runs, issues)
+    R.mc, calls, assigns = teach(runs, issues)
     R._FAILED_COMMENTS = {}
     out.clear()
     rc = R.main()
@@ -294,7 +261,7 @@ say("--codex-back with an idle stand-in clears and hands back",
 rc, assigns, lines = run_main(True, False, {}, [], state=past)
 os.remove(R.OUTAGE) if os.path.exists(R.OUTAGE) else None
 R.CODEX_BACK, R.CODEX_FORCE = True, False
-R.mc, _, _, _ = teach({}, [])
+R.mc, _, _ = teach({}, [])
 out.clear()
 say("--codex-back with no file says so and exits 0",
     R.main() == 0 and any("nothing to clear" in l for l in out))
@@ -315,7 +282,7 @@ out.clear()
 R.clear_outage("dry")
 say("DRY clear_outage deletes nothing", os.path.exists(R.OUTAGE) and out[-1].startswith("WOULD clear"))
 json.dump(past, open(R.OUTAGE, "w"))
-R.mc, _, _, _ = teach({"AMBR-38": []}, [CARD])
+R.mc, _, _ = teach({"AMBR-38": []}, [CARD])
 out.clear()
 say("DRY expiry keeps the file and says WOULD",
     R.codex_outage_tick([CARD]) is None and os.path.exists(R.OUTAGE)
@@ -402,7 +369,7 @@ R.CODEX_OUTAGE_UNTIL = None
 R._FAILED_COMMENTS = {}
 two = [{"identifier": "AMBR-55", "status": "done", "assignee_id": None, "assignee_type": None},
        {"identifier": "AMBR-56", "status": "todo", "assignee_id": None, "assignee_type": None}]
-R.mc, calls, assigns, _ = teach({}, two)
+R.mc, calls, assigns = teach({}, two)
 out.clear()
 rc = R.main()
 say("main() routes an issue that exists only on page 2 (the AMBR-56 bug)",
@@ -482,7 +449,7 @@ say("an unparseable comment answer is no decision, and says so",
 def run_slices(issues, runs, comments, dry=False, outage=None, ticks=1):
     """Drive slice_tick over a taught CLI; returns the reruns asked for, the log, and any assigns."""
     R.DRY = dry
-    R.mc, calls, assigns, _ = teach(runs, issues, comments)
+    R.mc, calls, assigns = teach(runs, issues, comments)
     out.clear()
     for _ in range(ticks):
         R.slice_tick(issues, outage)
@@ -591,463 +558,12 @@ reset_memory()
 R.CODEX_BACK = R.CODEX_FORCE = R.DRY = False
 R.CODEX_OUTAGE_UNTIL = None
 R._FAILED_COMMENTS = {}
-R.mc, calls, assigns, _ = teach({"AMBR-77": []}, [CODE_CARD], CS)
+R.mc, calls, assigns = teach({"AMBR-77": []}, [CODE_CARD], CS)
 out.clear()
 rc = R.main()
 say("main() runs the slice loop on an ordinary tick",
     rc == 0 and ("issue", "rerun", "AMBR-77") in calls)
 say("...and that tick assigns nothing — the card is already where routing wants it", not assigns)
-
-
-# ==================================================================== the spec-review fallback
-# The planner writes the PRD and the spec on a `todo` card, posts ONE comment @mentioning the gpt
-# spec reviewer, and ends its turn — no column move, no re-assignment, because the card is still
-# its own. That mention is the whole dispatch. While the Codex account is out of credits the
-# reviewer's run dies in seconds on the usage limit and the mention is spent: nothing re-posts it,
-# and no other loop here watches a card whose column and assignee are already right, so it stalls
-# in `todo` looking finished. Everett has un-stalled it by hand twice, identically. The shapes
-# below are AMBR-46's real ones, read off the board on 2026-09-15.
-GPT_REVIEWER = R.SPEC_REVIEWER
-CLAUDE_REVIEWER = R.STAND_IN_SPEC_REVIEWER
-PLANNER = R.PLANNER
-LIMIT = ("You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase "
-         "more credits or try again at Sep 19th, 2026 4:09 AM.")
-TRIGGER = "01a097b1-be80-70d6-8af6-e435179c9e13"      # the planner's mention comment, from AMBR-46
-TODO_CARD = {"identifier": "AMBR-46", "status": "todo",
-             "assignee_id": PLANNER, "assignee_type": "agent"}
-OUTAGE_ON = {"until": "2099-01-01T00:00:00-05:00", "reason": "t", "set_by": "t"}
-FIRED = f"AMBR-46:specfallback:{TRIGGER}"
-
-
-def rec(agent, status, when, error=None, trigger=None):
-    """One run in the shape `issue runs <KEY> --output json` really answers with."""
-    return {"agent_id": agent, "status": status, "created_at": when,
-            "error": error, "trigger_comment_id": trigger}
-
-
-DEAD = rec(GPT_REVIEWER, "failed", "2026-09-12T18:16:43-04:00", LIMIT, TRIGGER)
-# Newest first, which is the order the CLI documents and answers in.
-HISTORY = [DEAD, rec(PLANNER, "completed", "2026-09-12T18:00:57-04:00")]
-
-
-def run_fallback(runs, issues=None, outage=OUTAGE_ON, dry=False, ticks=1):
-    """Drive spec_review_fallback_tick over a taught CLI; returns its posts, the log, the assigns."""
-    issues = issues if issues is not None else [TODO_CARD]
-    R.DRY = dry
-    R.mc, calls, assigns, posts = teach(runs, issues)
-    out.clear()
-    for _ in range(ticks):
-        R.spec_review_fallback_tick(issues, outage)
-    R.DRY = False
-    return posts, list(out), assigns
-
-
-reset_memory()
-posts, lines, _ = run_fallback({"AMBR-46": HISTORY}, outage=None)
-say("outage off — the fallback does not even look", not posts and not lines)
-
-reset_memory()
-posts, lines, assigns = run_fallback({"AMBR-46": HISTORY})
-say("a dead gpt spec review during an outage dispatches the stand-in, exactly once", len(posts) == 1)
-say("...as a reply under the planner's mention, with the body on stdin",
-    posts and posts[0][0] == ("issue", "comment", "add", "AMBR-46",
-                              "--parent", TRIGGER, "--content-stdin"))
-say("...the stand-in mentioned live, the planner's mention in backticks so it is not woken now",
-    posts and posts[0][1] == R.SPEC_FALLBACK_BODY
-    and f"[@claude-spec-reviewer](mention://agent/{CLAUDE_REVIEWER})" in posts[0][1]
-    and f"`[@claude-planner](mention://agent/{PLANNER})`" in posts[0][1]
-    and "router outage mode" in posts[0][1] and "FIND-001" in posts[0][1])
-say("...logged with the card, the cause and the comment it went under",
-    f"spec-review fallback: AMBR-46 — codex-spec-reviewer failed on the usage limit; "
-    f"dispatched claude-spec-reviewer under {TRIGGER}" in lines)
-say("...and the fallback assigns nothing", not assigns)
-say("...remembered under {KEY}:specfallback:{trigger comment}", FIRED in json.load(open(R.RETRIED)))
-say("...with a stamp neither the hour nor the day's prune can expire",
-    json.load(open(R.RETRIED))[FIRED] == R.SLICE_FOREVER and R.already_retried(FIRED))
-say("...and without spending the card's ordinary retry budget", not R.already_retried("AMBR-46"))
-
-reset_memory()
-posts, lines, _ = run_fallback({"AMBR-46": HISTORY}, ticks=2)
-say("the same mention is never answered twice, however many ticks pass", len(posts) == 1)
-
-reset_memory()
-busy = [rec(PLANNER, "running", "2026-09-12T18:20:00-04:00")] + HISTORY
-posts, lines, _ = run_fallback({"AMBR-46": busy})
-say("a run in flight on the card blocks the dispatch, whoever owns it", not posts)
-say("...and nothing is remembered, so it fires on the tick after that run ends",
-    not os.path.exists(R.RETRIED))
-
-reset_memory()
-after = [rec(CLAUDE_REVIEWER, "completed", "2026-09-12T18:18:04-04:00", trigger="01a097b2-f97a")]
-posts, lines, _ = run_fallback({"AMBR-46": after + HISTORY})
-say("a stand-in run started after the death is the fallback already done — by hand or by a lost "
-    "tick", not posts and not lines)
-
-reset_memory()
-before = HISTORY + [rec(CLAUDE_REVIEWER, "completed", "2026-09-12T17:00:00-04:00")]
-posts, _, _ = run_fallback({"AMBR-46": before})
-say("...but a stand-in run from BEFORE it is an earlier round, not an answer to this one",
-    len(posts) == 1)
-
-reset_memory()
-other = [rec(GPT_REVIEWER, "failed", "2026-09-12T18:16:43-04:00",
-             "You're out of usage credits. Switch to another model to continue.", TRIGGER)]
-posts, lines, _ = run_fallback({"AMBR-46": other})
-say("a failed review that is not the usage limit is left alone (AMBR-28's wording)",
-    not posts and not lines)
-
-reset_memory()
-posts, _, _ = run_fallback({"AMBR-46": [rec(GPT_REVIEWER, "failed",
-                                            "2026-09-12T18:16:43-04:00", LIMIT.upper(), TRIGGER)]})
-say("the limit message is matched case-insensitively", len(posts) == 1)
-
-reset_memory()
-posts, lines, _ = run_fallback({"AMBR-46": [rec(GPT_REVIEWER, "failed",
-                                                "2026-09-12T18:16:43-04:00", LIMIT, None)]})
-say("a dead run with no trigger comment has nothing to reply under", not posts and not lines)
-
-reset_memory()
-posts, _, _ = run_fallback({"AMBR-46": [rec(GPT_REVIEWER, "completed",
-                                            "2026-09-12T18:16:43-04:00", None, TRIGGER)]})
-say("a gpt review that completed is not a stall", not posts)
-
-reset_memory()
-posts, _, _ = run_fallback({"AMBR-46": HISTORY}, issues=[{**TODO_CARD, "status": "code"}])
-say("only a todo card is the fallback's business", not posts)
-reset_memory()
-posts, _, _ = run_fallback({"AMBR-46": HISTORY}, issues=[{**TODO_CARD, "assignee_id": CODEX}])
-say("...and only one the planner owns", not posts)
-reset_memory()
-posts, _, _ = run_fallback({"AMBR-46": HISTORY}, issues=[{**TODO_CARD, "assignee_type": "member"}])
-say("...a card parked with a human never dispatches", not posts)
-
-reset_memory()
-posts, lines, _ = run_fallback({"AMBR-46": "unreadable"})
-say("an unreadable runs answer is no decision, and says so",
-    not posts and any("no spec-review decision this tick" in l for l in lines))
-reset_memory()
-R.DRY = False
-R.mc = lambda *a, **k: "not json"
-out.clear()
-R.spec_review_fallback_tick([TODO_CARD], OUTAGE_ON)
-say("an unparseable one is no decision either, and says which failure it was",
-    any("came back unparseable" in l and "no spec-review decision" in l for l in out))
-
-reset_memory()
-posts, lines, _ = run_fallback({"AMBR-46": HISTORY}, dry=True)
-say("DRY says WOULD and posts nothing",
-    not posts and f"WOULD dispatch claude-spec-reviewer on AMBR-46 under {TRIGGER}" in lines)
-say("...and writes no memory", not os.path.exists(R.RETRIED))
-
-reset_memory()
-R.DRY = False
-
-
-def refuse_post(*a, **k):
-    """A CLI that answers the reads and then refuses the write, the way a failed post reports."""
-    if a[:3] == ("issue", "comment", "add"):
-        return None
-    if a[:2] == ("issue", "runs"):
-        return json.dumps([] if "--active" in a else HISTORY)
-    raise AssertionError("un-taught CLI call: %r" % (a,))
-
-
-R.mc = refuse_post
-out.clear()
-R.spec_review_fallback_tick([TODO_CARD], OUTAGE_ON)
-say("a post that does not take is logged FAILED",
-    any(l.startswith("FAILED  spec-review fallback on AMBR-46") for l in out))
-say("...and is still remembered, so a dead CLI cannot spam one mention every 60 s",
-    R.already_retried(FIRED))
-
-# ------------------------------------------------------------------- main() runs it every tick
-reset_memory()
-json.dump(OUTAGE_ON, open(R.OUTAGE, "w"))
-R.CODEX_BACK = R.CODEX_FORCE = R.DRY = False
-R.CODEX_OUTAGE_UNTIL = None
-R._FAILED_COMMENTS = {}
-R.mc, calls, assigns, posts = teach({"AMBR-46": HISTORY}, [TODO_CARD])
-out.clear()
-rc = R.main()
-say("main() runs the spec-review fallback on an ordinary outage tick",
-    rc == 0 and len(posts) == 1
-    and posts[0][0][:4] == ("issue", "comment", "add", "AMBR-46"))
-say("...and that tick assigns nothing — the planner already owns the card", not assigns)
-# The same board with the outage file gone: the gap this closes is an outage-only gap, and a
-# healthy Codex account re-runs its own reviewer.
-reset_memory()
-os.remove(R.OUTAGE)
-R.mc, calls, assigns, posts = teach({"AMBR-46": HISTORY}, [TODO_CARD])
-out.clear()
-rc = R.main()
-say("...while outage mode is OFF the same board posts nothing", rc == 0 and not posts)
-
-
-
-# ================================================================= fresh fix rounds (spec 61)
-# Multica starts a run on ASSIGNMENT and that run RESUMES the agent's prior session on the card,
-# so a fix round used to open with the whole build still in context (0070: 9.2M cache reads under
-# the 200K ceiling, against 0.6M/6.7M/13.3M for the fresh slice runs that built it). Spec 61
-# §Context packs (pantry `63f56a0d`) makes starting cold safe by writing the hand-off down as a
-# `PACK · <sha>` root comment. So a Code card at review_round >= 2 with a pack on it is assigned
-# with `--no-start` and started by `issue rerun` (`force_fresh_session=true`) — one run, no resume.
-# Everything else on this board keeps the plain assign it has always had.
-FIX_KEY = "AMBR-80"
-LEAD_AGENT = OTHER_AGENT                     # the review lead: it posts the pack after consolidating
-PACK = ("PACK · 1d9ce04\n"
-        "spec: specs/monetization.md#Quota semantics\n"
-        "heads: #255 1d9ce04; #256 ebe5d70\n"
-        "findings: FIND-001 Medium open; FIND-002 Low open\n"
-        "ci: 1d9ce04 green\n"
-        "read: implementer-next: src/quota.ts \u00b7 reviewer: hunks\n")
-FIX_CARD = {"identifier": FIX_KEY, "status": "code", "assignee_id": REVIEW_SQUAD,
-            "assignee_type": "squad", "metadata": {"review_round": 2}}
-PACK_CS = {FIX_KEY: [cmt(CODEX, "slice 3 pushed, PRs are up", "f0", "2026-09-14T01:00:00-04:00"),
-                     cmt(LEAD_AGENT, PACK, "f1", "2026-09-14T05:56:00-04:00")]}
-NO_PACK_CS = {FIX_KEY: [cmt(CODEX, "slice 3 pushed, PRs are up", "f0",
-                            "2026-09-14T01:00:00-04:00"),
-                        cmt(LEAD_AGENT, "round 1 \u00b7 10 findings \u00b7 changes-requested", "f1",
-                            "2026-09-14T05:56:00-04:00")]}
-
-# ------------------------------------------------------------------------------------ is_pack
-say("a first-line `PACK · <sha>` header is a pack", R.is_pack(cmt(CODEX, PACK, "x", "t")))
-say("`PACK · pre-build` is a pack too — there is no head yet",
-    R.is_pack(cmt(R.PLANNER, "PACK · pre-build\nspec: specs/foo.md#Bar\n", "x", "t")))
-say("a leading blank line does not stop it being a pack",
-    R.is_pack(cmt(CODEX, "\n\nPACK · abc1234\nheads: #1 abc1234\n", "x", "t")))
-say("a pack QUOTED under a later line is discussion about a pack, not one",
-    not R.is_pack(cmt(LEAD_AGENT, "as agreed:\n\nPACK · abc1234\nheads: #1 abc1234\n", "x", "t")))
-say("an ordinary comment is not a pack", not R.is_pack(cmt(CODEX, "PR is up, over to review", "x", "t")))
-say("a comment with no content is not a pack", not R.is_pack({"content": None}))
-
-# ------------------------------------------------------------- newest_root_comment(match=is_pack)
-OLD_PACK = cmt(R.PLANNER, "PACK · pre-build\nspec: specs/monetization.md#Quota\n", "p0",
-               "2026-09-13T09:00:00-04:00")
-NEW_PACK = cmt(LEAD_AGENT, PACK, "p1", "2026-09-14T05:56:00-04:00")
-CHATTER = cmt(LEAD, "looks right to me", "p2", "2026-09-14T06:10:00-04:00", atype="member")
-R.mc = lambda *a: json.dumps([OLD_PACK, NEW_PACK, CHATTER])
-say("the newest PACK root is taken, not the newest root",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack)["id"] == "p1")
-say("...while the unfiltered read still answers the newest root of any kind",
-    R.newest_root_comment(FIX_KEY)["id"] == "p2")
-R.mc = lambda *a: json.dumps([OLD_PACK, CHATTER])
-say("a later comment never hides an earlier pack",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack)["id"] == "p0")
-R.mc = lambda *a: json.dumps(
-    [CHATTER, cmt(CODEX, PACK, "p3", "2026-09-14T07:00:00-04:00", parent="p2")])
-say("a pack posted as a REPLY is not a pack root",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack) is None)
-R.mc = lambda *a: json.dumps([CHATTER])
-say("a card with no pack at all answers None", R.newest_root_comment(FIX_KEY, match=R.is_pack) is None)
-out.clear()
-R.mc = lambda *a: None
-say("an unreadable read names the fresh-fix decision, not the slice one",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack, why="no fresh-fix decision this tick") is None
-    and "no fresh-fix decision this tick" in out[-1])
-
-# ------------------------------------------------------------------------------- review_round
-R.mc = lambda *a, **k: (_ for _ in ()).throw(AssertionError("review_round must not call the CLI"))
-say("the round is read off the issue row, at no CLI call at all",
-    R.review_round(FIX_KEY, FIX_CARD) == 2)
-out.clear()
-say("a card with an empty metadata object has no round, and says nothing",
-    R.review_round(FIX_KEY, {"metadata": {}}) is None and not out)
-say("a round stored as a string is still a number",
-    R.review_round(FIX_KEY, {"metadata": {"review_round": "3"}}) == 3)
-say("a round that is not a number at all is no round",
-    R.review_round(FIX_KEY, {"metadata": {"review_round": "soon"}}) is None)
-
-R.mc, _, _, _ = teach({}, [], None, {FIX_KEY: {"review_round": 2}})
-say("a row without a metadata field falls back to the named read (a bare `2`)",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) == 2)
-out.clear()
-R.mc, _, _, _ = teach({}, [], None, {})
-say("a key the CLI cannot find fails OPEN to the plain assign, and says so",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) is None
-    and "could not read the review_round" in out[-1] and "plain way" in out[-1])
-out.clear()
-R.mc, _, _, _ = teach({}, [], None, {FIX_KEY: "unreadable"})
-say("...and an unreadable metadata read does exactly the same",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) is None
-    and "could not read the review_round" in out[-1])
-
-# ------------------------------------------------------------------------------ fresh_fix_tick
-def run_fresh(card=None, runs=None, comments=None, metadata=None, dry=False,
-              want="claude-implementer", ticks=1, mc=None):
-    """Drive fresh_fix_tick over a taught CLI; returns its answers, assigns, reruns and the log."""
-    card = card if card is not None else FIX_CARD
-    R.DRY = dry
-    calls, assigns = [], []
-    if mc is None:
-        R.mc, calls, assigns, _ = teach(runs if runs is not None else {FIX_KEY: []},
-                                        [card], comments if comments is not None else PACK_CS,
-                                        metadata)
-    else:
-        R.mc = mc
-    out.clear()
-    said = [R.fresh_fix_tick(card["identifier"], want, card) for _ in range(ticks)]
-    R.DRY = False
-    return said, assigns, [c for c in calls if c[:2] == ("issue", "rerun")], list(out)
-
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh()
-say("a pack on a round-2 Code card takes the assign away from the caller", said == [True])
-say("...assigned WITHOUT starting a run",
-    assigns == [("issue", "assign", FIX_KEY, "--to", "claude-implementer", "--no-start")])
-say("...and started by exactly one rerun", reruns == [("issue", "rerun", FIX_KEY)])
-say("...logged in the required wording",
-    f"fresh fix round: {FIX_KEY} (review_round 2) has a PACK — assigned claude-implementer "
-    f"without resume and started a fresh run" in lines)
-say("...remembered under {KEY}:freshfix:{round}", f"{FIX_KEY}:freshfix:2" in json.load(open(R.RETRIED)))
-say("...with a stamp neither the hour nor the day's prune can expire",
-    json.load(open(R.RETRIED))[f"{FIX_KEY}:freshfix:2"] == R.SLICE_FOREVER
-    and R.already_retried(f"{FIX_KEY}:freshfix:2"))
-say("...and without spending the card's ordinary retry budget", not R.already_retried(FIX_KEY))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(ticks=2)
-say("the same round never fires twice — one assign, one rerun, over two ticks",
-    said == [True, True] and len(assigns) == 1 and len(reruns) == 1)
-
-reset_memory()
-said, assigns, reruns, _ = run_fresh()
-said2, assigns2, reruns2, _ = run_fresh(card={**FIX_CARD, "metadata": {"review_round": 3}})
-say("round 3 is its own fix round and fires again",
-    said2 == [True] and len(assigns2) == 1 and len(reruns2) == 1
-    and f"{FIX_KEY}:freshfix:3" in json.load(open(R.RETRIED)))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(comments=NO_PACK_CS)
-say("no pack — the caller does the plain assign it always did, and nothing fires here",
-    said == [False] and not assigns and not reruns and not lines)
-
-reset_memory()
-R.mc, calls, assigns, _ = teach({FIX_KEY: []}, [FIX_CARD], PACK_CS)
-out.clear()
-r1 = R.fresh_fix_tick(FIX_KEY, "claude-implementer", {**FIX_CARD, "metadata": {"review_round": 1}})
-say("round 1 is the build's own review, not a fix round — plain assign",
-    r1 is False and not assigns and not [c for c in calls if c[:2] == ("issue", "rerun")])
-say("...and the comments are never even read: the free gate runs first",
-    not [c for c in calls if c[:3] == ("issue", "comment", "list")])
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(card={**FIX_CARD, "metadata": {}})
-say("a card with no round at all is a plain assign", said == [False] and not assigns and not reruns)
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(runs={FIX_KEY: [{"agent_id": CODEX, "status": "running"}]})
-say("a run in flight means nothing at all this tick — no assign, no rerun",
-    said == [True] and not assigns and not reruns)
-say("...and nothing is remembered, so it fires on the tick after that run ends",
-    not os.path.exists(R.RETRIED))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(runs={FIX_KEY: "unreadable"})
-say("an unreadable runs answer fails closed — nothing fires, and it says so",
-    said == [True] and not assigns and not reruns
-    and any("treating it as work in flight" in l for l in lines))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(card={"identifier": FIX_KEY, "status": "code",
-                                               "assignee_id": REVIEW_SQUAD, "assignee_type": "squad"},
-                                         metadata={FIX_KEY: "unreadable"})
-say("an unreadable review_round fails OPEN to today's plain assign, and says so",
-    said == [False] and not assigns and not reruns
-    and any("could not read the review_round" in l and "plain way" in l for l in lines))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(dry=True)
-say("DRY says WOULD and runs nothing at all",
-    said == [True] and not assigns and not reruns
-    and f"WOULD start a fresh fix round on {FIX_KEY} (review_round 2) — assign "
-        f"claude-implementer without resume, then rerun" in lines)
-say("...and writes no memory", not os.path.exists(R.RETRIED))
-
-
-def refuse(what):
-    """A CLI that answers every read and then refuses one write, the way a failed call reports."""
-    def mc(*a, **k):
-        if a[:2] == ("issue", "assign"):
-            return None if what == "assign" else "ok"
-        if a[:2] == ("issue", "rerun"):
-            return None if what == "rerun" else json.dumps({"id": "r", "status": "queued"})
-        if a[:3] == ("issue", "comment", "list"):
-            return json.dumps(PACK_CS[FIX_KEY])
-        if a[:2] == ("issue", "runs"):
-            return json.dumps([])
-        raise AssertionError("un-taught CLI call: %r" % (a,))
-    return mc
-
-
-reset_memory()
-R.DRY = False
-R.mc = refuse("assign")
-out.clear()
-said = R.fresh_fix_tick(FIX_KEY, "claude-implementer", FIX_CARD)
-say("a --no-start assign that does not take is logged FAILED and never falls back to a resume",
-    said is True and any(l.startswith(f"FAILED  fresh fix round on {FIX_KEY}")
-                         and "--no-start assign" in l for l in out))
-say("...and is still remembered, so a dead CLI cannot re-fire one round every 60 s",
-    R.already_retried(f"{FIX_KEY}:freshfix:2"))
-
-reset_memory()
-R.mc = refuse("rerun")
-out.clear()
-said = R.fresh_fix_tick(FIX_KEY, "claude-implementer", FIX_CARD)
-say("a rerun that does not take is logged FAILED, naming the card as assigned but not running",
-    said is True and any(l.startswith(f"FAILED  fresh fix round on {FIX_KEY}")
-                         and "did not start" in l for l in out))
-
-# --------------------------------------------------------------- main(): both branches, end to end
-def run_fix_main(card, comments, dry=False, outage=None):
-    """One ordinary tick of main() over a single Code card; returns assigns, reruns and the log."""
-    if os.path.exists(R.OUTAGE):
-        os.remove(R.OUTAGE)
-    if outage:
-        json.dump(outage, open(R.OUTAGE, "w"))
-    reset_memory()
-    R.CODEX_BACK = R.CODEX_FORCE = False
-    R.CODEX_OUTAGE_UNTIL = None
-    R.DRY = dry
-    R._FAILED_COMMENTS = {}
-    R.mc, calls, assigns, _ = teach({card["identifier"]: []}, [card], comments)
-    out.clear()
-    rc = R.main()
-    R.DRY = False
-    return rc, assigns, [c for c in calls if c[:2] == ("issue", "rerun")], list(out)
-
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS)
-say("main(): a fix round with a pack is assigned without resume and rerun fresh",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer", "--no-start")]
-    and reruns == [("issue", "rerun", FIX_KEY)])
-say("...and the plain `assigned … -> …` line never appears for it",
-    any(l.startswith("fresh fix round: ") for l in lines)
-    and not any(l.startswith(f"assigned {FIX_KEY}") for l in lines))
-
-rc, assigns, reruns, lines = run_fix_main({**FIX_CARD, "metadata": {"review_round": 1}}, PACK_CS)
-say("main(): round 1 keeps today's plain assign, pack or no pack",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer")]
-    and not reruns and any(l.startswith(f"assigned {FIX_KEY} (code)") for l in lines))
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, NO_PACK_CS)
-say("main(): round 2 without a pack keeps today's plain assign",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer")]
-    and not reruns)
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS, outage=OUTAGE_ON)
-say("main(): during an outage the fix round goes fresh to the stand-in",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "claude-implementer",
-                             "--no-start")]
-    and reruns == [("issue", "rerun", FIX_KEY)])
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS, dry=True)
-say("main() --dry-run: nothing is assigned, nothing is rerun, and it says WOULD",
-    rc == 0 and not assigns and not reruns
-    and any(l.startswith(f"WOULD start a fresh fix round on {FIX_KEY}") for l in lines))
-if os.path.exists(R.OUTAGE):
-    os.remove(R.OUTAGE)
 
 
 print(f"\n{checks} assertions — " + ("SOME FAILED" if failed else "ALL PASSED"))

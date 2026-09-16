@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Detect drift between a repo's two instruction files.
 
 pantry's AGENTS.md says it plainly: "Two instruction files with no drift check is

@@ -1,7 +1,7 @@
 ---
 type: index
 title: sources
-description: Index of 2 concept(s) under sources/.
+description: Index of 3 concept(s) under sources/.
 tags: [index]
 timestamp: 2026-09-10T00:00:00Z
 permalink: agents/sources/index
@@ -21,6 +21,8 @@ distilled so an agent does not need to re-fetch them. Each carries a
 
 | Concept | Type | Description |
 |---------|------|-------------|
+| [Context engineering for coding agents — sources read 2026-09-15](context-engineering-2026-09.md) | `source` | The external sources behind the board's context-layer research (Anthropic
+engineering posts and Claude Code/API docs, Manus, Cognition, OpenHands, ACO |
 | [Interpretable Context Methodology (ICM)](icm-folder-structure-as-agent-architecture.md) | `reference` | Van Clief & McDermott, arXiv 2603.16021 - replacing framework orchestration
 with filesystem structure. Governs this workspace's pipelines. |
 | [Open Knowledge Format (OKF) v0.1](okf-open-knowledge-format.md) | `reference` | Google Cloud's open spec for representing knowledge as a directory of

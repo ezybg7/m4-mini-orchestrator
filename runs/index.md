@@ -20,5 +20,5 @@ pipeline" route still has a home.
 
 - [2026-09-12 apply 0066–0069](2026-09-12-apply-0066-0069/index.md) — the production apply of the recipe-comments, recipe-following and frozen-category migrations, run by Everett from `apply.sh` after the orchestrator's session was refused the command.
 - [2026-09-12 design tour](2026-09-12-design-tour/index.md) — a repeatable Maestro screenshot tour of every reachable Ambry screen on the iPhone 17 Pro simulator, in light, dark and largest-accessibility-text, against a disposable Neon branch, for the orchestrator's HIG review.
-- [2026-09-14 0070 claim_ai_call pools apply (AMBR-57)](2026-09-14-apply-0070/index.md) — rehearsed; dry run + apply staged for Everett's seat after the Worker deploy
+- [2026-09-14 0070 claim_ai_call pools apply (AMBR-57)](2026-09-14-apply-0070/index.md) — applied to production 2026-09-15 (16/16), #256 merged, base refreshed
 - [2026-09-12 USDA tranche 2 apply (AMBR-34)](2026-09-12-apply-usda-t2/index.md) — staged dry run + apply for Everett's seat

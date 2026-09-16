@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Conformance checker: OKF v0.1 + ICM stage contracts, over the whole workspace.
 
 An independent consumer -- it uses nothing but the files on disk, which is the

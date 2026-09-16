@@ -5,7 +5,7 @@
   <key>Label</key><string>com.user.multica-usage-report</string>
   <key>ProgramArguments</key>
   <array><string>/bin/bash</string><string>-c</string>
-    <string>exec /usr/bin/python3 "$HOME/agents/scripts/multica-usage-report.py" --issue AMBR-60 --days 7</string></array>
+    <string>exec /opt/homebrew/bin/python3 "$HOME/agents/scripts/multica-usage-report.py" --issue AMBR-60 --days 7</string></array>
   <key>StartCalendarInterval</key>
   <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>15</integer></dict>
   <key>RunAtLoad</key><false/>

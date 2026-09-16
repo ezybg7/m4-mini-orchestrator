@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Weekly token-burn report for the Multica board (Everett's decision t5, 2026-09-14).
 
 Rolls up every run's usage record (multica issue runs <KEY> --output json -> usage[])
@@ -48,12 +48,84 @@ def fmt(n):
     n = float(n)
     return f"{n/1e9:.2f}B" if n >= 1e9 else f"{n/1e6:.1f}M" if n >= 1e6 else f"{n/1e3:.0f}K" if n >= 1e3 else f"{n:.0f}"
 
+LEVERS_SINCE = "2026-09-14T04:00:00-04:00"   # compaction ceiling + targeted rounds + test-loop budget went live
+def packs_since():
+    try: return open(os.path.expanduser("~/agents/multica/.phase-packs-since")).read().strip()
+    except OSError: return "9999-12-31T00:00:00Z"
+ROLE = {"claude-implementer": "impl", "codex-implementer": "impl", "claude-reviewer": "rev", "claude-spec-reviewer": "rev",
+        "codex-reviewer (archived)": "rev", "retired reviewer seat": "rev", "review-lead": "lead", "claude-planner": "plan"}
+
+def phase_of(first_created):
+    """Phase by the card's first run (ISO with offset). Compares in UTC."""
+    t = ts(first_created).astimezone(datetime.timezone.utc)
+    if t >= ts(packs_since().replace("Z", "+00:00")).astimezone(datetime.timezone.utc): return "packs"
+    if t >= ts(LEVERS_SINCE).astimezone(datetime.timezone.utc): return "levers"
+    return "baseline"
+
+def card_scorecard(key, agents):
+    runs = [r for r in items_of(mc("issue", "runs", key)) if r.get("status") == "completed" and r.get("usage")]
+    if not runs: return None
+    runs.sort(key=lambda r: r["created_at"])
+    by = collections.defaultdict(lambda: dict(n=0, cr=0, out=0, usd=0.0, mins=0.0))
+    tot = dict(n=0, cr=0, out=0, usd=0.0)
+    for r in runs:
+        role = ROLE.get(agents.get(r["agent_id"][:8], ""), "other")
+        st, en = ts(r.get("started_at")), ts(r.get("completed_at"))
+        mins = (en - st).total_seconds() / 60 if st and en else 0
+        for u in r["usage"]:
+            cr, out = u.get("cache_read_tokens", 0), u.get("output_tokens", 0); d = usd(u) or 0.0
+            by[role]["cr"] += cr; by[role]["out"] += out; by[role]["usd"] += d; tot["cr"] += cr; tot["out"] += out; tot["usd"] += d
+        by[role]["n"] += 1; by[role]["mins"] += mins; tot["n"] += 1
+    meta = mc("issue", "get", key)
+    rounds = (meta.get("metadata") or {}).get("review_round") if isinstance(meta, dict) else None
+    return dict(key=key, phase=phase_of(runs[0]["created_at"]), first=runs[0]["created_at"][:16], runs=tot["n"], cr=tot["cr"], out=tot["out"], usd=tot["usd"], rounds=rounds,
+                impl=by["impl"], rev=by["rev"], lead=by["lead"])
+
+def phase_report(a):
+    agents = {ag["id"][:8]: ag["name"] for ag in items_of(mc("agent", "list"))}; agents.update({k: v for k, v in ARCHIVED.items() if k not in agents})
+    if a.card:
+        c = card_scorecard(a.card, agents)
+        if not c: print("no completed runs with usage on", a.card); return
+        print(f"{c['key']} · phase {c['phase']} · first run {c['first']} · rounds {c['rounds']} · {c['runs']} runs · reads {fmt(c['cr'])} · out {fmt(c['out'])} · ${c['usd']:.0f}")
+        for role in ("impl", "rev", "lead"):
+            g = c[role]; print(f"  {role:5} runs {g['n']:2d} · reads/run {fmt(g['cr']/max(g['n'],1)):>7} · out {fmt(g['out']):>6} · ${g['usd']:.0f} · {g['mins']/max(g['n'],1):.0f} min/run")
+        return
+    issues = []; offset = 0
+    while True:
+        page = mc("issue", "list", "--limit", "100", "--offset", str(offset), "--fields", "identifier,title,status,metadata"); batch = items_of(page); issues.extend(batch)
+        if not batch or not (isinstance(page, dict) and page.get("has_more")): break
+        offset += len(batch)
+    cards = []
+    for i in issues:
+        if not (i.get("metadata") or {}).get("review_round"): continue   # loop cards only: they went through build + review
+        c = card_scorecard(i["identifier"], agents)
+        if c: c["title"] = (i.get("title") or "")[:48]; cards.append(c)
+    cards.sort(key=lambda c: c["first"])
+    print(f"| Card | Phase | Rounds | Runs | Reads | Impl reads/run | Rev reads/run | $-equiv |")
+    print("|---|---|---:|---:|---:|---:|---:|---:|")
+    for c in cards:
+        print(f"| {c['key']} {c['title']} | {c['phase']} | {c['rounds']} | {c['runs']} | {fmt(c['cr'])} | {fmt(c['impl']['cr']/max(c['impl']['n'],1))} | {fmt(c['rev']['cr']/max(c['rev']['n'],1))} | ${c['usd']:.0f} |")
+    import statistics
+    print()
+    print("| Phase | Cards | Median $ | Median reads | Median rounds | Median impl reads/run | Median rev reads/run |")
+    print("|---|---:|---:|---:|---:|---:|---:|")
+    for ph in ("baseline", "levers", "packs"):
+        cs = [c for c in cards if c["phase"] == ph and c["usd"] > 0]
+        if not cs: print(f"| {ph} | 0 | — | — | — | — | — |"); continue
+        med = lambda f: statistics.median(f(c) for c in cs)
+        print(f"| {ph} | {len(cs)} | ${med(lambda c: c['usd']):.0f} | {fmt(med(lambda c: c['cr']))} | {med(lambda c: c['rounds'] or 0):.0f} | {fmt(med(lambda c: c['impl']['cr']/max(c['impl']['n'],1)))} | {fmt(med(lambda c: c['rev']['cr']/max(c['rev']['n'],1)))} |")
+    print(f"\n_Phases by each card's first run: baseline < {LEVERS_SINCE[:16]} (before the ceiling, targeted rounds and test budget) · levers until the pack rollout ({packs_since()[:16]}) · packs after. Claude $-equivalent at API list rates; Codex-only cards show $0._")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--issue", default=os.environ.get("MULTICA_USAGE_CARD", ""))
     ap.add_argument("--days", type=int, default=7)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--card", default="", help="print a scorecard for one card (reads/run by role, rounds, phase) and exit")
+    ap.add_argument("--phases", action="store_true", help="print the before/after table by phase (baseline · levers · packs) and exit")
     a = ap.parse_args()
+    if a.card or a.phases:
+        return phase_report(a)
     now = datetime.datetime.now().astimezone()
     w1 = now - datetime.timedelta(days=a.days)          # this window start
     w0 = now - datetime.timedelta(days=2 * a.days)      # previous window start
@@ -134,6 +206,13 @@ def main():
         L.append(f"- {key} · {agent} · {model} · {fmt(cr)} · {fmt(out)} · {mins:.0f} min · {('$%.0f' % d) if d is not None else 'codex'}")
     L.append("")
     L.append("_Prices: API list rates (Opus 5 $5/$0.50/$6.25/$25 per MTok input/cache read/cache write/output; Sonnet 5 $2/$0.20/$2.50/$10; Fable 5.1 $10/$0.25/$12.50/$50) — a proxy for how fast the plan's weekly caps drain, not a bill. A run's cost is turns × context; reads/run is the number to watch. Source: `multica issue runs <KEY> --output json`. Script: `~/agents/scripts/multica-usage-report.py`._")
+    # before/after by phase, appended to every weekly report
+    import io, contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        try: phase_report(argparse.Namespace(card="", phases=True))
+        except Exception as e: print(f"(phase table unavailable: {e})")
+    L.append(""); L.append("### Before / after, by card phase"); L.append(buf.getvalue().rstrip())
     body = "\n".join(L)
     if a.dry_run or not a.issue:
         print(body); return

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Bring a markdown file's frontmatter up to OKF v0.1 conformance.
 
 OKF requires exactly one field: `type`. Conventional fields, in this order:

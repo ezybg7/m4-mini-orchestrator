@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Generate OKF index.md files from the bundle's own frontmatter.
 
 OKF O5: index.md at every level, for progressive disclosure as an agent

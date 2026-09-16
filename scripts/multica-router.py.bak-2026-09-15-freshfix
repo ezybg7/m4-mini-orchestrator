@@ -37,16 +37,6 @@ in seconds, every time: the card sits in Todo looking finished, and no other loo
 card whose column and assignee are already right. So while outage mode is on, a failed
 codex-spec-reviewer run carrying the usage-limit message is answered by re-posting the dispatch to
 claude-spec-reviewer as a reply under the planner's own mention — once per mention, forever.
-
-Fresh fix rounds. Multica starts a run on ASSIGNMENT, and that run RESUMES the agent's prior session
-on the card (`PriorSessionID` -> `claude --resume`). That is right for a build and wrong for a fix
-round: the whole build is still in context and the fix round pays for it on every turn. Spec 61
-§Context packs (pantry `63f56a0d`) answers that with the pack, a root comment whose first line is
-`PACK · <head sha>` carrying everything the next run needs to start cold. So when the review lead
-sends a card back to Code for round 2 or later and a PACK root is on it, the implementer is assigned
-WITHOUT a run (`issue assign --no-start`) and the run is started by `issue rerun`, which re-enqueues
-that same assignment with `force_fresh_session=true`. Without a pack, below round 2, or with a run
-already in flight, nothing changes.
 """
 import json, os, subprocess, sys
 
@@ -136,16 +126,6 @@ SLICE_MARKER_RE = r"^\s*(?:open:\s*)?next-slice:\s*(\d+)\s*/\s*(\d+)\s*$"
 # implementer wrote a marker and got it wrong" apart from "there is no marker here",
 # which are different events: the first is worth a line in the log, the second is not.
 SLICE_MARKER_LOOSE_RE = r"^\s*(?:open:\s*)?next-slice:[ \t]*(.*?)[ \t]*$"
-
-# --- fresh fix rounds ------------------------------------------------------------------
-# Spec 61 §Context packs: the pack is a root comment whose FIRST line is `PACK · <head sha>`
-# (or `PACK · pre-build` before there is a commit), and readers take the newest one. All this
-# router ever asks is whether one exists — the shape below the header is the agents' business.
-PACK_PREFIX = "PACK ·"
-# Round 1 is the review of the build itself. A card back in Code at round 2 or later is a FIX
-# round, and that is the one the spec starts fresh: the pack now carries what the resumed
-# session was being kept alive to remember.
-FIX_ROUND_MIN = 2
 
 # --- the spec-review fallback ----------------------------------------------------------
 # The planner's handoff to the spec reviewer is a @mention and nothing else: it writes the PRD and
@@ -540,23 +520,6 @@ def parse_slice_marker(text):
     return None
 
 
-def is_pack(comment):
-    """True when a comment's FIRST line is a context pack's header — `PACK · <head sha>`.
-
-    First line only, deliberately. A pack quoted inside a later comment is discussion ABOUT a
-    pack, not one — the same line the slice marker draws between a handoff and a reply about a
-    handoff. Leading blank lines are forgiven because nothing else on this board opens with
-    that header, so a stray newline is a typo and not a different kind of comment.
-
-    The author is NOT checked, and that is the spec's shape rather than an omission: the
-    planner writes the first pack into the card brief, the implementer writes one after every
-    slice and every fix, the lead writes one after every consolidation, and Everett may edit
-    any of them by hand. Whoever wrote it, the newest pack is the hand-off the next run reads.
-    """
-    first = ((comment.get("content") or "").lstrip().split("\n", 1)[0]).strip()
-    return first.startswith(PACK_PREFIX)
-
-
 def created_time(row):
     """A comment's or a run's created_at as an aware datetime, or None when it cannot be read.
 
@@ -576,35 +539,27 @@ def created_time(row):
     return t if t.tzinfo else t.astimezone()
 
 
-def newest_root_comment(key, match=None, why="no slice decision this tick"):
+def newest_root_comment(key):
     """The newest top-level comment on an issue, or None when there is none or it is unreadable.
 
     Roots only, and asked for as `--roots-only`, because a slice marker is a handoff the
     implementer makes to this router — the same words quoted in a reply under someone else's
     thread are discussion ABOUT a handoff, not one. `--roots-only` is also the read the CLI
     never folds, so a resolved thread cannot hide the newest root behind a summary.
-
-    `match` narrows the roots to the kind the caller is after, because two loops now ask this
-    question and they ask different ones. The slice loop wants the newest root, whatever it is:
-    a marker that is no longer the last word on the card has been overtaken by discussion. The
-    fresh fix round wants the newest root THAT IS A PACK, because a pack stays the hand-off it
-    always was however much is said under it afterwards. `why` names the decision that is not
-    being made when the read fails, so one log line cannot claim to be about the other loop.
     """
     out = mc("issue", "comment", "list", key, "--roots-only", "--output", "json")
     if out is None:
-        log(f"could not read the comments of {key} — {why}")
+        log(f"could not read the comments of {key} — no slice decision this tick")
         return None
     try:
         cs = json.loads(out)
         cs = cs if isinstance(cs, list) else cs.get("comments", [])
     except json.JSONDecodeError:
-        log(f"the comments of {key} came back unparseable — {why}")
+        log(f"the comments of {key} came back unparseable — no slice decision this tick")
         return None
     # parent_id is checked again rather than left to the flag: this is what decides whether a
     # fresh run starts, and it costs one comparison not to depend on the CLI honouring it.
-    roots = [c for c in cs if isinstance(c, dict) and c.get("parent_id") is None
-             and (match is None or match(c))]
+    roots = [c for c in cs if isinstance(c, dict) and c.get("parent_id") is None]
     if not roots:
         return None
     stamped = [(created_time(c), n, c) for n, c in enumerate(roots)]
@@ -789,121 +744,6 @@ def spec_review_fallback_tick(issues, outage):
                 f"dispatched claude-spec-reviewer under {trigger}")
 
 
-def review_round(key, issue=None):
-    """The card's `review_round` as an int, or None when there is none or it cannot be read.
-
-    The lead owns this number: it sets it to 1 when it opens the review and raises it by one
-    every time findings survive and the card goes back to Code. So it is exactly the question
-    "is this assignment a fix round, and which one".
-
-    Read off the issue row first, because `issue list --output json` already carries a
-    `metadata` object on every issue and reading it there costs no CLI call at all; the named
-    read is a fallback for a board whose rows ever stop carrying it. That read answers with a
-    BARE JSON value (`2`), and exits non-zero with `key "review_round" not found on issue` when
-    the card has no round — which reaches `mc` as None, indistinguishable from a CLI that
-    failed. Both are answered the same way and it is the safe way: None, the caller assigns the
-    way it always has, and the log says the round could not be read. Failing OPEN is the whole
-    posture here — a fix round that resumes is a year of correct behaviour, and a fresh one
-    fired on a card whose round nobody could read is a guess.
-    """
-    meta = (issue or {}).get("metadata")
-    if not isinstance(meta, dict):
-        out = mc("issue", "metadata", "get", key, "--key", "review_round", "--output", "json")
-        if out is None:
-            log(f"could not read the review_round of {key} — assigning it the plain way")
-            return None
-        try:
-            parsed = json.loads(out)
-        except json.JSONDecodeError:
-            parsed = out.strip()          # a bare unquoted value the CLI did not fence
-        meta = parsed if isinstance(parsed, dict) else {"review_round": parsed}
-    raw = meta.get("review_round", meta.get("value"))
-    try:
-        return int(str(raw).strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def fresh_fix_tick(key, want, issue):
-    """Start a Code card's fix round as a FRESH run when the card carries a context pack.
-
-    Spec 61 §Context packs, "Fresh fix rounds" (pantry `63f56a0d`). Multica starts a run on
-    ASSIGNMENT and that run resumes the agent's prior session on the card, so a fix round opens
-    with the entire build still in context: on the 0070 card the fix round replayed 9.2M cache
-    reads under the 200K ceiling, against 0.6M / 6.7M / 13.3M for the three fresh runs that
-    built it. The pack is what makes starting cold safe — heads, findings, blast radius, CI and
-    an explicit read list, written down on the card — so where there is one, the assignment is
-    made WITHOUT a run and `issue rerun` starts the run instead. One run either way.
-
-    Why that rerun is a FRESH session, read out of Multica's source rather than taken on trust:
-    `RerunIssue` (`internal/service/task.go`) passes its caller's source task straight through as
-    the new row's `rerun_of_task_id`, and the CLI's `issue rerun <KEY>` has no flag to name one —
-    so it is always the derived form, "run the assignee again", with a NULL lineage. The daemon's
-    claim handler (`internal/handler/daemon.go`) resumes a rerun ONLY from a named source task;
-    with none it falls through to `else if !task.ForceFreshSession`, and every rerun row pins that
-    flag true, so no prior session is offered and the run starts clean. Note what that means: a
-    rerun that DID name a source task would RESUME it (MUL-4869) — the freshness lives in the bare
-    assignee-derived form, not in the flag's name. Keep this call bare.
-
-    That holds on either generation of the daemon, which matters because the source read above was
-    checked out after the running build (0.4.42 / 76f59f5f1, built 2026-09-09) and has not been
-    pinned to it: an OLDER claim handler gates the whole resume lookup on `!force_fresh_session`
-    and so starts clean outright, and the newer one reaches the same place through the NULL
-    lineage. It is also what was observed — AMBR-57's three slice reruns each opened cold
-    (2026-09-14). If a future build ever resumes a bare rerun, this loop is where it would show up.
-
-    Returns True when the caller must NOT do its own assign — because this did it, or because
-    it already did it for this round and doing it again is a second implementer on one branch.
-    False means nothing here applies and today's plain assign is the right call.
-
-    Four gates, cheapest first, and every one of them is a reason to leave today's behaviour
-    alone: the round is 2 or more (free — it rides on the issue row); this exact round has
-    never fired; a PACK root exists; nothing at all is in flight on the card. An unreadable
-    round fails open to the plain assign and says so; an unreadable comment list does the same.
-    """
-    rnd = review_round(key, issue)
-    if rnd is None or rnd < FIX_ROUND_MIN:
-        return False
-    # Keyed on the round, not the card: round 3 is a new fix round and must fire again, while
-    # round 2 must never fire twice. Forever, for the slice loop's reason — `rerun` is not
-    # idempotent and the hour's rate limit is not long enough to be a guard against that.
-    fired = f"{key}:freshfix:{rnd}"
-    if already_retried(fired):
-        return True
-    if newest_root_comment(key, match=is_pack, why="no fresh-fix decision this tick") is None:
-        return False
-    # Any agent, not just this one: the question is whether the card is busy at all. `rerun` is
-    # not passive about what it finds — RerunIssue CANCELS the pending tasks on that (issue,
-    # agent) thread on its way in — so firing under a live run either kills the run underneath it
-    # or puts a second implementer on one branch. Fails closed: an unreadable answer counts as in
-    # flight, run_in_flight says so, and the next tick asks again. Nothing is remembered, so
-    # waiting costs a minute and never the round.
-    if run_in_flight(key):
-        return True
-    if DRY:
-        log(f"WOULD start a fresh fix round on {key} (review_round {rnd}) — "
-            f"assign {want} without resume, then rerun")
-        return True
-    # Remembered BEFORE the mutation, like a slice: a round that is lost costs a stalled card a
-    # human can nudge, and one that fires twice costs two implementers pushing to one branch.
-    # The FAILED lines below are what make the first one visible.
-    if already_retried(fired, remember=True, forever=True):
-        return True
-    if mc("issue", "assign", key, "--to", want, "--no-start") is None:
-        # No fallback to the plain assign on purpose. The plain assign is the resumed run this
-        # whole path exists to avoid, and a fix round that does not start is a card a human can
-        # see and nudge — where a resumed one is a silent 9M-read regression.
-        log(f"FAILED  fresh fix round on {key} — the --no-start assign to {want} did not take")
-        return True
-    if mc("issue", "rerun", key) is None:
-        log(f"FAILED  fresh fix round on {key} — {want} holds the card but the fresh run "
-            f"did not start")
-        return True
-    log(f"fresh fix round: {key} (review_round {rnd}) has a PACK — assigned {want} "
-        f"without resume and started a fresh run")
-    return True
-
-
 def list_issues():
     """Every issue on the board, page by page — not just the first one.
 
@@ -1057,20 +897,6 @@ def main():
                 continue
             already_retried(f"{key}:codex-outage", remember=True)
             mc("issue", "assign", key, "--unassign")
-        elif status == "code" and fresh_fix_tick(key, want, i):
-            # Spec 61 §Fresh fix rounds: the lead has sent this card back to Code and it
-            # carries a pack, so the fix round has been started WITHOUT resuming the build's
-            # session — assigned with --no-start, then rerun. Nothing left here to assign.
-            #
-            # A branch of this chain rather than a check just above the assign, and that is
-            # load-bearing: the two branches above have already UNASSIGNED the card, so a
-            # fresh-fix answer of True there ("this round has already fired") would `continue`
-            # past the assign and leave the card with no assignee and no run at all. Those two
-            # keep today's behaviour, which is what both of them want anyway — an
-            # infrastructure cancellation and an outage hand-over have no build session worth
-            # protecting. This is the ordinary route: a card whose assignee is about to
-            # change, with nothing undone behind it.
-            continue
         if DRY:
             log(f"WOULD assign {key} ({status}) {current or '(none)'} -> {want}"); continue
         if mc("issue", "assign", key, "--to", want) is None:

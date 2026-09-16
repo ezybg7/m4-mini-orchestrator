@@ -113,3 +113,11 @@ the ceiling (baseline 22–55M) with 19 jest calls (baseline 81). Round 1 elapse
 58). The gate-skip half of lever 2 did not fire: the daemon PAT cannot read PR checks — grant
 read-only Checks / Commit statuses / Actions. The targeted-round path was not exercised (round 2
 was a legitimate full pass: shared payload keys removed) — first exercise on a later card.
+
+## What enters a run's context (measured 2026-09-15, AMBR-57, 13 runs, 622 tool calls)
+Share of returned bytes: source-file reads 36% · spec/ADR re-reads 19% · diff reads 18% · issue/thread reads 12% · repo setup 4% · edits 2% · CLAUDE.md/AGENTS.md 2% · gates 1%. Orientation (~36%) is repeated from scratch in every run. `codegraph explore` returns 7–14% of the bytes of the whole files it draws from. Research record and the pack design: pantry `docs/research/context-engineering-2026-09.md`; sources in [context-engineering sources](../sources/context-engineering-2026-09.md).
+
+## Context packs live 2026-09-15 — and how the effect is measured
+All four steps of spec 61 §Context packs are live (skill `pantry-context-pack`; reviewer, implementer, lead and planner instructions; the router's `fresh_fix_tick`). Measurement: `~/agents/scripts/multica-usage-report.py --phases` tags every loop card by the phase of its first run (baseline < 2026-09-14 04:00 · levers · packs since the stamp in `~/agents/multica/.phase-packs-since`) and prints per-phase medians of reads, rounds and implementer/reviewer reads per run; `--card <KEY>` is one card by role; the Monday AMBR-60 post appends the table. Baseline medians (21 cards): 90.8M reads · 3 rounds · implementer 11.1M reads/run · reviewer 3.9M. Compare reads, not dollars — Codex-built cards cost $0 in Claude.
+
+**Precision on "rerun starts fresh" (verified in the Multica source 2026-09-16):** the CLI's bare `multica issue rerun <KEY>` sends an empty body, which the handler treats as "rerun the current assignee" with `force_fresh_session=true` (`internal/handler/task_lifecycle.go:143`) and no source task, so the daemon does not resume (`internal/handler/daemon.go:2751`); it also cancels pending tasks on that (issue, agent) thread (`internal/service/task.go:5513`). A rerun that names a source task resumes. The router's slice loop and `fresh_fix_tick` keep the call bare on purpose.

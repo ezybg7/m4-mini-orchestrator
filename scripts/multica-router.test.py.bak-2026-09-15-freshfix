@@ -43,7 +43,6 @@ def say(t, ok):
 now = datetime.now().astimezone()
 STAND_IN = R.STAND_IN_IMPLEMENTER
 CODEX = "8b234c22-58d2-4e3e-9d89-73760b11347c"
-REVIEW_SQUAD = "074e7a7d-8e19-4a1e-9f52-0b6d3f2c8a11"   # the `review` squad, a card's owner in_review
 
 # ---------------------------------------------------------------------- parse_retry_at
 msg = ("You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to "
@@ -167,7 +166,7 @@ R.mc = lambda *a: "[]"
 say("an idle stand-in does not hold the hand-back", not R.hand_back_held([CARD]))
 
 # --------------------------------------------------- the expiry path holds, then hands back
-def teach(runs, issues, comments=None, metadata=None):
+def teach(runs, issues, comments=None):
     """A CLI that answers only what this harness has taught it; records assigns, refuses the rest.
 
     `comments` maps issue key -> the comment list `issue comment list` should answer with, and
@@ -180,14 +179,6 @@ def teach(runs, issues, comments=None, metadata=None):
 
     Posts are recorded separately from assigns: `issue comment add` carries its body on STDIN,
     not in argv, so the fourth return value is (args, body) pairs and a test can assert both.
-
-    `metadata` maps issue key -> the KV dict `issue metadata get` should answer from, and
-    answers the way the real CLI does: a BARE JSON value for a key that is set (`2`, not
-    `{"review_round": 2}`), and None for one that is not, because the real CLI exits 1 with
-    `key "review_round" not found on issue` and `mc` turns a non-zero exit into None. "unreadable"
-    makes the whole read answer None, which is the other way that shape arrives. Untaught is the
-    ordinary case and means "no keys on this card" — every card on the real board answers its
-    metadata straight off the `issue list` row, so this path is the fallback, not the norm.
     """
     calls, assigns, posts = [], [], []
 
@@ -209,7 +200,7 @@ def teach(runs, issues, comments=None, metadata=None):
                                {"id": R.SPEC_REVIEWER, "name": "codex-spec-reviewer"},
                                {"id": R.STAND_IN_SPEC_REVIEWER, "name": "claude-spec-reviewer"}])
         if a[:2] == ("squad", "list"):
-            return json.dumps([{"id": REVIEW_SQUAD, "name": "review"}])
+            return json.dumps([])
         if a[:2] == ("issue", "runs"):
             r = runs.get(a[2], [])
             if r == "unreadable":
@@ -224,14 +215,6 @@ def teach(runs, issues, comments=None, metadata=None):
             if "--roots-only" in a:
                 cs = [c for c in cs if c.get("parent_id") is None]
             return json.dumps(cs)
-        if a[:3] == ("issue", "metadata", "get"):
-            m = (metadata or {}).get(a[3], {})
-            if m == "unreadable":
-                return None
-            want = a[a.index("--key") + 1] if "--key" in a else None
-            if want not in m:
-                return None              # the CLI exits 1: key "…" not found on issue
-            return json.dumps(m[want])
         if a[:2] == ("issue", "rerun"):
             return json.dumps({"id": "run-1", "status": "queued"})
         if a[:3] == ("issue", "comment", "add"):
@@ -782,272 +765,6 @@ out.clear()
 rc = R.main()
 say("...while outage mode is OFF the same board posts nothing", rc == 0 and not posts)
 
-
-
-# ================================================================= fresh fix rounds (spec 61)
-# Multica starts a run on ASSIGNMENT and that run RESUMES the agent's prior session on the card,
-# so a fix round used to open with the whole build still in context (0070: 9.2M cache reads under
-# the 200K ceiling, against 0.6M/6.7M/13.3M for the fresh slice runs that built it). Spec 61
-# §Context packs (pantry `63f56a0d`) makes starting cold safe by writing the hand-off down as a
-# `PACK · <sha>` root comment. So a Code card at review_round >= 2 with a pack on it is assigned
-# with `--no-start` and started by `issue rerun` (`force_fresh_session=true`) — one run, no resume.
-# Everything else on this board keeps the plain assign it has always had.
-FIX_KEY = "AMBR-80"
-LEAD_AGENT = OTHER_AGENT                     # the review lead: it posts the pack after consolidating
-PACK = ("PACK · 1d9ce04\n"
-        "spec: specs/monetization.md#Quota semantics\n"
-        "heads: #255 1d9ce04; #256 ebe5d70\n"
-        "findings: FIND-001 Medium open; FIND-002 Low open\n"
-        "ci: 1d9ce04 green\n"
-        "read: implementer-next: src/quota.ts \u00b7 reviewer: hunks\n")
-FIX_CARD = {"identifier": FIX_KEY, "status": "code", "assignee_id": REVIEW_SQUAD,
-            "assignee_type": "squad", "metadata": {"review_round": 2}}
-PACK_CS = {FIX_KEY: [cmt(CODEX, "slice 3 pushed, PRs are up", "f0", "2026-09-14T01:00:00-04:00"),
-                     cmt(LEAD_AGENT, PACK, "f1", "2026-09-14T05:56:00-04:00")]}
-NO_PACK_CS = {FIX_KEY: [cmt(CODEX, "slice 3 pushed, PRs are up", "f0",
-                            "2026-09-14T01:00:00-04:00"),
-                        cmt(LEAD_AGENT, "round 1 \u00b7 10 findings \u00b7 changes-requested", "f1",
-                            "2026-09-14T05:56:00-04:00")]}
-
-# ------------------------------------------------------------------------------------ is_pack
-say("a first-line `PACK · <sha>` header is a pack", R.is_pack(cmt(CODEX, PACK, "x", "t")))
-say("`PACK · pre-build` is a pack too — there is no head yet",
-    R.is_pack(cmt(R.PLANNER, "PACK · pre-build\nspec: specs/foo.md#Bar\n", "x", "t")))
-say("a leading blank line does not stop it being a pack",
-    R.is_pack(cmt(CODEX, "\n\nPACK · abc1234\nheads: #1 abc1234\n", "x", "t")))
-say("a pack QUOTED under a later line is discussion about a pack, not one",
-    not R.is_pack(cmt(LEAD_AGENT, "as agreed:\n\nPACK · abc1234\nheads: #1 abc1234\n", "x", "t")))
-say("an ordinary comment is not a pack", not R.is_pack(cmt(CODEX, "PR is up, over to review", "x", "t")))
-say("a comment with no content is not a pack", not R.is_pack({"content": None}))
-
-# ------------------------------------------------------------- newest_root_comment(match=is_pack)
-OLD_PACK = cmt(R.PLANNER, "PACK · pre-build\nspec: specs/monetization.md#Quota\n", "p0",
-               "2026-09-13T09:00:00-04:00")
-NEW_PACK = cmt(LEAD_AGENT, PACK, "p1", "2026-09-14T05:56:00-04:00")
-CHATTER = cmt(LEAD, "looks right to me", "p2", "2026-09-14T06:10:00-04:00", atype="member")
-R.mc = lambda *a: json.dumps([OLD_PACK, NEW_PACK, CHATTER])
-say("the newest PACK root is taken, not the newest root",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack)["id"] == "p1")
-say("...while the unfiltered read still answers the newest root of any kind",
-    R.newest_root_comment(FIX_KEY)["id"] == "p2")
-R.mc = lambda *a: json.dumps([OLD_PACK, CHATTER])
-say("a later comment never hides an earlier pack",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack)["id"] == "p0")
-R.mc = lambda *a: json.dumps(
-    [CHATTER, cmt(CODEX, PACK, "p3", "2026-09-14T07:00:00-04:00", parent="p2")])
-say("a pack posted as a REPLY is not a pack root",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack) is None)
-R.mc = lambda *a: json.dumps([CHATTER])
-say("a card with no pack at all answers None", R.newest_root_comment(FIX_KEY, match=R.is_pack) is None)
-out.clear()
-R.mc = lambda *a: None
-say("an unreadable read names the fresh-fix decision, not the slice one",
-    R.newest_root_comment(FIX_KEY, match=R.is_pack, why="no fresh-fix decision this tick") is None
-    and "no fresh-fix decision this tick" in out[-1])
-
-# ------------------------------------------------------------------------------- review_round
-R.mc = lambda *a, **k: (_ for _ in ()).throw(AssertionError("review_round must not call the CLI"))
-say("the round is read off the issue row, at no CLI call at all",
-    R.review_round(FIX_KEY, FIX_CARD) == 2)
-out.clear()
-say("a card with an empty metadata object has no round, and says nothing",
-    R.review_round(FIX_KEY, {"metadata": {}}) is None and not out)
-say("a round stored as a string is still a number",
-    R.review_round(FIX_KEY, {"metadata": {"review_round": "3"}}) == 3)
-say("a round that is not a number at all is no round",
-    R.review_round(FIX_KEY, {"metadata": {"review_round": "soon"}}) is None)
-
-R.mc, _, _, _ = teach({}, [], None, {FIX_KEY: {"review_round": 2}})
-say("a row without a metadata field falls back to the named read (a bare `2`)",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) == 2)
-out.clear()
-R.mc, _, _, _ = teach({}, [], None, {})
-say("a key the CLI cannot find fails OPEN to the plain assign, and says so",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) is None
-    and "could not read the review_round" in out[-1] and "plain way" in out[-1])
-out.clear()
-R.mc, _, _, _ = teach({}, [], None, {FIX_KEY: "unreadable"})
-say("...and an unreadable metadata read does exactly the same",
-    R.review_round(FIX_KEY, {"identifier": FIX_KEY}) is None
-    and "could not read the review_round" in out[-1])
-
-# ------------------------------------------------------------------------------ fresh_fix_tick
-def run_fresh(card=None, runs=None, comments=None, metadata=None, dry=False,
-              want="claude-implementer", ticks=1, mc=None):
-    """Drive fresh_fix_tick over a taught CLI; returns its answers, assigns, reruns and the log."""
-    card = card if card is not None else FIX_CARD
-    R.DRY = dry
-    calls, assigns = [], []
-    if mc is None:
-        R.mc, calls, assigns, _ = teach(runs if runs is not None else {FIX_KEY: []},
-                                        [card], comments if comments is not None else PACK_CS,
-                                        metadata)
-    else:
-        R.mc = mc
-    out.clear()
-    said = [R.fresh_fix_tick(card["identifier"], want, card) for _ in range(ticks)]
-    R.DRY = False
-    return said, assigns, [c for c in calls if c[:2] == ("issue", "rerun")], list(out)
-
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh()
-say("a pack on a round-2 Code card takes the assign away from the caller", said == [True])
-say("...assigned WITHOUT starting a run",
-    assigns == [("issue", "assign", FIX_KEY, "--to", "claude-implementer", "--no-start")])
-say("...and started by exactly one rerun", reruns == [("issue", "rerun", FIX_KEY)])
-say("...logged in the required wording",
-    f"fresh fix round: {FIX_KEY} (review_round 2) has a PACK — assigned claude-implementer "
-    f"without resume and started a fresh run" in lines)
-say("...remembered under {KEY}:freshfix:{round}", f"{FIX_KEY}:freshfix:2" in json.load(open(R.RETRIED)))
-say("...with a stamp neither the hour nor the day's prune can expire",
-    json.load(open(R.RETRIED))[f"{FIX_KEY}:freshfix:2"] == R.SLICE_FOREVER
-    and R.already_retried(f"{FIX_KEY}:freshfix:2"))
-say("...and without spending the card's ordinary retry budget", not R.already_retried(FIX_KEY))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(ticks=2)
-say("the same round never fires twice — one assign, one rerun, over two ticks",
-    said == [True, True] and len(assigns) == 1 and len(reruns) == 1)
-
-reset_memory()
-said, assigns, reruns, _ = run_fresh()
-said2, assigns2, reruns2, _ = run_fresh(card={**FIX_CARD, "metadata": {"review_round": 3}})
-say("round 3 is its own fix round and fires again",
-    said2 == [True] and len(assigns2) == 1 and len(reruns2) == 1
-    and f"{FIX_KEY}:freshfix:3" in json.load(open(R.RETRIED)))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(comments=NO_PACK_CS)
-say("no pack — the caller does the plain assign it always did, and nothing fires here",
-    said == [False] and not assigns and not reruns and not lines)
-
-reset_memory()
-R.mc, calls, assigns, _ = teach({FIX_KEY: []}, [FIX_CARD], PACK_CS)
-out.clear()
-r1 = R.fresh_fix_tick(FIX_KEY, "claude-implementer", {**FIX_CARD, "metadata": {"review_round": 1}})
-say("round 1 is the build's own review, not a fix round — plain assign",
-    r1 is False and not assigns and not [c for c in calls if c[:2] == ("issue", "rerun")])
-say("...and the comments are never even read: the free gate runs first",
-    not [c for c in calls if c[:3] == ("issue", "comment", "list")])
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(card={**FIX_CARD, "metadata": {}})
-say("a card with no round at all is a plain assign", said == [False] and not assigns and not reruns)
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(runs={FIX_KEY: [{"agent_id": CODEX, "status": "running"}]})
-say("a run in flight means nothing at all this tick — no assign, no rerun",
-    said == [True] and not assigns and not reruns)
-say("...and nothing is remembered, so it fires on the tick after that run ends",
-    not os.path.exists(R.RETRIED))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(runs={FIX_KEY: "unreadable"})
-say("an unreadable runs answer fails closed — nothing fires, and it says so",
-    said == [True] and not assigns and not reruns
-    and any("treating it as work in flight" in l for l in lines))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(card={"identifier": FIX_KEY, "status": "code",
-                                               "assignee_id": REVIEW_SQUAD, "assignee_type": "squad"},
-                                         metadata={FIX_KEY: "unreadable"})
-say("an unreadable review_round fails OPEN to today's plain assign, and says so",
-    said == [False] and not assigns and not reruns
-    and any("could not read the review_round" in l and "plain way" in l for l in lines))
-
-reset_memory()
-said, assigns, reruns, lines = run_fresh(dry=True)
-say("DRY says WOULD and runs nothing at all",
-    said == [True] and not assigns and not reruns
-    and f"WOULD start a fresh fix round on {FIX_KEY} (review_round 2) — assign "
-        f"claude-implementer without resume, then rerun" in lines)
-say("...and writes no memory", not os.path.exists(R.RETRIED))
-
-
-def refuse(what):
-    """A CLI that answers every read and then refuses one write, the way a failed call reports."""
-    def mc(*a, **k):
-        if a[:2] == ("issue", "assign"):
-            return None if what == "assign" else "ok"
-        if a[:2] == ("issue", "rerun"):
-            return None if what == "rerun" else json.dumps({"id": "r", "status": "queued"})
-        if a[:3] == ("issue", "comment", "list"):
-            return json.dumps(PACK_CS[FIX_KEY])
-        if a[:2] == ("issue", "runs"):
-            return json.dumps([])
-        raise AssertionError("un-taught CLI call: %r" % (a,))
-    return mc
-
-
-reset_memory()
-R.DRY = False
-R.mc = refuse("assign")
-out.clear()
-said = R.fresh_fix_tick(FIX_KEY, "claude-implementer", FIX_CARD)
-say("a --no-start assign that does not take is logged FAILED and never falls back to a resume",
-    said is True and any(l.startswith(f"FAILED  fresh fix round on {FIX_KEY}")
-                         and "--no-start assign" in l for l in out))
-say("...and is still remembered, so a dead CLI cannot re-fire one round every 60 s",
-    R.already_retried(f"{FIX_KEY}:freshfix:2"))
-
-reset_memory()
-R.mc = refuse("rerun")
-out.clear()
-said = R.fresh_fix_tick(FIX_KEY, "claude-implementer", FIX_CARD)
-say("a rerun that does not take is logged FAILED, naming the card as assigned but not running",
-    said is True and any(l.startswith(f"FAILED  fresh fix round on {FIX_KEY}")
-                         and "did not start" in l for l in out))
-
-# --------------------------------------------------------------- main(): both branches, end to end
-def run_fix_main(card, comments, dry=False, outage=None):
-    """One ordinary tick of main() over a single Code card; returns assigns, reruns and the log."""
-    if os.path.exists(R.OUTAGE):
-        os.remove(R.OUTAGE)
-    if outage:
-        json.dump(outage, open(R.OUTAGE, "w"))
-    reset_memory()
-    R.CODEX_BACK = R.CODEX_FORCE = False
-    R.CODEX_OUTAGE_UNTIL = None
-    R.DRY = dry
-    R._FAILED_COMMENTS = {}
-    R.mc, calls, assigns, _ = teach({card["identifier"]: []}, [card], comments)
-    out.clear()
-    rc = R.main()
-    R.DRY = False
-    return rc, assigns, [c for c in calls if c[:2] == ("issue", "rerun")], list(out)
-
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS)
-say("main(): a fix round with a pack is assigned without resume and rerun fresh",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer", "--no-start")]
-    and reruns == [("issue", "rerun", FIX_KEY)])
-say("...and the plain `assigned … -> …` line never appears for it",
-    any(l.startswith("fresh fix round: ") for l in lines)
-    and not any(l.startswith(f"assigned {FIX_KEY}") for l in lines))
-
-rc, assigns, reruns, lines = run_fix_main({**FIX_CARD, "metadata": {"review_round": 1}}, PACK_CS)
-say("main(): round 1 keeps today's plain assign, pack or no pack",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer")]
-    and not reruns and any(l.startswith(f"assigned {FIX_KEY} (code)") for l in lines))
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, NO_PACK_CS)
-say("main(): round 2 without a pack keeps today's plain assign",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "codex-implementer")]
-    and not reruns)
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS, outage=OUTAGE_ON)
-say("main(): during an outage the fix round goes fresh to the stand-in",
-    rc == 0 and assigns == [("issue", "assign", FIX_KEY, "--to", "claude-implementer",
-                             "--no-start")]
-    and reruns == [("issue", "rerun", FIX_KEY)])
-
-rc, assigns, reruns, lines = run_fix_main(FIX_CARD, PACK_CS, dry=True)
-say("main() --dry-run: nothing is assigned, nothing is rerun, and it says WOULD",
-    rc == 0 and not assigns and not reruns
-    and any(l.startswith(f"WOULD start a fresh fix round on {FIX_KEY}") for l in lines))
-if os.path.exists(R.OUTAGE):
-    os.remove(R.OUTAGE)
 
 
 print(f"\n{checks} assertions — " + ("SOME FAILED" if failed else "ALL PASSED"))

@@ -98,6 +98,14 @@ make build && pnpm install --frozen-lockfile --filter '@multica/web...' && pnpm 
 launchctl kickstart -k gui/501/com.user.multica-backend && launchctl kickstart -k gui/501/com.user.multica-web
 ```
 
+The unattended weekly version of exactly this is `~/agents/scripts/multica-rebuild.sh`
+(LaunchAgent `com.user.multica-rebuild`, Sundays 04:30). It was fixed 2026-09-15: it had
+drifted to `npm ci` in `apps/web`, which can only fail here (see Gotchas), and it now
+records the commit it actually installed in `~/agents/logs/.multica-rebuild-deployed` —
+without that stamp a run that rebased and then failed to build left the tree ahead of the
+running binaries and every later run reported "up to date" while launchd served the old code.
+Clearing that file is the way to force a rebuild. Measured 2026-09-15: 82 s cold, 38 s warm.
+
 Measured 2026-09-11: `make build` 14 s cold (88 s CPU), install 12 s,
 `next build` 54 s. Idle RSS: backend 36 MB, web 210 MB (+16 MB esbuild
 helper), Postgres ~166 MB summed over 14 processes (double-counts shared
@@ -174,6 +182,29 @@ himself on 2026-09-12 after a scratch-session investigation (daily log 12:40):
 
 ## Gotchas
 
+- **The web tier is a pnpm workspace — `npm` can never build it.** `apps/web` depends on
+  `@multica/{core,ui,views,eslint-config}` via `workspace:*` and on `catalog:` versions, and
+  there is no `package-lock.json` in the repo, so `npm ci` exits EUSAGE; with `--silent` it
+  prints **nothing at all**, which is how the 2026-09-13 weekly run logged a bare
+  `WEB BUILD FAILED`. Install at the **workspace root** (`pnpm install --frozen-lockfile`),
+  then build through turbo (`pnpm exec turbo build --filter=@multica/web`) so the `mdx`
+  step that `build` dependsOn runs first. Never `--silent` in an unattended build.
+- **`next build` writes into `.next` in place** and `com.user.multica-web` runs
+  `next start` straight out of it, so a half-finished build corrupts the *running* web tier.
+  The weekly script snapshots `.next` (minus the ~1.5 GB `cache/`) and restores it on failure.
+- **Build the server with the Makefile's ldflags.** A plain `go build ./cmd/server` leaves
+  `main.commit` at its default and `/health` then reports `{"commit":"unknown"}` — the only
+  on-box way to tell which build is live. Mirror `make build`:
+  `-ldflags "-X main.version=$(git describe --tags --match 'v[0-9]*' --always --dirty) -X main.commit=$(git rev-parse --short HEAD)"`.
+  `cmd/migrate` takes no ldflags upstream.
+- **The Xcode licence gate breaks the C toolchain, and `go build` needs it for `runtime/cgo`.**
+  `xcode-select -p` is `/Applications/Xcode.app`, and every Xcode update resets the agreement:
+  on 2026-09-15 `clang`, `xcrun`, `/usr/bin/git` and `/usr/bin/python3` all failed with
+  "You have not agreed to the Xcode license agreements" (exit 69) and took the Go build with
+  them. `sudo xcodebuild -license` is the machine-wide fix and needs a human. Until then,
+  `export DEVELOPER_DIR=/Library/Developer/CommandLineTools` uses the Command Line Tools
+  toolchain (clang 21.0.0, own SDK), which is not behind that gate — the weekly script falls
+  back to it automatically and logs when it does.
 - **Auth hardening is deliberate.** Homebrew's cluster defaults to `trust`; with it
   any local user — the future `multica` daemon user — could connect as the
   `orchestrator` superuser and `pg_read_file` the files spec 61 fences off.

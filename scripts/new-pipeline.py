@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Scaffold a conformant ICM pipeline.
 
 CONTEXT.md tells you to "add a pipeline per SPEC.md §2.2", but §2.2 is a table of

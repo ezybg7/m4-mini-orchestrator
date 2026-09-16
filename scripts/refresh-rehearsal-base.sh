@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH  # 2026-09-15: /usr/bin/python3 is the Xcode license stub under cron/launchd
 # Re-dump production's schema (no rows) into the rehearsal project's `base` database.
 # Run after EVERY production apply — base goes stale the moment a migration lands.
 set -euo pipefail

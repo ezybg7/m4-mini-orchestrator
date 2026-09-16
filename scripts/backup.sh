@@ -1,4 +1,5 @@
 #!/bin/bash
+export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH  # 2026-09-15: /usr/bin/python3 is the Xcode license stub under cron/launchd
 set -euo pipefail
 cd ~/agents
 

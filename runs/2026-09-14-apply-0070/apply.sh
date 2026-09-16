@@ -15,9 +15,9 @@ git -C "$REPO" fetch -q origin "$BR" 2>/dev/null || true
 SHA=${1:-$(git -C "$REPO" rev-parse "origin/$BR")}
 git -C "$REPO" show "${SHA}:supabase/migrations/0070_claim_ai_call_pools.sql" > "$W/m.sql" || { echo "MISSING migration at $SHA"; exit 2; }
 git -C "$REPO" show "${SHA}:db/asserts/0027_ai_quota.sql" > "$W/a.sql" || { echo "MISSING assert file at $SHA"; exit 2; }
-S=$(shasum -a 256 "$W/m.sql" | cut -c1-16); [ "$S" = "$REVIEWED" ] || { echo "REFUSING: migration sha256 $S… differs from the reviewed $REVIEWED…"; exit 2; }
+S=$(shasum -a 256 "$W/m.sql" | cut -c1-16); [ "$S" = "$REVIEWED" ] || { echo "REFUSING: migration sha256 ${S}… differs from the reviewed ${REVIEWED}…"; exit 2; }
 echo "target: $(psql "$P" -X -Atc 'select current_database() || '"'"' as '"'"' || current_user')  (REAL APPLY)"
-echo "file: ${SHA:0:8}:supabase/migrations/0070_claim_ai_call_pools.sql  sha256 $S…"
+echo "file: ${SHA:0:8}:supabase/migrations/0070_claim_ai_call_pools.sql  sha256 ${S}…"
 echo
 psql "$P" -X -v ON_ERROR_STOP=1 -1 -f "$W/m.sql" 2>&1 | grep -v -E '^(SET|BEGIN)$' | tee "$W/out"; rc=${PIPESTATUS[0]}
 [ "$rc" = 0 ] || { echo "== APPLY FAILED (psql exit $rc) — the single transaction rolled back; paste this output on AMBR-57"; exit 1; }

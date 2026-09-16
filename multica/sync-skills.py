@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/homebrew/bin/python3
 """Deploy the skills our Multica agents need into the workspace, from their one home on disk.
 
 The repo's .claude/skills/ is authoritative for pantry-*, ~/agents/skills for the personal
@@ -20,6 +20,7 @@ ENV = {**os.environ, "PATH": f"{HOME}/.local/bin:/opt/homebrew/bin:" + os.enviro
 # which no task should be running.
 SOURCES = [
     (f"{REPO}/pantry-code-review", "pantry-code-review"),
+    (f"{REPO}/pantry-context-pack", "pantry-context-pack"),
     (f"{REPO}/pantry-security-basics", "pantry-security-basics"),
     (f"{REPO}/pantry-data-modeling", "pantry-data-modeling"),
     (f"{REPO}/pantry-testing-strategy", "pantry-testing-strategy"),
