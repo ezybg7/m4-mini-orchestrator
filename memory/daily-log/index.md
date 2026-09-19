@@ -1,7 +1,7 @@
 ---
 type: index
 title: daily-log
-description: Index of 13 concept(s) and 1 subdirectory(ies) under daily-log/.
+description: Index of 14 concept(s) and 1 subdirectory(ies) under daily-log/.
 tags: [index]
 timestamp: 2026-09-10T00:00:00Z
 permalink: agents/daily-log/index
@@ -42,3 +42,4 @@ to [`archive/`](archive/index.md). Look for current state in
 | [2026-09-14](2026-09-14.md) | `log` | Token review applied — compaction ceiling trial, targeted review rounds, test-loop budget, weekly burn report; Everett's questions answered, slicing p |
 | [2026-09-15](2026-09-15.md) | `log` | Everett's t6/t7/t8 answers — slicing confirmed, token still lacks Checks read (probe AMBR-62), Worker deploy command corrected for the 0070 apply |
 | [2026-09-16](2026-09-16.md) | `log` | Xcode licence accepted by Everett (root of the python stub); AMBR-64 — the first context-pack card — approved in one round and merged (#259); AMBR-61  |
+| [2026-09-18](2026-09-18.md) | `log` | Orchestrator session notes |
